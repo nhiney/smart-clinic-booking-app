@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "231411507802",
+    "project_id": "smart-clinic-90c51",
+    "storage_bucket": "smart-clinic-90c51.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:231411507802:android:86f81331d8031d468f6e63",
+        "android_client_info": {
+          "package_name": "com.example.smart_clinic_booking"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC4mX4ZxNrKwO95mREdOrKqxzrRgjSDiTk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
