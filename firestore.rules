@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users - chỉ user đăng nhập mới đọc/sửa profile của mình
+    match /users/{userId} {
+      allow read, update: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null;
+    }
+
+    // Doctors - ai cũng đọc được, chỉ admin mới sửa
+    match /doctors/{doctorId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Appointments - patient xem của mình, doctor xem bệnh nhân
+    match /appointments/{appointmentId} {
+      allow read: if request.auth != null &&
+        (resource.data.patientId == request.auth.uid ||
+         resource.data.doctorId == request.auth.uid);
+      allow create: if request.auth != null;
+      allow update: if request.auth != null &&
+        (resource.data.patientId == request.auth.uid ||
+         resource.data.doctorId == request.auth.uid);
+    }
+
+    // Medical Records - patient chỉ xem của mình
+    match /medical_records/{recordId} {
+      allow read: if request.auth != null &&
+        (resource.data.patientId == request.auth.uid ||
+         resource.data.doctorId == request.auth.uid);
+      allow create: if request.auth != null;
+    }
+
+    // Medications - patient quản lý thuốc của mình
+    match /medications/{medicationId} {
+      allow read, write: if request.auth != null &&
+        resource.data.patientId == request.auth.uid;
+      allow create: if request.auth != null;
+    }
+  }
+}

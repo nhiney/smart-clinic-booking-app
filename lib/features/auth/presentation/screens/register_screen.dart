@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'terms_screen.dart';
 import 'otp_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -43,24 +43,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Future<void> _openTerms() async {
-    // Demo linking to a PDF file URL.
-    final Uri url = Uri.parse('https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf');
-    try {
-      if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Không thể mở file pdf điều khoản.')),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Lỗi khi mở file điều khoản.')),
-        );
-      }
-    }
+  void _openTerms() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const TermsScreen()),
+    );
   }
 
   @override

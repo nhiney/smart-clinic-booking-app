@@ -100,22 +100,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: Column(
                 children: [
                   Text(
-                    "BỆNH VIỆN ĐA KHOA QUỐC TẾ",
+                    "SMART CLINIC",
                     style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
                       color: AppColors.primary,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: 6),
-                  Text(
-                    "INTERNATIONAL GENERAL HOSPITAL",
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey,
-                      letterSpacing: 1.2,
+                      letterSpacing: 1.0,
                     ),
                     textAlign: TextAlign.center,
                   ),

@@ -10,5 +10,8 @@
         "**/.symlinks": true,
         "**/.plugin_symlinks": true,
         "**/*.decode.log": true
-    }
+    },
+    "cSpell.words": [
+        "thống"
+    ]
 }
