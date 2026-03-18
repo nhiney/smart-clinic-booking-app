@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_input.dart';
-import '../widgets/onboarding_slider.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -25,7 +24,7 @@ class _RegisterPageState extends State<RegisterPage> {
           child: Column(
             children: [
               const SizedBox(height: 20),
-              const OnboardingSlider(),
+              const Icon(Icons.person_add, size: 60, color: Colors.blue),
               const SizedBox(height: 30),
               Container(
                 padding: const EdgeInsets.all(20),

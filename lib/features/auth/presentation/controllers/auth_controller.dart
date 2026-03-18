@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../domain/entities/user_entity.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/register_usecase.dart';
 
@@ -13,17 +14,19 @@ class AuthController extends ChangeNotifier {
 
   bool isLoading = false;
   String? errorMessage;
+  UserEntity? currentUser;
 
-  Future<bool> login(String email, String password) async {
+  Future<bool> login(String phone, String password) async {
     try {
       isLoading = true;
+      errorMessage = null;
       notifyListeners();
 
-      await loginUseCase(email, password);
+      currentUser = await loginUseCase(phone, password);
 
       return true;
     } catch (e) {
-      errorMessage = e.toString();
+      errorMessage = e.toString().replaceAll('Exception: ', '');
       return false;
     } finally {
       isLoading = false;
@@ -32,20 +35,43 @@ class AuthController extends ChangeNotifier {
   }
 
   Future<bool> register(
-      String name, String email, String password) async {
+    String name,
+    String phone,
+    String password,
+  ) async {
     try {
       isLoading = true;
+      errorMessage = null;
       notifyListeners();
 
-      await registerUseCase(name, email, password);
+      currentUser = await registerUseCase(
+        name,
+        phone,
+        password,
+      );
 
       return true;
     } catch (e) {
-      errorMessage = e.toString();
+      errorMessage = e.toString().replaceAll('Exception: ', '');
       return false;
     } finally {
       isLoading = false;
       notifyListeners();
     }
+  }
+
+  void logout() {
+    currentUser = null;
+    notifyListeners();
+  }
+
+  void updateUser(UserEntity user) {
+    currentUser = user;
+    notifyListeners();
+  }
+
+  void clearError() {
+    errorMessage = null;
+    notifyListeners();
   }
 }

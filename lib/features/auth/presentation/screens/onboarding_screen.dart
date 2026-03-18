@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 import 'login_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -32,7 +33,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   void next() {
     if (currentIndex == slides.length - 1) {
-      Navigator.pushReplacement(
+      Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => const LoginScreen(),
@@ -58,7 +59,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void skip() {
-    Navigator.pushReplacement(
+    Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => const LoginScreen(),
@@ -93,6 +94,45 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
 
+            /// HOSPITAL INFO
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Column(
+                children: [
+                  Text(
+                    "BỆNH VIỆN ĐA KHOA QUỐC TẾ",
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    "INTERNATIONAL GENERAL HOSPITAL",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey,
+                      letterSpacing: 1.2,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    "Tận tâm chăm sóc - Sức khỏe vươn xa",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontStyle: FontStyle.italic,
+                      color: Colors.grey,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+
             /// PAGE VIEW
             Expanded(
               child: PageView.builder(
@@ -105,32 +145,45 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 },
                 itemBuilder: (context, index) {
                   return Padding(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Image.asset(
-                          slides[index]["image"]!,
-                          height: 280,
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.all(10),
+                            child: Image.asset(
+                              slides[index]["image"]!,
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.local_hospital,
+                                size: 100,
+                                color: Colors.blue,
+                              ),
+                            ),
+                          ),
                         ),
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 20),
                         Text(
                           slides[index]["title"]!,
                           style: const TextStyle(
-                            fontSize: 26,
+                            fontSize: 24,
                             fontWeight: FontWeight.bold,
+                            height: 1.3,
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 15),
+                        const SizedBox(height: 12),
                         Text(
                           slides[index]["desc"]!,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: Colors.grey,
-                            fontSize: 16,
+                            fontSize: 15,
+                            height: 1.5,
                           ),
-                        )
+                        ),
+                        const SizedBox(height: 20),
                       ],
                     ),
                   );

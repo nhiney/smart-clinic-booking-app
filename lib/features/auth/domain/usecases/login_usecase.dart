@@ -7,11 +7,11 @@ class LoginUseCase {
   LoginUseCase(this.repository);
 
   Future<UserEntity> call(
-    String email,
+    String phone,
     String password,
   ) async {
     return await repository.login(
-      email,
+      phone,
       password,
     );
   }

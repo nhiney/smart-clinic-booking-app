@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/user_entity.dart';
 
 class UserModel extends UserEntity {
@@ -5,13 +6,23 @@ class UserModel extends UserEntity {
     required super.id,
     required super.email,
     required super.name,
+    super.phone,
+    super.role,
+    super.avatarUrl,
+    super.createdAt,
   });
 
-  factory UserModel.fromJson(Map<String, dynamic> json, String id) {
+  factory UserModel.fromJson(Map<String, dynamic> json, String docId) {
     return UserModel(
-      id: id,
-      email: json['email'],
-      name: json['name'],
+      id: docId,
+      email: json['email'] ?? '',
+      name: json['name'] ?? '',
+      phone: json['phone'] ?? '',
+      role: json['role'] ?? 'patient',
+      avatarUrl: json['avatarUrl'] ?? '',
+      createdAt: json['createdAt'] != null
+          ? (json['createdAt'] as Timestamp).toDate()
+          : null,
     );
   }
 
@@ -19,6 +30,24 @@ class UserModel extends UserEntity {
     return {
       'email': email,
       'name': name,
+      'phone': phone,
+      'role': role,
+      'avatarUrl': avatarUrl,
+      'createdAt': createdAt != null
+          ? Timestamp.fromDate(createdAt!)
+          : FieldValue.serverTimestamp(),
     };
+  }
+
+  factory UserModel.fromEntity(UserEntity entity) {
+    return UserModel(
+      id: entity.id,
+      email: entity.email,
+      name: entity.name,
+      phone: entity.phone,
+      role: entity.role,
+      avatarUrl: entity.avatarUrl,
+      createdAt: entity.createdAt,
+    );
   }
 }

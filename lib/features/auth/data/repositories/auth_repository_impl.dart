@@ -1,6 +1,7 @@
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_datasource.dart';
+import '../models/user_model.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDatasource remoteDatasource;
@@ -8,39 +9,25 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl(this.remoteDatasource);
 
   @override
-  Future<UserEntity> login(String email, String password) async {
-    final result = await remoteDatasource.login(
-      email: email,
+  Future<UserEntity> login(String phone, String password) async {
+    return await remoteDatasource.login(
+      phone: phone,
       password: password,
-    );
-
-    final user = result.user!;
-
-    return UserEntity(
-      id: user.uid,
-      email: user.email ?? '',
-      name: '',
     );
   }
 
   @override
   Future<UserEntity> register(
     String name,
-    String email,
-    String password,
-  ) async {
-    final result = await remoteDatasource.register(
+    String phone,
+    String password, {
+    String role = 'patient',
+  }) async {
+    return await remoteDatasource.register(
       name: name,
-      email: email,
+      phone: phone,
       password: password,
-    );
-
-    final user = result.user!;
-
-    return UserEntity(
-      id: user.uid,
-      email: user.email ?? '',
-      name: name,
+      role: role,
     );
   }
 
@@ -52,13 +39,22 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   UserEntity? getCurrentUser() {
     final user = remoteDatasource.getCurrentUser();
-
     if (user == null) return null;
 
     return UserEntity(
       id: user.uid,
       email: user.email ?? '',
-      name: '',
+      name: user.displayName ?? '',
     );
+  }
+
+  @override
+  Future<UserEntity?> getUserProfile(String uid) async {
+    return await remoteDatasource.getUserProfile(uid);
+  }
+
+  @override
+  Future<void> updateUserProfile(UserEntity user) async {
+    await remoteDatasource.updateUserProfile(UserModel.fromEntity(user));
   }
 }
