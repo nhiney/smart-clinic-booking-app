@@ -1,4 +1,4 @@
-# 🏥 ICare — Smart Medical Booking App
+# ICare — Smart Medical Booking App
 
 A mobile healthcare application built with **Flutter** and **Firebase** that streamlines  
 medical appointment booking, patient record management, and clinic discovery.
@@ -10,22 +10,23 @@ Designed with accessibility in mind — including voice-assisted booking for eld
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
-- [Features](#-features)
-- [Tech Stack](#-tech-stack)
-- [System Architecture](#-system-architecture)
-- [Project Structure](#-project-structure)
-- [Database Design](#-database-design-firestore)
-- [Key Workflows](#-key-workflows)
-- [Challenges & Solutions](#-challenges--solutions)
-- [Testing](#-testing)
-- [Getting Started](#-getting-started)
-- [Future Improvements](#-future-improvements)
+- [Features](#features)
+- [AI & Voice Interaction](#ai--voice-interaction)
+- [Tech Stack](#tech-stack)
+- [System Architecture](#system-architecture)
+- [Project Structure](#project-structure)
+- [Database Design](#database-design-firestore)
+- [Key Workflows](#key-workflows)
+- [Challenges & Solutions](#challenges--solutions)
+- [Testing](#testing)
+- [Getting Started](#getting-started)
+- [Future Improvements](#future-improvements)
 
 ---
 
-## ✨ Features
+## Features
 
 | Category | Details |
 |---|---|
@@ -35,13 +36,25 @@ Designed with accessibility in mind — including voice-assisted booking for eld
 | **Medical Records** | View diagnosis history, prescriptions, and doctor notes |
 | **Medication Tracker** | Track active medications with dosage, frequency, and schedule |
 | **Notifications** | In-app notifications for booking confirmations, reminders, and updates |
-| **Voice-Assisted Booking** | Basic speech-to-text input to help elderly users navigate the booking flow |
+| **AI-Assisted Interaction** | Supports basic intent recognition and simplifies booking workflow through voice input |
 | **Authentication** | Phone-based OTP verification with role-based access (Patient / Doctor / Admin) |
 | **User Profiles** | Manage personal info, avatar, and account settings |
 
 ---
 
-## 🛠 Tech Stack
+## AI & Voice Interaction
+
+The system includes a basic AI-assisted interaction layer:
+
+- Speech-to-text processing for voice input
+- Simple intent recognition for booking-related actions
+- Helps reduce interaction complexity for elderly users
+
+> Note: This is a lightweight AI approach (rule-based / basic intent parsing), suitable for the project scope.
+
+---
+
+## Tech Stack
 
 | Layer | Technology |
 |---|---|
@@ -59,7 +72,7 @@ Designed with accessibility in mind — including voice-assisted booking for eld
 
 ---
 
-## 🏗 System Architecture
+## System Architecture
 
 The project follows **Clean Architecture** principles, separating each feature into three distinct layers:
 
@@ -102,7 +115,7 @@ Dependencies are wired using **GetIt** with **Injectable** for code generation. 
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 lib/
@@ -143,7 +156,7 @@ Each feature module is **self-contained** — it owns its data layer, domain log
 
 ---
 
-## 🗄 Database Design (Firestore)
+## Database Design (Firestore)
 
 ### Collections Overview
 
@@ -236,7 +249,7 @@ match /appointments/{appointmentId} {
 
 ---
 
-## 🔄 Key Workflows
+## Key Workflows
 
 ### Appointment Booking Flow
 
@@ -283,7 +296,7 @@ Phone Input → OTP Verification → Profile Setup → Home Screen
 
 ---
 
-## 🧩 Challenges & Solutions
+## Challenges & Solutions
 
 ### 1. Data Consistency in Concurrent Bookings
 **Problem**: Two patients could theoretically book the same time slot simultaneously.  
@@ -307,7 +320,7 @@ Phone Input → OTP Verification → Profile Setup → Home Screen
 
 ---
 
-## 🧪 Testing
+## Testing
 
 The test suite is organized into three levels:
 
@@ -328,15 +341,15 @@ test/
 
 ### Key Test Scenarios
 
-- ✅ Appointment creation with valid data
-- ✅ Appointment cancellation and status transitions
-- ✅ Schedule conflict detection (double-booking prevention)
-- ✅ Auth flow: phone verification → profile creation → login
-- ✅ Doctor search and filtering by specialty
-- ✅ Medical record creation and retrieval by patient
-- ✅ Medication CRUD operations
-- ✅ Firestore security rule validation (unauthorized access blocked)
-- ✅ Edge cases: empty inputs, network errors, invalid time slots
+- Appointment creation with valid data
+- Appointment cancellation and status transitions
+- Schedule conflict detection (double-booking prevention)
+- Auth flow: phone verification → profile creation → login
+- Doctor search and filtering by specialty
+- Medical record creation and retrieval by patient
+- Medication CRUD operations
+- Firestore security rule validation (unauthorized access blocked)
+- Edge cases: empty inputs, network errors, invalid time slots
 
 ### Running Tests
 
@@ -350,7 +363,7 @@ flutter test integration_test/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -388,7 +401,7 @@ flutter run
 
 ---
 
-## 🔮 Future Improvements
+## Future Improvements
 
 - [ ] **Firestore Transactions** — Replace query-then-write with atomic transactions for fully race-condition-free booking
 - [ ] **Push Notifications** — Integrate Firebase Cloud Messaging for real-time booking reminders
@@ -402,12 +415,12 @@ flutter run
 
 ---
 
-## 📄 License
+## License
 
 This project is developed for educational purposes as part of a Mobile Application Development course.
 
 ---
 
 <p align="center">
-  Built with ❤️ using Flutter & Firebase
+  Built with Flutter & Firebase
 </p>
