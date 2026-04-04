@@ -28,23 +28,14 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        // Use iOS config as a fallback for macOS if available, often works for Firebase
+        return ios;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
       case TargetPlatform.linux:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for linux - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
       default:
         throw UnsupportedError(
-          'DefaultFirebaseOptions are not supported for this platform.',
+          'Firebase has not been configured for this platform (${defaultTargetPlatform.name}). '
+          'Please run "flutterfire configure" to add support.',
         );
     }
   }
@@ -64,6 +55,7 @@ class DefaultFirebaseOptions {
     projectId: 'smart-clinic-90c51',
     storageBucket: 'smart-clinic-90c51.firebasestorage.app',
     iosBundleId: 'com.example.smartClinicBooking',
+    iosClientId: '231411507802-1rs6e29cma20me3krvhvujefugnvej2l.apps.googleusercontent.com',
   );
 
 }

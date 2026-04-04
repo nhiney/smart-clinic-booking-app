@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
+import 'package:smart_clinic_booking/features/auth/data/datasources/auth_remote_datasource.dart';
+import 'package:smart_clinic_booking/features/auth/data/repositories/auth_repository_impl.dart';
 
 import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
+import 'config/dependency_injection/injection.dart';
 
 // Auth
-import 'features/auth/data/datasources/auth_remote_datasource.dart';
-import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/domain/usecases/login_usecase.dart';
 import 'features/auth/domain/usecases/register_usecase.dart';
+import 'features/auth/domain/usecases/verify_phone_usecase.dart';
+import 'features/auth/domain/usecases/signin_with_phone_usecase.dart';
+import 'features/auth/domain/usecases/create_password_usecase.dart';
 import 'features/auth/presentation/controllers/auth_controller.dart';
 
 // Doctor
@@ -59,17 +65,28 @@ import 'features/medication/presentation/screens/medication_screen.dart';
 import 'features/profile/presentation/screens/profile_screen.dart';
 import 'features/maps/presentation/screens/clinic_map_screen.dart';
 import 'features/notification/presentation/screens/notification_screen.dart';
+import 'features/auth/presentation/screens/onboarding_screen.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Initialize Firebase
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    FirebaseFirestore.instance.settings = const Settings(
+      persistenceEnabled: true,
+      cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+    );
   } catch (e) {
-    debugPrint('Firebase init error: $e');
+    debugPrint('Firebase initialization failed: $e');
+    // If Firebase fails, the app can still run in offline mode or show an error
   }
+
+  // Initialize Dependency Injection
+  await configureDependencies();
 
   // Data sources
   final authDatasource = AuthRemoteDatasource();
@@ -101,8 +118,11 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider(
           create: (_) => AuthController(
-            loginUseCase: LoginUseCase(authRepository),
-            registerUseCase: RegisterUseCase(authRepository),
+            loginUseCase: getIt<LoginUseCase>(),
+            registerUseCase: getIt<RegisterUseCase>(),
+            verifyPhoneUseCase: getIt<VerifyPhoneUseCase>(),
+            signInWithPhoneUseCase: getIt<SignInWithPhoneUseCase>(),
+            createPasswordUseCase: getIt<CreatePasswordUseCase>(),
           ),
         ),
         ChangeNotifierProvider(
@@ -138,11 +158,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Smart Clinic',
+      title: 'ICare',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       home: const SplashScreen(),
       routes: {
+        '/onboarding': (_) => const OnboardingScreen(),
         '/login': (_) => const LoginScreen(),
         '/register': (_) => const RegisterScreen(),
         '/home': (_) => const HomeScreen(),
@@ -153,6 +174,15 @@ class MyApp extends StatelessWidget {
         '/profile': (_) => const ProfileScreen(),
         '/maps': (_) => const ClinicMapScreen(),
         '/notifications': (_) => const NotificationScreen(),
+      },
+      onUnknownRoute: (settings) {
+        return MaterialPageRoute(
+          builder: (context) => const Scaffold(
+            body: Center(
+              child: Text('Lỗi tải lại trang. Vui lòng thử lại!'),
+            ),
+          ),
+        );
       },
     );
   }

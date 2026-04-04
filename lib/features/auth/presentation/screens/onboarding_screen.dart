@@ -95,12 +95,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
 
             /// HOSPITAL INFO
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: Column(
                 children: [
                   Text(
-                    "SMART CLINIC",
+                    "ICARE",
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w900,
@@ -109,7 +109,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  SizedBox(height: 6),
+                  SizedBox(height: 4),
+                  Text(
+                    "ỨNG DỤNG HỖ TRỢ ĐẶT LỊCH KHÁM THÔNG MINH",
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary.withValues(alpha: 0.8),
+                      letterSpacing: 0.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 8),
                   Text(
                     "Tận tâm chăm sóc - Sức khỏe vươn xa",
                     style: TextStyle(

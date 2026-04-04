@@ -90,7 +90,7 @@ class TermsScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 const Center(
                   child: Text(
-                    "© 2026 SMART CLINIC. All rights reserved.",
+                    "© 2026 ICARE. All rights reserved.",
                     style: TextStyle(color: Colors.grey, fontSize: 13),
                   ),
                 ),
@@ -153,7 +153,7 @@ class TermsScreen extends StatelessWidget {
         border: Border.all(color: const Color(0xFFD1E0FF)),
       ),
       child: const Text(
-        "Ứng dụng SMART CLINIC (“Chúng tôi”) cam kết ưu tiên bảo vệ tuyệt đối quyền riêng tư và dữ liệu cá nhân của người dùng (“Bạn”) tuân thủ nghiêm ngặt Quy định bảo vệ dữ liệu chung (GDPR), Luật An toàn thông tin mạng Việt Nam và Nghị định 13/2023/NĐ-CP về bảo vệ dữ liệu cá nhân.",
+        "Ứng dụng ICARE (“Chúng tôi”) cam kết ưu tiên bảo vệ tuyệt đối quyền riêng tư và dữ liệu cá nhân của người dùng (“Bạn”) tuân thủ nghiêm ngặt Quy định bảo vệ dữ liệu chung (GDPR), Luật An toàn thông tin mạng Việt Nam và Nghị định 13/2023/NĐ-CP về bảo vệ dữ liệu cá nhân.",
         style: TextStyle(
           fontSize: 14.5,
           height: 1.6,

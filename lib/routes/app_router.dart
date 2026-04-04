@@ -1,5 +1,5 @@
 import 'package:go_router/go_router.dart';
-import '../features/auth/presentation/pages/login_page.dart';
+import 'package:smart_clinic_booking/config/routes/app_router.dart';
 import '../features/auth/presentation/pages/register_page.dart';
 
 class AppRouter {

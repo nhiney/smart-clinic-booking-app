@@ -18,7 +18,7 @@ class AppLogo extends StatelessWidget {
         ),
         SizedBox(height: 10),
         Text(
-          "Smart Clinic",
+          "ICare",
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,

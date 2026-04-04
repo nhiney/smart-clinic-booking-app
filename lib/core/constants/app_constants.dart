@@ -1,5 +1,5 @@
 class AppConstants {
-  static const String appName = "Smart Clinic Booking";
+  static const String appName = "ICare";
 
   // Routes
   static const String splashRoute = "/";
