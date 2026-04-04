@@ -32,25 +32,24 @@ Designed with accessibility in mind — including voice-assisted booking for eld
 |---|---|
 | **Appointment Booking** | Search doctors → select time slot → confirm booking with conflict detection |
 | **Doctor Discovery** | Browse doctors by specialty, view ratings, experience, and availability |
-| **Clinic Map** | Interactive OpenStreetMap with clinic locations, ratings, and open hours |
+| **QR Check-in System** | Auto check-in at hospital via secure, encrypted QR Scanner |
 | **Medical Records** | View diagnosis history, prescriptions, and doctor notes |
 | **Medication Tracker** | Track active medications with dosage, frequency, and schedule |
 | **Notifications** | In-app notifications for booking confirmations, reminders, and updates |
-| **AI-Assisted Interaction** | Supports basic intent recognition and simplifies booking workflow through voice input |
-| **Authentication** | Phone-based OTP verification with role-based access (Patient / Doctor / Admin) |
+| **AI & Voice Chatbot** | Voice-first natural interaction (Speech-To-Text / Text-To-Speech) parsing intent & entities |
+| **Authentication** | Phone-based OTP verification with 5 core roles (Patient, Doctor, Admin, Scanner, Chatbot) |
 | **User Profiles** | Manage personal info, avatar, and account settings |
 
 ---
 
 ## AI & Voice Interaction
 
-The system includes a basic AI-assisted interaction layer:
+The system features an advanced, yet simple, AI Voice Chatbot interaction layer designed specifically for the elderly:
 
-- Speech-to-text processing for voice input
-- Simple intent recognition for booking-related actions
-- Helps reduce interaction complexity for elderly users
-
-> Note: This is a lightweight AI approach (rule-based / basic intent parsing), suitable for the project scope.
+- **Input**: Voice (Speech-to-Text) translating to text strings.
+- **Processing**: Intent Detection (book/cancel/search) & Entity Extraction (Specialty, Date, Time, Location).
+- **Output**: Automatic system UI suggestions combined with Text-to-Speech (TTS) auditory feedback.
+- Designed to handle unclear input gracefully (asking again simply, rather than forcing manual typing).
 
 ---
 
@@ -179,7 +178,7 @@ Firestore
 | `name` | string | Display name |
 | `email` | string | Email address |
 | `phone` | string | Phone number (used for OTP login) |
-| `role` | string | `patient` \| `doctor` \| `admin` |
+| `role` | string | `patient` \| `doctor` \| `admin` \| `scanner` \| `chatbot` |
 | `avatarUrl` | string | Profile image URL |
 | `createdAt` | timestamp | Account creation date |
 
@@ -205,6 +204,7 @@ Firestore
 | `dateTime` | timestamp | Appointment date and time |
 | `status` | string | `pending` \| `confirmed` \| `cancelled` \| `completed` |
 | `notes` | string | Patient's notes or symptoms |
+| `secureQrHash` | string | Used for encrypted hospital check-in validations |
 | `createdAt` | timestamp | Booking creation time |
 
 #### `medical_records/{recordId}`
@@ -256,7 +256,7 @@ match /appointments/{appointmentId} {
 ```
 ┌──────────┐     ┌──────────────┐     ┌─────────────┐     ┌──────────────┐
 │  Browse   │────▶│ Select Doctor │────▶│ Pick Date & │────▶│   Confirm    │
-│  Doctors  │     │  & Specialty  │     │  Time Slot   │     │   Booking    │
+│  Doctors  │     │  & Specialty  │     │  Time Slot   │     │ Booking & QR │
 └──────────┘     └──────────────┘     └─────────────┘     └──────┬───────┘
                                                                   │
                                          ┌────────────────────────▼──────┐
@@ -266,11 +266,17 @@ match /appointments/{appointmentId} {
                                          └───────────────────────────────┘
 ```
 
-1. Patient browses doctors (filtered by specialty, sorted by rating)
-2. Selects a doctor and views their available days and time slots
-3. Picks an available date and time slot from the doctor's schedule
-4. Confirms the booking — a new document is created in `appointments` with `status: "pending"`
-5. Doctor can later update the status to `confirmed`, `completed`, or `cancelled`
+1. Patient searches doctors visually OR via the **Voice AI Assistant**.
+2. Selects a doctor and views availability.
+3. Picks a slot or lets the Voice AI pick the best matched slot automatically.
+4. Confirms booking — receives a **Secure QR Code** incorporating patient ID, appt ID, and timestamp. Data saves to `appointments` collection.
+
+### QR Check-in Flow
+
+1. **Arrival**: Patient arrives at the hospital.
+2. **Scan Phase**: Staff/Admin uses the `Scanner` Role on the app to scan the patient's QR.
+3. **Verification**: Backend reads `appointment_id`, `patient_id` and validates the signature via Cloud Functions.
+4. **Completion**: If valid, the system updates the appointment status to `checked_in` and plays auditory confirmation to the patient.
 
 ### Schedule Conflict Prevention
 
