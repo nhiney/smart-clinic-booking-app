@@ -4,6 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../controllers/auth_controller.dart';
 import 'create_password_screen.dart';
+import '../../../../core/widgets/branded_app_bar.dart';
 
 import 'dart:async';
 
@@ -130,15 +131,8 @@ class _OtpScreenState extends State<OtpScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text("Xác nhận mã OTP", style: TextStyle(color: Colors.black)),
-        centerTitle: true,
+      appBar: const BrandedAppBar(
+        title: "Xác nhận mã OTP",
       ),
       body: SafeArea(
         child: Padding(

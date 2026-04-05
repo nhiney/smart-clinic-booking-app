@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/widgets/doctor_card.dart';
 import '../../../../shared/widgets/empty_state_widget.dart';
 import '../../../../shared/widgets/loading_widget.dart';
+import '../../../../core/widgets/branded_app_bar.dart';
 import '../controllers/doctor_controller.dart';
 import 'doctor_detail_screen.dart';
 
@@ -36,15 +36,17 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text("Tìm bác sĩ"),
+      appBar: const BrandedAppBar(
+        title: "Tìm bác sĩ",
       ),
       body: Column(
         children: [
           // Search bar
           Container(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-            color: AppColors.primary,
+            decoration: const BoxDecoration(
+              gradient: AppColors.primaryGradient,
+            ),
             child: TextField(
               controller: searchController,
               onChanged: (val) {

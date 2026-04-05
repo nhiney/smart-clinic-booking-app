@@ -76,39 +76,39 @@ class _SplashScreenState extends State<SplashScreen>
                   child: ScaleTransition(
                     scale: _scaleAnimation,
                     child: Container(
-                      width: 120,
-                      height: 120,
+                      width: 150,
+                      height: 150,
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(30),
+                        borderRadius: BorderRadius.circular(35),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
+                            color: Colors.black.withOpacity(0.15),
+                            blurRadius: 25,
+                            offset: const Offset(0, 12),
                           ),
                         ],
                       ),
-                      child: const Icon(
-                        Icons.local_hospital_rounded,
-                        size: 64,
-                        color: AppColors.primary,
+                      padding: const EdgeInsets.all(20),
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        fit: BoxFit.contain,
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 30),
 
-                // App Name
+                // App Name (Handled by Logo PNG, but keeping subtitle)
                 FadeTransition(
                   opacity: _fadeAnimation,
                   child: const Text(
-                    'ICare',
+                    'ICARE',
                     style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 36,
+                      fontWeight: FontWeight.w900,
                       color: Colors.white,
-                      letterSpacing: 1.5,
+                      letterSpacing: 2.0,
                     ),
                   ),
                 ),

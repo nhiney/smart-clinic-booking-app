@@ -3,6 +3,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/doctor_entity.dart';
 import '../../../appointment/presentation/screens/booking_screen.dart';
+import '../../../../core/widgets/icare_logo.dart';
 
 class DoctorDetailScreen extends StatelessWidget {
   final DoctorEntity doctor;
@@ -15,10 +16,31 @@ class DoctorDetailScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       body: CustomScrollView(
         slivers: [
-          // App bar with doctor image
           SliverAppBar(
-            expandedHeight: 200,
+            expandedHeight: 220,
             pinned: true,
+            backgroundColor: AppColors.primaryDark,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
+            ),
+            title: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ICareLogo(size: 28, showText: false, isLight: true),
+                SizedBox(width: 8),
+                Text(
+                  "ICARE",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 18,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ],
+            ),
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: const BoxDecoration(
@@ -27,24 +49,33 @@ class DoctorDetailScreen extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 40),
-                    CircleAvatar(
-                      radius: 45,
-                      backgroundColor: Colors.white.withOpacity(0.3),
-                      child: const Icon(
-                        Icons.person,
-                        size: 50,
-                        color: Colors.white,
+                    const SizedBox(height: 60),
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.white24,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const CircleAvatar(
+                        radius: 40,
+                        backgroundColor: Colors.white,
+                        child: Icon(Icons.person, size: 40, color: AppColors.primary),
                       ),
                     ),
                     const SizedBox(height: 10),
                     Text(
                       doctor.name,
-                      style: AppTextStyles.heading2.copyWith(color: Colors.white),
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                     Text(
                       doctor.specialty,
-                      style: AppTextStyles.body.copyWith(
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
                         color: Colors.white70,
                       ),
                     ),

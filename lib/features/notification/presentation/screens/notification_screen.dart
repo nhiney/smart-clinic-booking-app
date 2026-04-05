@@ -8,6 +8,7 @@ import '../../../../shared/widgets/loading_widget.dart';
 import '../../domain/entities/notification_entity.dart';
 import '../controllers/notification_controller.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../../core/widgets/branded_app_bar.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -54,8 +55,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text("Thông báo"),
+      appBar: BrandedAppBar(
+        title: "Thông báo",
         actions: [
           Consumer<NotificationController>(
             builder: (_, controller, __) {
@@ -69,7 +70,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   },
                   child: const Text(
                     "Đọc tất cả",
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
                   ),
                 );
               }

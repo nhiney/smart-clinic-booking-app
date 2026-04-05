@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/widgets/appointment_card.dart';
 import '../../../../shared/widgets/empty_state_widget.dart';
 import '../../../../shared/widgets/loading_widget.dart';
 import '../controllers/appointment_controller.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../../core/widgets/branded_app_bar.dart';
 
 class AppointmentHistoryScreen extends StatefulWidget {
   const AppointmentHistoryScreen({super.key});
@@ -41,13 +41,14 @@ class _AppointmentHistoryScreenState extends State<AppointmentHistoryScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text("Lịch hẹn"),
+      appBar: BrandedAppBar(
+        title: "Lịch hẹn",
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white60,
+          indicatorColor: AppColors.primary,
+          labelColor: AppColors.primary,
+          unselectedLabelColor: AppColors.textSecondary,
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
           tabs: const [
             Tab(text: "Sắp tới"),
             Tab(text: "Hoàn thành"),

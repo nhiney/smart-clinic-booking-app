@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/widgets/empty_state_widget.dart';
@@ -9,6 +8,7 @@ import '../../domain/entities/medication_entity.dart';
 import '../../data/models/medication_model.dart';
 import '../controllers/medication_controller.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../../core/widgets/branded_app_bar.dart';
 
 class MedicationScreen extends StatefulWidget {
   const MedicationScreen({super.key});
@@ -161,7 +161,7 @@ class _MedicationScreenState extends State<MedicationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text("Nhắc uống thuốc")),
+      appBar: const BrandedAppBar(title: "Nhắc uống thuốc"),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddMedication,
         backgroundColor: AppColors.primary,

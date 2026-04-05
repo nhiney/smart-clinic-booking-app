@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/icare_logo.dart';
 
-/// Section 1: Header — greeting, notifications, profile, voice assistant.
 class HomeHeader extends StatelessWidget {
   final String userName;
+  final String role;
   final int unreadNotifications;
   final VoidCallback onNotificationTap;
   final VoidCallback onProfileTap;
   final VoidCallback onVoiceTap;
-  final ValueChanged<String> onSearchSubmit;
+  final Function(String) onSearchSubmit;
 
   const HomeHeader({
     super.key,
     required this.userName,
+    required this.role,
     required this.unreadNotifications,
     required this.onNotificationTap,
     required this.onProfileTap,
@@ -23,168 +24,164 @@ class HomeHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final greeting = _getGreeting();
+    final roleLabel = role == 'doctor' ? 'Bác sĩ' : 'Bạn';
+
     return Container(
+      padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 10, 20, 10),
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF1565C0), Color(0xFF1E88E5)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      padding: EdgeInsets.fromLTRB(
-        20,
-        MediaQuery.of(context).padding.top + 16,
-        20,
-        24,
+        gradient: AppColors.backgroundGradient,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Xin chào,',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: Colors.white.withValues(alpha: 0.8),
-                        fontSize: 13,
+              Row(
+                children: [
+                  const ICareLogo(
+                    size: 60,
+                    showText: false,
+                  ),
+                  const SizedBox(width: 14),
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'ICARE',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.primaryDark,
+                          letterSpacing: 1.0,
+                          height: 1.1,
+                        ),
+                      ),
+                      Text(
+                        'Healthcare Excellence',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  _HeaderIconButton(
+                    icon: Icons.notifications_none_rounded,
+                    onTap: onNotificationTap,
+                    badgeCount: unreadNotifications,
+                  ),
+                  const SizedBox(width: 12),
+                  GestureDetector(
+                    onTap: onProfileTap,
+                    child: Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.shadow,
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const CircleAvatar(
+                        backgroundColor: AppColors.primarySurface,
+                        child: Icon(Icons.person, color: AppColors.primary, size: 24),
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      userName,
-                      style: AppTextStyles.heading3.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              _IconButton(
-                icon: Icons.mic_none_rounded,
-                onTap: onVoiceTap,
-                badge: null,
-              ),
-              const SizedBox(width: 8),
-              _IconButton(
-                icon: Icons.notifications_none_rounded,
-                onTap: onNotificationTap,
-                badge: unreadNotifications > 0 ? unreadNotifications : null,
-              ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: onProfileTap,
-                child: CircleAvatar(
-                  radius: 20,
-                  backgroundColor: Colors.white.withValues(alpha: 0.2),
-                  child: const Icon(Icons.person, color: Colors.white, size: 20),
-                ),
+                  ),
+                ],
               ),
             ],
           ),
           const SizedBox(height: 20),
-          // Search bar
-          _SearchBar(onSubmit: onSearchSubmit),
+          Padding(
+            padding: const EdgeInsets.only(left: 2),
+            child: Text(
+              '$greeting, $roleLabel $userName'.trim(),
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Chào buổi sáng';
+    if (hour < 18) return 'Chào buổi chiều';
+    return 'Chào buổi tối';
+  }
 }
 
-class _IconButton extends StatelessWidget {
+class _HeaderIconButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
-  final int? badge;
+  final int badgeCount;
 
-  const _IconButton({required this.icon, required this.onTap, this.badge});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: Colors.white, size: 22),
-          ),
-          if (badge != null)
-            Positioned(
-              top: -4,
-              right: -4,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  color: AppColors.error,
-                  shape: BoxShape.circle,
-                ),
-                child: Text(
-                  '$badge',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SearchBar extends StatelessWidget {
-  final ValueChanged<String> onSubmit;
-
-  const _SearchBar({required this.onSubmit});
+  const _HeaderIconButton({
+    required this.icon,
+    required this.onTap,
+    this.badgeCount = 0,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 46,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      child: Row(
-        children: [
-          const Icon(Icons.search, color: AppColors.textHint, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: TextField(
-              onSubmitted: onSubmit,
-              decoration: InputDecoration(
-                hintText: 'Tìm bác sĩ, chuyên khoa, cơ sở y tế...',
-                hintStyle: AppTextStyles.bodySmall.copyWith(color: AppColors.textHint),
-                border: InputBorder.none,
-                isDense: true,
+    return Stack(
+      children: [
+        Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
               ),
-              style: AppTextStyles.body,
+            ],
+          ),
+          child: IconButton(
+            icon: Icon(icon, color: AppColors.primary, size: 24),
+            onPressed: onTap,
+          ),
+        ),
+        if (badgeCount > 0)
+          Positioned(
+            right: 0,
+            top: 0,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                color: AppColors.error,
+                shape: BoxShape.circle,
+              ),
+              constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+              child: Text(
+                badgeCount > 9 ? '9+' : '$badgeCount',
+                style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
-        ],
-      ),
+      ],
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/branded_app_bar.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -39,34 +40,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: BrandedAppBar(
+        backgroundColor: Colors.white,
+        showLogo: true,
+        actions: [
+          TextButton(
+            onPressed: _goToLogin,
+            child: const Text(
+              "Skip",
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            /// HEADER (Brand + SKIP)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    "ICARE",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.primary,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: _goToLogin,
-                    child: const Text(
-                      "Skip",
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
-                    ),
-                  ),
-                ],
-              ),
-            ),
 
             /// PAGE VIEW
             Expanded(

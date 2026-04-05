@@ -9,6 +9,9 @@ import '../widgets/role_selector_toggle.dart';
 import '../widgets/patient_registration_form.dart';
 import '../widgets/doctor_kyc_registration_form.dart';
 import '../widgets/auth_localizations.dart';
+import '../../../../core/widgets/icare_logo.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/branded_app_bar.dart';
 
 class SignUpScreen extends StatelessWidget {
   const SignUpScreen({super.key});
@@ -26,7 +29,6 @@ class SignUpScreen extends StatelessWidget {
             ),
           );
         } else if (state.isSuccess) {
-          // Navigate based on role after success
           if (state.isDoctor) {
             context.go('/kyc_upload'); 
           } else {
@@ -39,38 +41,41 @@ class SignUpScreen extends StatelessWidget {
         final theme = Theme.of(context);
 
         return Scaffold(
-          backgroundColor: theme.colorScheme.surface,
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
+          backgroundColor: AppColors.background,
+          appBar: BrandedAppBar(
+            showLogo: true,
+            leadingWidth: 120,
+            leading: TextButton.icon(
               onPressed: () => context.pop(),
-            ),
-            title: Text(
-              l10n.signUpTitle,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
+              icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+              label: const Text(
+                "Quay lại",
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.only(left: 8),
+                alignment: Alignment.centerLeft,
               ),
             ),
-            centerTitle: true,
             actions: [
-              // Language Toggle in AppBar
               Padding(
                 padding: const EdgeInsets.only(right: 8.0),
                 child: TextButton.icon(
                   onPressed: () => context.read<SignUpBloc>().add(ToggleLanguageEvent()),
-                  icon: Icon(
+                  icon: const Icon(
                     Icons.language,
                     size: 18,
-                    color: theme.colorScheme.primary,
+                    color: AppColors.primary,
                   ),
                   label: Text(
                     state.isEnglish ? "VN" : "EN",
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
+                      color: AppColors.primary,
                     ),
                   ),
                 ),
@@ -83,19 +88,19 @@ class SignUpScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Logo or Icon at the top
                   Center(
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primaryContainer.withOpacity(0.4),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.local_hospital_rounded,
-                        size: 48,
-                        color: theme.colorScheme.primary,
-                      ),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 16),
+                        Text(
+                          l10n.signUpTitle,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.primaryDark,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 32),

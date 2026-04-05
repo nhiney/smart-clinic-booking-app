@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/widgets/branded_app_bar.dart';
 
 class TermsScreen extends StatelessWidget {
   const TermsScreen({super.key});
@@ -7,14 +8,8 @@ class TermsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text(
-          'Điều khoản sử dụng',
-          style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        iconTheme: const IconThemeData(color: Colors.black),
+      appBar: const BrandedAppBar(
+        title: 'Điều khoản sử dụng',
       ),
       body: SafeArea(
         child: Scrollbar(

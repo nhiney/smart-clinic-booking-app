@@ -7,6 +7,7 @@ import '../../../doctor/domain/entities/doctor_entity.dart';
 import '../../domain/entities/appointment_entity.dart';
 import '../controllers/appointment_controller.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../../core/widgets/branded_app_bar.dart';
 
 class BookingScreen extends StatefulWidget {
   final DoctorEntity doctor;

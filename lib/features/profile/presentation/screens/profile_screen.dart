@@ -7,6 +7,8 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
 import '../controllers/profile_controller.dart';
 import '../../../auth/domain/entities/user_entity.dart';
+import '../../../../core/widgets/branded_app_bar.dart';
+import '../../../../core/widgets/icare_logo.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -15,7 +17,7 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text("Hồ sơ cá nhân")),
+      appBar: const BrandedAppBar(title: "Hồ sơ cá nhân"),
       body: Consumer<AuthController>(
         builder: (_, auth, __) {
           final user = auth.currentUser;

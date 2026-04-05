@@ -61,48 +61,52 @@ class _AppointmentItem extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1565C0), Color(0xFF1E88E5)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(18),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.blue.withValues(alpha: 0.1), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 56,
+                height: 56,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppColors.primarySurface,
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(Icons.person, color: Colors.white, size: 22),
+                child: const Icon(Icons.person_rounded, color: AppColors.primary, size: 30),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       appointment.doctorName,
-                      style: AppTextStyles.subtitle.copyWith(color: Colors.white),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF263238),
+                      ),
                     ),
+                    const SizedBox(height: 4),
                     Text(
                       appointment.specialty,
-                      style: AppTextStyles.caption.copyWith(
-                        color: Colors.white.withValues(alpha: 0.8),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -111,53 +115,66 @@ class _AppointmentItem extends StatelessWidget {
               _StatusChip(status: appointment.status),
             ],
           ),
-          const SizedBox(height: 16),
-          const Divider(color: Colors.white24, height: 1),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              const Icon(Icons.calendar_today_rounded, color: Colors.white70, size: 16),
-              const SizedBox(width: 6),
-              Text(
-                dateFormatter.format(appointment.dateTime),
-                style: AppTextStyles.bodySmall.copyWith(color: Colors.white),
-              ),
-              const SizedBox(width: 16),
-              const Icon(Icons.access_time_rounded, color: Colors.white70, size: 16),
-              const SizedBox(width: 6),
-              Text(
-                timeFormatter.format(appointment.dateTime),
-                style: AppTextStyles.bodySmall.copyWith(color: Colors.white),
-              ),
-            ],
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8F9FA),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.calendar_today_rounded, color: AppColors.primary, size: 18),
+                const SizedBox(width: 10),
+                Text(
+                  dateFormatter.format(appointment.dateTime),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF455A64),
+                  ),
+                ),
+                const Spacer(),
+                const Icon(Icons.access_time_rounded, color: AppColors.primary, size: 18),
+                const SizedBox(width: 10),
+                Text(
+                  timeFormatter.format(appointment.dateTime),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF455A64),
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Row(
             children: [
               Expanded(
                 child: OutlinedButton(
                   onPressed: onCancel,
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(color: Colors.white54),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    foregroundColor: const Color(0xFF607D8B),
+                    side: BorderSide(color: Colors.grey.shade300),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    minimumSize: const Size(double.infinity, 50),
                   ),
-                  child: const Text('Hủy', style: TextStyle(fontWeight: FontWeight.w600)),
+                  child: const Text('Hủy', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton(
                   onPressed: onReschedule,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: AppColors.primary,
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    minimumSize: const Size(double.infinity, 50),
                   ),
-                  child: const Text('Đổi lịch', style: TextStyle(fontWeight: FontWeight.w600)),
+                  child: const Text('Đổi lịch', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 ),
               ),
             ],
@@ -176,24 +193,38 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(20),
+        color: _getStatusColor(status).withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Text(
         _formatStatus(status),
-        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          color: _getStatusColor(status),
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
+  }
+
+  Color _getStatusColor(String s) {
+    switch (s) {
+      case 'confirmed': return const Color(0xFF4CAF50);
+      case 'pending': return const Color(0xFFFF9800);
+      case 'completed': return const Color(0xFF2196F3);
+      case 'cancelled': return const Color(0xFFF44336);
+      default: return Colors.grey;
+    }
   }
 
   String _formatStatus(String s) {
     switch (s) {
       case 'confirmed': return 'Đã xác nhận';
-      case 'pending': return 'Chờ xác nhận';
-      case 'completed': return 'Hoàn thành';
-      case 'cancelled': return 'Đã hủy';
+      case 'pending': return 'Chờ';
+      case 'completed': return 'Xong';
+      case 'cancelled': return 'Hủy';
       default: return s;
     }
   }

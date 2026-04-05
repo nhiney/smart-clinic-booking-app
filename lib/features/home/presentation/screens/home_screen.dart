@@ -3,29 +3,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
-import '../../../appointment/presentation/screens/appointment_history_screen.dart';
-import '../../../appointment/presentation/screens/booking_screen.dart';
-import '../../../doctor/presentation/screens/doctor_list_screen.dart';
-import '../../../doctor/presentation/screens/doctor_detail_screen.dart';
-import '../../../medical_record/presentation/screens/medical_record_list_screen.dart';
-import '../../../medication/presentation/screens/medication_screen.dart';
-import '../../../notification/presentation/screens/notification_screen.dart';
-import '../../../profile/presentation/screens/profile_screen.dart';
-import '../../../maps/presentation/screens/clinic_map_screen.dart';
 import '../bloc/home_bloc.dart';
 import '../bloc/home_bloc_handler.dart';
 import '../widgets/home_header.dart';
 import '../widgets/quick_actions_grid.dart';
 import '../widgets/upcoming_appointment_card.dart';
-import '../widgets/medication_reminder_section.dart';
-import '../widgets/health_summary_section.dart';
-import '../widgets/ai_assistant_section.dart';
-import '../widgets/recommended_doctors_section.dart';
+import '../widgets/hospital_banner.dart';
 import '../widgets/health_news_feed.dart';
-import '../widgets/notifications_preview.dart';
+import '../widgets/recommended_doctors_section.dart';
+import '../widgets/medication_reminder_section.dart';
+import '../widgets/prominent_hospitals_section.dart';
 
-/// Production Home Screen.
-/// Orchestrates the Bloc, routes, and composes all 10 modular sections.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -33,8 +21,24 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
+  late AnimationController _pulseController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,101 +46,103 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: AppColors.background,
       body: IndexedStack(
         index: _currentIndex,
-        children: const [
-          _HomeDashboard(),
-          MedicalRecordListScreen(),
-          AppointmentHistoryScreen(),
-          NotificationScreen(),
-          ProfileScreen(),
+        children: [
+          const _HomeDashboard(),
+          const Center(child: Text('Thông báo')),
+          const Center(child: Text('Chức năng')),
+          const Center(child: Text('Cá nhân')),
         ],
       ),
-      bottomNavigationBar: _HomeBottomNav(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-      ),
+      bottomNavigationBar: _buildBottomNav(),
+      floatingActionButton: _buildAIButton(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
-}
 
-/// Bottom Navigation Section (Section 10).
-class _HomeBottomNav extends StatelessWidget {
-  final int currentIndex;
-  final ValueChanged<int> onTap;
-
-  const _HomeBottomNav({required this.currentIndex, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        boxShadow: [BoxShadow(color: AppColors.shadow, blurRadius: 12, offset: Offset(0, -2))],
-      ),
-      child: SafeArea(
-        child: SizedBox(
-          height: 60,
-          child: Row(
-            children: [
-              _NavItem(icon: Icons.home_rounded, label: 'Trang chủ', index: 0, current: currentIndex, onTap: onTap),
-              _NavItem(icon: Icons.folder_shared_rounded, label: 'Hồ sơ', index: 1, current: currentIndex, onTap: onTap),
-              _NavItem(icon: Icons.calendar_month_rounded, label: 'Lịch hẹn', index: 2, current: currentIndex, onTap: onTap),
-              _NavItem(icon: Icons.notifications_rounded, label: 'Thông báo', index: 3, current: currentIndex, onTap: onTap),
-              _NavItem(icon: Icons.person_rounded, label: 'Tài khoản', index: 4, current: currentIndex, onTap: onTap),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final int index;
-  final int current;
-  final ValueChanged<int> onTap;
-
-  const _NavItem({
-    required this.icon,
-    required this.label,
-    required this.index,
-    required this.current,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isActive = index == current;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => onTap(index),
-        behavior: HitTestBehavior.opaque,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildBottomNav() {
+    return BottomAppBar(
+      shape: const CircularNotchedRectangle(),
+      notchMargin: 10,
+      elevation: 20,
+      child: Container(
+        height: 65,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Icon(
-              icon,
-              color: isActive ? AppColors.primary : AppColors.textHint,
-              size: 24,
-            ),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-                color: isActive ? AppColors.primary : AppColors.textHint,
-              ),
-            ),
+            Expanded(child: _navItem(0, Icons.home_rounded, 'Trang chủ')),
+            Expanded(child: _navItem(1, Icons.notifications_rounded, 'Thông báo')),
+            const SizedBox(width: 50), // Gap for FAB
+            Expanded(child: _navItem(2, Icons.grid_view_rounded, 'Chức năng')),
+            Expanded(child: _navItem(3, Icons.person_rounded, 'Cá nhân')),
           ],
         ),
       ),
     );
   }
+
+  Widget _navItem(int index, IconData icon, String label) {
+    final isSelected = _currentIndex == index;
+    return InkWell(
+      onTap: () => setState(() => _currentIndex = index),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            color: isSelected ? AppColors.primary : const Color(0xFF90A4AE),
+            size: 26,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? AppColors.primary : const Color(0xFF90A4AE),
+              fontSize: 10,
+              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAIButton() {
+    return AnimatedBuilder(
+      animation: _pulseController,
+      builder: (context, child) {
+        return Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withOpacity(0.4 * _pulseController.value),
+                blurRadius: 18 * _pulseController.value,
+                spreadRadius: 6 * _pulseController.value,
+              ),
+            ],
+          ),
+          child: FloatingActionButton(
+            onPressed: () {},
+            backgroundColor: Colors.transparent,
+            elevation: 8,
+            child: Container(
+              width: 65,
+              height: 65,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: AppColors.aiGradient,
+              ),
+              child: const Icon(Icons.mic_rounded, color: Colors.white, size: 34),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
-/// Dashboard page — loads data via Bloc and renders all 10 sections.
 class _HomeDashboard extends StatefulWidget {
   const _HomeDashboard();
 
@@ -154,191 +160,101 @@ class _HomeDashboardState extends State<_HomeDashboard> {
   void _loadData() {
     final authController = context.read<AuthController>();
     final userId = authController.currentUser?.id ?? '';
-    context.read<HomeBlocHandler>().add(HomeLoadRequested(userId: userId));
+    if (userId.isNotEmpty) {
+      context.read<HomeBlocHandler>().add(HomeLoadRequested(userId: userId));
+    }
   }
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<HomeBlocHandler, HomeState>(
-      builder: (context, state) {
-        if (state is HomeLoading) {
-          return const _LoadingView();
-        }
-        if (state is HomeError) {
-          return _ErrorView(message: state.message, onRetry: _loadData);
-        }
-        if (state is HomeLoaded) {
-          return _LoadedView(state: state);
-        }
-        return const _LoadingView();
-      },
-    );
-  }
-}
-
-class _LoadedView extends StatelessWidget {
-  final HomeLoaded state;
-
-  const _LoadedView({required this.state});
 
   @override
   Widget build(BuildContext context) {
     final authController = context.watch<AuthController>();
-    final userName = authController.currentUser?.name ?? 'Bạn';
+    final user = authController.currentUser;
+    final userName = user?.name ?? 'Bạn';
+    final userRole = user?.role ?? 'patient';
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        final userId = authController.currentUser?.id ?? '';
-        context.read<HomeBlocHandler>().add(HomeRefreshRequested(userId: userId));
-      },
-      child: CustomScrollView(
-        slivers: [
-          // Section 1: Header
-          SliverToBoxAdapter(
-            child: HomeHeader(
-              userName: userName,
-              unreadNotifications: state.upcomingAppointments.length,
-              onNotificationTap: () => Navigator.pushNamed(context, '/notifications'),
-              onProfileTap: () => Navigator.pushNamed(context, '/profile'),
-              onVoiceTap: () {}, // AI voice shortcut
-              onSearchSubmit: (query) => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const DoctorListScreen()),
+    return BlocBuilder<HomeBlocHandler, HomeState>(
+      builder: (context, state) {
+        return RefreshIndicator(
+          onRefresh: () async {
+            final userId = authController.currentUser?.id ?? '';
+            context.read<HomeBlocHandler>().add(HomeRefreshRequested(userId: userId));
+          },
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: HomeHeader(
+                  userName: userName,
+                  role: userRole,
+                  unreadNotifications: state is HomeLoaded ? state.upcomingAppointments.length : 3,
+                  onNotificationTap: () {},
+                  onProfileTap: () {},
+                  onVoiceTap: () {},
+                  onSearchSubmit: (q) {},
+                ),
               ),
-            ),
-          ),
-
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Column(
-                children: [
-                  // Section 2: Quick Actions
-                  QuickActionsGrid(
-                    onBookAppointment: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const DoctorListScreen()),
-                    ),
-                    onViewAppointments: () => Navigator.pushNamed(context, '/appointments'),
-                    onMedicalRecords: () => Navigator.pushNamed(context, '/medical-records'),
-                    onPrescriptions: () => Navigator.pushNamed(context, '/medication'),
-                    onContactSupport: () {}, // Support chat
-                    onVoiceAssistant: () {}, // AI chat
-                  ),
-                  const SizedBox(height: 28),
-
-                  // Section 3: Upcoming Appointment
-                  UpcomingAppointmentCard(
+              const SliverToBoxAdapter(child: SizedBox(height: 10)),
+              SliverToBoxAdapter(
+                child: QuickActionsGrid(
+                  userRole: userRole,
+                  onBookAppointment: () {},
+                  onViewAppointments: () {},
+                  onMedicalRecords: () {},
+                  onPrescriptions: () {},
+                  onContactSupport: () {},
+                  onVoiceAssistant: () {},
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 28)),
+              const SliverToBoxAdapter(child: HospitalBanner()),
+              const SliverToBoxAdapter(child: SizedBox(height: 28)),
+              if (state is HomeLoaded) ...[
+                SliverToBoxAdapter(
+                  child: UpcomingAppointmentCard(
                     appointments: state.upcomingAppointments,
-                    onViewAll: () => Navigator.pushNamed(context, '/appointments'),
-                    onBook: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const DoctorListScreen()),
-                    ),
-                    onCancel: (apt) {}, // dispatch cancel event
-                    onReschedule: (apt) {}, // navigate to reschedule
+                    onViewAll: () {},
+                    onBook: () {},
+                    onCancel: (apt) {},
+                    onReschedule: (apt) {},
                   ),
-                  const SizedBox(height: 28),
-
-                  // Section 4: Medication Reminder
-                  MedicationReminderSection(
-                    reminders: state.medicationReminders,
-                    onMarkTaken: (id) {
-                      context.read<HomeBlocHandler>().add(
-                            HomeMedicationMarkedTaken(reminderId: id),
-                          );
-                    },
-                  ),
-                  const SizedBox(height: 28),
-
-                  // Section 5: Health Summary
-                  HealthSummarySection(summary: state.healthSummary),
-                  const SizedBox(height: 28),
-
-                  // Section 6: AI Assistant
-                  AiAssistantSection(
-                    onMessageSent: (msg) {}, // AI Bloc dispatch
-                    onVoiceTap: () {}, // voice recognition
-                    onOpenFullChat: () {}, // navigate to AI chat screen
-                  ),
-                  const SizedBox(height: 28),
-
-                  // Section 7: Recommended Doctors
-                  RecommendedDoctorsSection(
-                    doctors: state.recommendedDoctors,
-                    onViewAll: () => Navigator.pushNamed(context, '/doctors'),
-                    onBookDoctor: (doc) => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => BookingScreen(doctor: doc)),
-                    ),
-                    onViewDoctor: (doc) => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => DoctorDetailScreen(doctor: doc)),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 28)),
+                if (userRole == 'patient') ...[
+                  SliverToBoxAdapter(
+                    child: MedicationReminderSection(
+                      reminders: state.medicationReminders,
+                      onMarkTaken: (id) {},
                     ),
                   ),
-                  const SizedBox(height: 28),
-
-                  // Section 8: Health News
-                  HealthNewsFeed(
-                    articles: state.healthNews,
-                    onArticleTap: (article) {}, // open article detail
-                  ),
-                  const SizedBox(height: 28),
-
-                  // Section 9: Notifications Preview
-                  NotificationsPreview(
-                    notifications: const [], // TODO: wire notification data
-                    onViewAll: () => Navigator.pushNamed(context, '/notifications'),
-                  ),
-
-                  const SizedBox(height: 32),
+                  const SliverToBoxAdapter(child: SizedBox(height: 28)),
                 ],
-              ),
-            ),
+                const SliverToBoxAdapter(child: ProminentHospitalsSection()),
+                const SliverToBoxAdapter(child: SizedBox(height: 28)),
+                SliverToBoxAdapter(
+                  child: RecommendedDoctorsSection(
+                    doctors: state.recommendedDoctors,
+                    onViewAll: () {},
+                    onBookDoctor: (doc) {},
+                    onViewDoctor: (doc) {},
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 28)),
+                SliverToBoxAdapter(
+                  child: HealthNewsFeed(
+                    articles: state.healthNews,
+                    onArticleTap: (article) {},
+                  ),
+                ),
+              ] else if (state is HomeLoading) ...[
+                const SliverFillRemaining(
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+              ],
+              const SliverToBoxAdapter(child: SizedBox(height: 120)),
+            ],
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LoadingView extends StatelessWidget {
-  const _LoadingView();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: CircularProgressIndicator(color: AppColors.primary),
-    );
-  }
-}
-
-class _ErrorView extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-
-  const _ErrorView({required this.message, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline, size: 48, color: AppColors.error),
-            const SizedBox(height: 16),
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: onRetry,
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-              child: const Text('Thử lại', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      ),
+        );
+      },
     );
   }
 }

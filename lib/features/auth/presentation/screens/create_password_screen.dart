@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/auth_controller.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/branded_app_bar.dart';
 
 class CreatePasswordScreen extends StatefulWidget {
   final String phone;
@@ -126,33 +127,23 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
     );
   }
 
-  @override
   Widget build(BuildContext context) {
-    const primaryBlue = Color(0xFF0056D2);
-    const textColor = Color(0xFF1F2937);
+    const primaryBlue = AppColors.primary;
+    const textColor = AppColors.textPrimary;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFC),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leadingWidth: 150,
-        leading: TextButton.icon(
-          onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false), // Skip option disguised as back
-          icon: const Icon(Icons.arrow_back, color: primaryBlue),
-          label: const Text(
-            "Bỏ qua",
-            style: TextStyle(
-              color: primaryBlue,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
+      appBar: BrandedAppBar(
+        title: "Thiết lập mật khẩu",
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false),
+            child: const Text(
+              "Bỏ qua",
+              style: TextStyle(color: primaryBlue, fontWeight: FontWeight.bold),
             ),
           ),
-          style: TextButton.styleFrom(
-            padding: const EdgeInsets.only(left: 16),
-            alignment: Alignment.centerLeft,
-          ),
-        ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(

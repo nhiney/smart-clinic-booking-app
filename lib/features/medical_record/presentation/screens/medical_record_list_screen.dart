@@ -9,6 +9,7 @@ import '../../domain/entities/medical_record_entity.dart';
 import '../controllers/medical_record_controller.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import 'medical_record_detail_screen.dart';
+import '../../../../core/widgets/branded_app_bar.dart';
 
 class MedicalRecordListScreen extends StatefulWidget {
   const MedicalRecordListScreen({super.key});
@@ -33,7 +34,7 @@ class _MedicalRecordListScreenState extends State<MedicalRecordListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text("Hồ sơ bệnh án")),
+      appBar: const BrandedAppBar(title: "Hồ sơ bệnh án"),
       body: Consumer<MedicalRecordController>(
         builder: (_, controller, __) {
           if (controller.isLoading) {

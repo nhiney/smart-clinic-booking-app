@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/icare_logo.dart';
+import '../../../../core/widgets/branded_app_bar.dart';
 import '../controllers/auth_controller.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -44,7 +46,6 @@ class _LoginScreenState extends State<LoginScreen> {
     
     final fullPhone = "$selectedCountryCode$phone";
     
-    // Logic for Password Login
     final success = await authController.login(
       fullPhone,
       passwordController.text.trim(),
@@ -68,105 +69,56 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryBlue = Color(0xFF0056D2);
-    const textColor = Color(0xFF1F2937);
-
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFC),
-      appBar: AppBar(
+      backgroundColor: AppColors.background,
+      appBar: BrandedAppBar(
+        showLogo: true,
+        leadingWidth: 100,
         backgroundColor: Colors.transparent,
-        elevation: 0,
-        leadingWidth: 150,
         leading: TextButton.icon(
           onPressed: () => context.go('/'),
-          icon: const Icon(Icons.arrow_back, color: primaryBlue),
+          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
           label: const Text(
-            "Quay lại",
+            "Back",
             style: TextStyle(
-              color: primaryBlue,
+              color: AppColors.primary,
               fontWeight: FontWeight.bold,
               fontSize: 16,
             ),
           ),
           style: TextButton.styleFrom(
-            padding: const EdgeInsets.only(left: 16),
+            padding: const EdgeInsets.only(left: 8),
             alignment: Alignment.centerLeft,
           ),
         ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 10.0),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header section (Logo + Welcome Text)
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 70,
-                      height: 70,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade300, width: 1),
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.local_hospital,
-                          size: 40,
-                          color: primaryBlue,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Chào mừng đến với",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: textColor,
-                            ),
-                          ),
-                          Text(
-                            "ICARE",
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w900,
-                              color: primaryBlue,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                const SizedBox(height: 20),
+                const SizedBox(height: 40),
                 const SizedBox(height: 12),
                 const Text(
                   "Chào mừng bạn quay trở lại",
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey,
+                    color: AppColors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 40),
 
-                // Phone Input Section
                 const Text(
                   "Số điện thoại",
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: textColor,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -176,22 +128,22 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: const TextStyle(fontSize: 16),
                   decoration: InputDecoration(
                     hintText: "Nhập số điện thoại...",
-                    hintStyle: const TextStyle(color: Colors.grey),
+                    hintStyle: const TextStyle(color: AppColors.textHint),
                     prefixIcon: Container(
                       width: 100,
                       padding: const EdgeInsets.only(left: 12, right: 8),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.phone_android, color: Colors.grey, size: 20),
+                          const Icon(Icons.phone_android, color: AppColors.textHint, size: 20),
                           const SizedBox(width: 4),
                           Expanded(
                             child: DropdownButtonHideUnderline(
                               child: DropdownButton<String>(
                                 value: selectedCountryCode,
                                 isExpanded: true,
-                                icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
-                                style: const TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 15),
+                                icon: const Icon(Icons.arrow_drop_down, color: AppColors.textHint),
+                                style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 15),
                                 items: countryCodes.map((String value) {
                                   return DropdownMenuItem<String>(
                                     value: value,
@@ -209,7 +161,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           Container(
                             width: 1,
                             height: 24,
-                            color: Colors.grey.shade300,
+                            color: AppColors.divider,
                           ),
                         ],
                       ),
@@ -219,15 +171,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
+                      borderSide: const BorderSide(color: AppColors.divider),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
+                      borderSide: const BorderSide(color: AppColors.divider),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: primaryBlue),
+                      borderSide: const BorderSide(color: AppColors.primary),
                     ),
                   ),
                   validator: (val) {
@@ -239,13 +191,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Password Input Section
                 const Text(
                   "Mật khẩu",
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: textColor,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -255,12 +206,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: const TextStyle(fontSize: 16),
                   decoration: InputDecoration(
                     hintText: "Nhập mật khẩu",
-                    hintStyle: const TextStyle(color: Colors.grey),
-                    prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey, size: 22),
+                    hintStyle: const TextStyle(color: AppColors.textHint),
+                    prefixIcon: const Icon(Icons.lock_outline, color: AppColors.textHint, size: 22),
                     suffixIcon: IconButton(
                       icon: Icon(
                         hidePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                        color: Colors.grey,
+                        color: AppColors.textHint,
                       ),
                       onPressed: () {
                         setState(() => hidePassword = !hidePassword);
@@ -271,15 +222,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
+                      borderSide: const BorderSide(color: AppColors.divider),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
+                      borderSide: const BorderSide(color: AppColors.divider),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: primaryBlue),
+                      borderSide: const BorderSide(color: AppColors.primary),
                     ),
                   ),
                   validator: (val) {
@@ -291,7 +242,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Save Login Information Checkbox
                 Row(
                   children: [
                     SizedBox(
@@ -305,15 +255,15 @@ class _LoginScreenState extends State<LoginScreen> {
                           });
                         },
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                        side: const BorderSide(color: Colors.grey),
-                        activeColor: primaryBlue,
+                        side: const BorderSide(color: AppColors.textHint),
+                        activeColor: AppColors.primary,
                       ),
                     ),
                     const SizedBox(width: 8),
                     const Text(
                       "Lưu thông tin đăng nhập",
                       style: TextStyle(
-                        color: textColor,
+                        color: AppColors.textPrimary,
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
@@ -322,7 +272,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // Login Button
                 Consumer<AuthController>(
                   builder: (context, auth, _) {
                     return SizedBox(
@@ -331,7 +280,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: ElevatedButton(
                         onPressed: auth.isLoading ? null : handleLogin,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryBlue,
+                          backgroundColor: AppColors.primary,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -357,7 +306,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Forgot Password link
                 Center(
                   child: TextButton(
                     onPressed: () {
@@ -366,7 +314,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: const Text(
                       "Quên tài khoản hoặc mật khẩu",
                       style: TextStyle(
-                        color: primaryBlue,
+                        color: AppColors.primary,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
@@ -375,7 +323,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 48),
 
-                // Register New Account Button
                 SizedBox(
                   width: double.infinity,
                   height: 52,
@@ -383,7 +330,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: goToRegister,
                     style: OutlinedButton.styleFrom(
                       backgroundColor: Colors.white,
-                      side: const BorderSide(color: primaryBlue, width: 1),
+                      side: const BorderSide(color: AppColors.primary, width: 1),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -393,7 +340,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: primaryBlue,
+                        color: AppColors.primary,
                       ),
                     ),
                   ),

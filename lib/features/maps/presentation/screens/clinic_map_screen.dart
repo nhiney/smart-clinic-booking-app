@@ -7,6 +7,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/widgets/loading_widget.dart';
 import '../../domain/entities/clinic_entity.dart';
 import '../controllers/maps_controller.dart';
+import '../../../../core/widgets/branded_app_bar.dart';
 
 class ClinicMapScreen extends StatefulWidget {
   const ClinicMapScreen({super.key});
@@ -33,7 +34,7 @@ class _ClinicMapScreenState extends State<ClinicMapScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text("Bản đồ phòng khám")),
+      appBar: const BrandedAppBar(title: "Bản đồ phòng khám"),
       body: Consumer<MapsController>(
         builder: (_, controller, __) {
           if (controller.isLoading) {
