@@ -9,9 +9,8 @@ import 'dart:async';
 
 class OtpScreen extends StatefulWidget {
   final String phone;
-  final String? name;
 
-  const OtpScreen({super.key, required this.phone, this.name});
+  const OtpScreen({super.key, required this.phone});
 
   @override
   State<OtpScreen> createState() => _OtpScreenState();
@@ -96,7 +95,7 @@ class _OtpScreenState extends State<OtpScreen> {
     final authController = context.read<AuthController>();
     final success = await authController.verifyOtp(
       _otpController.text.trim(),
-      name: widget.name,
+      name: null,
     );
     
     if (success && mounted) {
@@ -171,13 +170,7 @@ class _OtpScreenState extends State<OtpScreen> {
                           onChanged: (val) {
                             setState(() {});
                             if (val.length == 6) {
-                              // Add a small delay so the user can see the final digit they typed
-                              // before the verification process starts and locks the UI.
-                              Future.delayed(const Duration(milliseconds: 300), () {
-                                if (mounted) {
-                                  _verifyOtp();
-                                }
-                              });
+                              _verifyOtp();
                             }
                           },
                         ),

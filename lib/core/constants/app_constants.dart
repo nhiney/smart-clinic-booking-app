@@ -1,6 +1,9 @@
 class AppConstants {
   static const String appName = "ICare";
 
+  // Legal & Privacy
+  static const String privacyPolicyUrl = 'https://YOUR_FIREBASE_STORAGE_URL_HERE/privacy_policy.pdf'; // TODO: Replace with real URL after upload
+
   // Routes
   static const String splashRoute = "/";
   static const String onboardingRoute = "/onboarding";

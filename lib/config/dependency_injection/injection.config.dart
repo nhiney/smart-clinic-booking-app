@@ -26,6 +26,14 @@ import 'package:smart_clinic_booking/features/auth/domain/usecases/signin_with_p
     as _i1025;
 import 'package:smart_clinic_booking/features/auth/domain/usecases/verify_phone_usecase.dart'
     as _i454;
+import 'package:smart_clinic_booking/features/doctor/data/datasources/doctor_remote_datasource.dart'
+    as _i569;
+import 'package:smart_clinic_booking/features/doctor/data/repositories/doctor_repository_impl.dart'
+    as _i679;
+import 'package:smart_clinic_booking/features/doctor/domain/repositories/doctor_repository.dart'
+    as _i791;
+import 'package:smart_clinic_booking/features/doctor/domain/usecases/get_doctors_usecase.dart'
+    as _i812;
 
 extension GetItInjectableX on _i174.GetIt {
 // initializes the registration of main-scope dependencies inside of GetIt
@@ -40,6 +48,10 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i514.AuthRemoteDatasource>(
         () => _i514.AuthRemoteDatasource());
+    gh.lazySingleton<_i569.DoctorRemoteDatasource>(
+        () => _i569.DoctorRemoteDatasource());
+    gh.lazySingleton<_i791.DoctorRepository>(
+        () => _i679.DoctorRepositoryImpl(gh<_i569.DoctorRemoteDatasource>()));
     gh.lazySingleton<_i63.AuthRepository>(
         () => _i846.AuthRepositoryImpl(gh<_i514.AuthRemoteDatasource>()));
     gh.lazySingleton<_i1025.SignInWithPhoneUseCase>(
@@ -52,6 +64,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i668.CreatePasswordUseCase(gh<_i63.AuthRepository>()));
     gh.lazySingleton<_i454.VerifyPhoneUseCase>(
         () => _i454.VerifyPhoneUseCase(gh<_i63.AuthRepository>()));
+    gh.factory<_i812.GetDoctorsUseCase>(
+        () => _i812.GetDoctorsUseCase(gh<_i791.DoctorRepository>()));
     return this;
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -37,7 +38,7 @@ class ProfileScreen extends StatelessWidget {
                         radius: 45,
                         backgroundColor: Colors.white.withOpacity(0.3),
                         child: Text(
-                          (user?.name ?? 'U').substring(0, 1).toUpperCase(),
+                          (user?.name != null && user!.name.isNotEmpty ? user.name : 'U').substring(0, 1).toUpperCase(),
                           style: const TextStyle(
                             fontSize: 36,
                             fontWeight: FontWeight.bold,
@@ -105,11 +106,7 @@ class ProfileScreen extends StatelessWidget {
                   child: OutlinedButton.icon(
                     onPressed: () {
                       auth.logout();
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (_) => const LoginScreen()),
-                        (route) => false,
-                      );
+                      context.go('/login');
                     },
                     icon: const Icon(Icons.logout, color: AppColors.error),
                     label: Text(

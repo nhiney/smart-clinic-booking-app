@@ -1,14 +1,16 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
-import 'package:smart_clinic_booking/features/auth/data/datasources/auth_remote_datasource.dart';
-import 'package:smart_clinic_booking/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'config/dependency_injection/injection.dart';
+import 'core/router/app_router.dart';
+import 'features/auth/presentation/bloc/sign_up_bloc.dart';
 
 // Auth
 import 'features/auth/domain/usecases/login_usecase.dart';
@@ -19,45 +21,45 @@ import 'features/auth/domain/usecases/create_password_usecase.dart';
 import 'features/auth/presentation/controllers/auth_controller.dart';
 
 // Doctor
+import 'features/doctor/domain/repositories/doctor_repository.dart';
 import 'features/doctor/data/datasources/doctor_remote_datasource.dart';
-import 'features/doctor/data/repositories/doctor_repository_impl.dart';
 import 'features/doctor/presentation/controllers/doctor_controller.dart';
 
 // Appointment
-import 'features/appointment/data/datasources/appointment_remote_datasource.dart';
-import 'features/appointment/data/repositories/appointment_repository_impl.dart';
+import 'features/appointment/domain/repositories/appointment_repository.dart';
 import 'features/appointment/presentation/controllers/appointment_controller.dart';
 
 // Medical Record
-import 'features/medical_record/data/datasources/medical_record_remote_datasource.dart';
-import 'features/medical_record/data/repositories/medical_record_repository_impl.dart';
+import 'features/medical_record/domain/repositories/medical_record_repository.dart';
 import 'features/medical_record/presentation/controllers/medical_record_controller.dart';
 
 // Medication
-import 'features/medication/data/datasources/medication_remote_datasource.dart';
-import 'features/medication/data/repositories/medication_repository_impl.dart';
+import 'features/medication/domain/repositories/medication_repository.dart';
 import 'features/medication/presentation/controllers/medication_controller.dart';
 
 // Profile
-import 'features/profile/data/datasources/profile_remote_datasource.dart';
-import 'features/profile/data/repositories/profile_repository_impl.dart';
+import 'features/profile/domain/repositories/profile_repository.dart';
 import 'features/profile/presentation/controllers/profile_controller.dart';
 
 // Maps
-import 'features/maps/data/datasources/maps_remote_datasource.dart';
-import 'features/maps/data/repositories/maps_repository_impl.dart';
+import 'features/maps/domain/repositories/maps_repository.dart';
 import 'features/maps/presentation/controllers/maps_controller.dart';
 
 // Notification
-import 'features/notification/data/datasources/notification_remote_datasource.dart';
-import 'features/notification/data/repositories/notification_repository_impl.dart';
+import 'features/notification/domain/repositories/notification_repository.dart';
 import 'features/notification/presentation/controllers/notification_controller.dart';
 
 // Screens
 import 'features/auth/presentation/screens/splash_screen.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/register_screen.dart';
-import 'features/auth/presentation/screens/home_screen.dart';
+import 'features/home/presentation/screens/home_screen.dart';
+import 'features/home/presentation/bloc/home_bloc_handler.dart';
+import 'features/home/data/datasources/home_remote_datasource.dart';
+import 'features/home/data/repositories/home_repository_impl.dart';
+import 'features/home/domain/usecases/get_health_summary_usecase.dart';
+import 'features/home/domain/usecases/medication_usecases.dart';
+import 'features/home/domain/usecases/get_health_news_usecase.dart';
 import 'features/doctor/presentation/screens/doctor_list_screen.dart';
 import 'features/appointment/presentation/screens/appointment_history_screen.dart';
 import 'features/medical_record/presentation/screens/medical_record_list_screen.dart';
@@ -66,6 +68,8 @@ import 'features/profile/presentation/screens/profile_screen.dart';
 import 'features/maps/presentation/screens/clinic_map_screen.dart';
 import 'features/notification/presentation/screens/notification_screen.dart';
 import 'features/auth/presentation/screens/onboarding_screen.dart';
+import 'features/appointment/domain/usecases/get_appointments_usecase.dart';
+import 'features/doctor/domain/usecases/get_doctors_usecase.dart';
 
 
 Future<void> main() async {
@@ -73,43 +77,43 @@ Future<void> main() async {
 
   // Initialize Firebase
   try {
+    debugPrint('[DIAGNOSTIC] Khởi tạo Firebase...');
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    
+    final options = DefaultFirebaseOptions.currentPlatform;
+    debugPrint('[DIAGNOSTIC] Project ID: ${options.projectId}');
+    debugPrint('[DIAGNOSTIC] API Key: ${options.apiKey.substring(0, 5)}***');
+
+    // Network Check for gRPC (Firestore)
+    try {
+      final googleDns = await Socket.connect('8.8.8.8', 53, timeout: const Duration(seconds: 5));
+      debugPrint('[DIAGNOSTIC] Kết nối Internet (8.8.8.8:53): THÀNH CÔNG');
+      await googleDns.close();
+      
+      // Check if firestore.googleapis.com is reachable (gRPC Port 443)
+      final firestoreHost = await Socket.connect('firestore.googleapis.com', 443, timeout: const Duration(seconds: 5));
+      debugPrint('[DIAGNOSTIC] Kết nối gRPC (firestore.googleapis.com:443): THÀNH CÔNG');
+      await firestoreHost.close();
+    } catch (e) {
+      debugPrint('[DIAGNOSTIC] LỖI KẾT NỐI MẠNG: $e');
+    }
+
+    // Disable Persistence on Emulators to fix 'unavailable' errors on MacOS/iOS simulators
     FirebaseFirestore.instance.settings = const Settings(
-      persistenceEnabled: true,
+      persistenceEnabled: false,
       cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
     );
   } catch (e) {
     debugPrint('Firebase initialization failed: $e');
-    // If Firebase fails, the app can still run in offline mode or show an error
   }
 
   // Initialize Dependency Injection
   await configureDependencies();
 
-  // Data sources
-  final authDatasource = AuthRemoteDatasource();
-  final doctorDatasource = DoctorRemoteDatasource();
-  final appointmentDatasource = AppointmentRemoteDatasource();
-  final medicalRecordDatasource = MedicalRecordRemoteDatasource();
-  final medicationDatasource = MedicationRemoteDatasource();
-  final profileDatasource = ProfileRemoteDatasource();
-  final mapsDatasource = MapsRemoteDatasource();
-  final notificationDatasource = NotificationRemoteDatasource();
-
-  // Repositories
-  final authRepository = AuthRepositoryImpl(authDatasource);
-  final doctorRepository = DoctorRepositoryImpl(doctorDatasource);
-  final appointmentRepository = AppointmentRepositoryImpl(appointmentDatasource);
-  final medicalRecordRepository = MedicalRecordRepositoryImpl(medicalRecordDatasource);
-  final medicationRepository = MedicationRepositoryImpl(medicationDatasource);
-  final profileRepository = ProfileRepositoryImpl(profileDatasource);
-  final mapsRepository = MapsRepositoryImpl(mapsDatasource);
-  final notificationRepository = NotificationRepositoryImpl(notificationDatasource);
-
   // Seed sample data (non-blocking, don't prevent app from starting)
-  doctorDatasource.seedDoctors().catchError((e) {
+  getIt<DoctorRemoteDatasource>().seedDoctors().catchError((e) {
     debugPrint('Seed doctors error: $e');
   });
 
@@ -126,25 +130,41 @@ Future<void> main() async {
           ),
         ),
         ChangeNotifierProvider(
-          create: (_) => DoctorController(repository: doctorRepository),
+          create: (_) => DoctorController(repository: getIt<DoctorRepository>()),
         ),
         ChangeNotifierProvider(
-          create: (_) => AppointmentController(repository: appointmentRepository),
+          create: (_) => AppointmentController(repository: getIt<AppointmentRepository>()),
         ),
         ChangeNotifierProvider(
-          create: (_) => MedicalRecordController(repository: medicalRecordRepository),
+          create: (_) => MedicalRecordController(repository: getIt<MedicalRecordRepository>()),
         ),
         ChangeNotifierProvider(
-          create: (_) => MedicationController(repository: medicationRepository),
+          create: (_) => MedicationController(repository: getIt<MedicationRepository>()),
         ),
         ChangeNotifierProvider(
-          create: (_) => ProfileController(repository: profileRepository),
+          create: (_) => ProfileController(repository: getIt<ProfileRepository>()),
         ),
         ChangeNotifierProvider(
-          create: (_) => MapsController(repository: mapsRepository),
+          create: (_) => MapsController(repository: getIt<MapsRepository>()),
         ),
         ChangeNotifierProvider(
-          create: (_) => NotificationController(repository: notificationRepository),
+          create: (_) => NotificationController(repository: getIt<NotificationRepository>()),
+        ),
+        BlocProvider<HomeBlocHandler>(
+          create: (_) {
+            final homeRepo = HomeRepositoryImpl(HomeRemoteDatasourceImpl());
+            return HomeBlocHandler(
+              getHealthSummary: GetHealthSummaryUseCase(homeRepo),
+              getMedicationReminders: GetMedicationRemindersUseCase(homeRepo),
+              markMedicationTaken: MarkMedicationTakenUseCase(homeRepo),
+              getHealthNews: GetHealthNewsUseCase(homeRepo),
+              getAppointments: getIt<GetAppointmentsUseCase>(),
+              getDoctors: getIt<GetDoctorsUseCase>(),
+            );
+          },
+        ),
+        BlocProvider<SignUpBloc>(
+          create: (_) => SignUpBloc(),
         ),
       ],
       child: const MyApp(),
@@ -157,33 +177,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'ICare',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: const SplashScreen(),
-      routes: {
-        '/onboarding': (_) => const OnboardingScreen(),
-        '/login': (_) => const LoginScreen(),
-        '/register': (_) => const RegisterScreen(),
-        '/home': (_) => const HomeScreen(),
-        '/doctors': (_) => const DoctorListScreen(),
-        '/appointments': (_) => const AppointmentHistoryScreen(),
-        '/medical-records': (_) => const MedicalRecordListScreen(),
-        '/medication': (_) => const MedicationScreen(),
-        '/profile': (_) => const ProfileScreen(),
-        '/maps': (_) => const ClinicMapScreen(),
-        '/notifications': (_) => const NotificationScreen(),
-      },
-      onUnknownRoute: (settings) {
-        return MaterialPageRoute(
-          builder: (context) => const Scaffold(
-            body: Center(
-              child: Text('Lỗi tải lại trang. Vui lòng thử lại!'),
-            ),
-          ),
-        );
-      },
+      routerConfig: appRouter,
     );
   }
 }

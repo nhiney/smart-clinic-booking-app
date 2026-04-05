@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
-import 'login_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -31,104 +31,38 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   ];
 
-  void next() {
-    if (currentIndex == slides.length - 1) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const LoginScreen(),
-        ),
-      );
-    } else {
-      controller.nextPage(
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.ease,
-      );
-    }
-  }
-
-  void back() {
-    if (currentIndex > 0) {
-      controller.previousPage(
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.ease,
-      );
-    } else {
-      Navigator.pop(context);
-    }
-  }
-
-  void skip() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const LoginScreen(),
-      ),
-    );
+  void _goToLogin() {
+    context.go('/login');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
-            /// HEADER (BACK + SKIP)
+            /// HEADER (Brand + SKIP)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios),
-                    onPressed: back,
-                  ),
-                  TextButton(
-                    onPressed: skip,
-                    child: const Text(
-                      "Skip",
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  )
-                ],
-              ),
-            ),
-
-            /// HOSPITAL INFO
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: Column(
-                children: [
-                  Text(
+                  const Text(
                     "ICARE",
                     style: TextStyle(
-                      fontSize: 28,
+                      fontSize: 22,
                       fontWeight: FontWeight.w900,
                       color: AppColors.primary,
-                      letterSpacing: 1.0,
+                      letterSpacing: 1.5,
                     ),
-                    textAlign: TextAlign.center,
                   ),
-                  SizedBox(height: 4),
-                  Text(
-                    "ỨNG DỤNG HỖ TRỢ ĐẶT LỊCH KHÁM THÔNG MINH",
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primary.withValues(alpha: 0.8),
-                      letterSpacing: 0.5,
+                  TextButton(
+                    onPressed: _goToLogin,
+                    child: const Text(
+                      "Skip",
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    "Tận tâm chăm sóc - Sức khỏe vươn xa",
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontStyle: FontStyle.italic,
-                      color: Colors.grey,
-                    ),
-                    textAlign: TextAlign.center,
                   ),
                 ],
               ),
@@ -146,45 +80,42 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 },
                 itemBuilder: (context, index) {
                   return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 40),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.all(10),
-                            child: Image.asset(
-                              slides[index]["image"]!,
-                              fit: BoxFit.contain,
-                              errorBuilder: (_, __, ___) => const Icon(
-                                Icons.local_hospital,
-                                size: 100,
-                                color: Colors.blue,
-                              ),
+                          child: Image.asset(
+                            slides[index]["image"]!,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => const Icon(
+                              Icons.local_hospital,
+                              size: 150,
+                              color: AppColors.primary,
                             ),
                           ),
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 40),
                         Text(
                           slides[index]["title"]!,
                           style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            height: 1.3,
+                            color: Color(0xFF1F2937),
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 16),
                         Text(
                           slides[index]["desc"]!,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: Colors.grey,
-                            fontSize: 15,
+                            fontSize: 16,
                             height: 1.5,
                           ),
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 40),
                       ],
                     ),
                   );
@@ -200,41 +131,53 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 (index) => AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
                   margin: const EdgeInsets.all(4),
-                  width: currentIndex == index ? 20 : 8,
+                  width: currentIndex == index ? 24 : 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: currentIndex == index ? Colors.blue : Colors.grey,
+                    color: currentIndex == index ? AppColors.primary : Colors.grey.shade300,
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 40),
 
-            /// NEXT BUTTON
+            /// ACTION BUTTON (Bắt đầu)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               child: SizedBox(
                 width: double.infinity,
-                height: 50,
+                height: 52,
                 child: ElevatedButton(
-                  onPressed: next,
+                  onPressed: currentIndex == slides.length - 1 
+                      ? _goToLogin 
+                      : () {
+                          controller.nextPage(
+                            duration: const Duration(milliseconds: 400),
+                            curve: Curves.ease,
+                          );
+                        },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: AppColors.primary,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
+                      borderRadius: BorderRadius.circular(12),
                     ),
+                    elevation: 0,
                   ),
                   child: Text(
                     currentIndex == slides.length - 1 ? "Bắt đầu" : "Tiếp tục",
-                    style: const TextStyle(fontSize: 16),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 40),
           ],
         ),
       ),

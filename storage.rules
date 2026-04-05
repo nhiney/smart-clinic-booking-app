@@ -1,0 +1,21 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper function for admin checks
+    function isSuperAdmin() {
+      return request.auth != null && request.auth.token.role == 'super_admin';
+    }
+
+    match /kyc_documents/{userId}/{fileName} {
+      // Users can only upload and read files nested under their exact UID directory
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Admins can read all KYC documents 
+      allow read: if isSuperAdmin();
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

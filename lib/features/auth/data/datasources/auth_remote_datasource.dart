@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import '../models/user_model.dart';
 
@@ -9,6 +9,11 @@ import '../models/user_model.dart';
 class AuthRemoteDatasource {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  // Environment Config for Clean Architecture
+  final bool isMockMode = kDebugMode;
+  String? _lastPhoneForMock;
+  UserModel? _lastMockUser;
 
   /// Normalizes phone number to digits-only format, replacing leading 0 with 84 for VN
   String _normalizePhone(String phone) {
@@ -128,6 +133,7 @@ class AuthRemoteDatasource {
         return await docRef.get(const GetOptions(source: Source.serverAndCache));
       } catch (e) {
         attempt++;
+        debugPrint('[FIRESTORE] Lỗi fetch (Lần $attempt): $e');
         if (attempt >= maxAttempts || !e.toString().contains('unavailable')) {
           rethrow;
         }
@@ -141,6 +147,15 @@ class AuthRemoteDatasource {
 
   Future<UserModel?> getUserProfile(String uid) async {
     try {
+      // [DIAGNOSTIC] Thử nghiệm kết nối trực tiếp Firestore
+      debugPrint('[DIAGNOSTIC] Đang kiểm tra kết nối Firestore (doc: test/test)...');
+      try {
+        await _firestore.collection('test').doc('test').get().timeout(const Duration(seconds: 5));
+        debugPrint('[DIAGNOSTIC] Kiểm tra kết nối Firestore: THÀNH CÔNG (hoặc không tìm thấy doc)');
+      } catch (e) {
+        debugPrint('[DIAGNOSTIC] LỖI KIỂM TRA KẾT NỐI FIRESTORE: $e');
+      }
+
       final docRef = _firestore.collection('users').doc(uid);
       final doc = await _fetchWithRetry(docRef);
       if (doc.exists && doc.data() != null) {
@@ -175,7 +190,7 @@ class AuthRemoteDatasource {
           .get();
       return snapshot.docs.isNotEmpty;
     } catch (e) {
-      debugPrint('Check phone registered error: $e');
+      debugPrint('[FIREBASE_AUTH] Lỗi kiểm tra số điện thoại: $e');
       return false;
     }
   }
@@ -189,20 +204,43 @@ class AuthRemoteDatasource {
   }) async {
     try {
       bool hasReplied = false;
+      
+      // Ensure phone number is in E.164 format (e.g. +84...)
+      String formattedPhone = phone.trim();
+      if (!formattedPhone.startsWith('+')) {
+        if (formattedPhone.startsWith('0')) {
+          formattedPhone = '+84${formattedPhone.substring(1)}';
+        } else if (!formattedPhone.startsWith('84')) {
+          formattedPhone = '+84$formattedPhone';
+        } else {
+          formattedPhone = '+$formattedPhone';
+        }
+      }
+      
+      // MOCK MODE: Skip Firebase verify and return mock ID immediately
+      if (isMockMode) {
+        debugPrint('[MOCK_AUTH] Chế độ DEV: Đã bỏ qua gửi SMS cho số $formattedPhone');
+        _lastPhoneForMock = formattedPhone;
+        onCodeSent('MOCK_VERIFICATION_ID');
+        return;
+      }
+      
+      debugPrint('[FIREBASE_AUTH] Bắt đầu xác thực số điện thoại: $formattedPhone');
 
       // Add a fallback timeout in case Firebase backend silently hangs after reCAPTCHA
-      Future.delayed(const Duration(seconds: 45), () {
+      Future.delayed(const Duration(seconds: 60), () {
         if (!hasReplied) {
           hasReplied = true;
-          onError('Quá thời gian chờ phản hồi từ máy chủ. Vui lòng thử lại.');
+          debugPrint('[FIREBASE_AUTH] Hết thời gian chờ (60s)');
+          onError('Quá thời gian chờ phản hồi từ máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại.');
         }
       });
 
       await _firebaseAuth.verifyPhoneNumber(
-        phoneNumber: phone,
-        timeout: const Duration(seconds: 40),
+        phoneNumber: formattedPhone,
+        timeout: const Duration(seconds: 60),
         verificationCompleted: (PhoneAuthCredential credential) async {
-          // AUTO VERIFICATION (mostly Android, or iOS test numbers)
+          debugPrint('[FIREBASE_AUTH] Tự động xác thực thành công (Android/Test cases)');
           if (!hasReplied) {
             hasReplied = true;
             try {
@@ -217,7 +255,7 @@ class AuthRemoteDatasource {
                   id: user.uid,
                   email: user.email ?? '',
                   name: user.displayName ?? 'Người dùng mới',
-                  phone: user.phoneNumber ?? phone,
+                  phone: user.phoneNumber ?? formattedPhone,
                   role: 'patient',
                   createdAt: DateTime.now(),
                 );
@@ -225,27 +263,37 @@ class AuthRemoteDatasource {
               }
               onAutoVerified();
             } catch (e) {
+              debugPrint('[FIREBASE_AUTH] Lỗi đăng nhập sau khi tự động xác thực: $e');
               onError('Lỗi tự động xác thực: ${e.toString()}');
             }
           }
         },
         verificationFailed: (FirebaseAuthException e) {
+          debugPrint('[FIREBASE_AUTH] Xác thực thất bại: Mã lỗi = ${e.code}, Thông điệp = ${e.message}');
           if (!hasReplied) {
             hasReplied = true;
-            onError(_handleAuthError(e.code));
+            if (e.code == 'too-many-requests') {
+              onError('Quá nhiều yêu cầu. Vui lòng thử lại sau hoặc sử dụng số điện thoại test.');
+            } else if (e.code == 'app-not-verified') {
+              onError('Ứng dụng chưa được xác thực (Thiếu SHA-1/SHA-256 hoặc URL Scheme).');
+            } else {
+              onError(_handleAuthError(e.code));
+            }
           }
         },
         codeSent: (String verificationId, int? resendToken) {
+          debugPrint('[FIREBASE_AUTH] Mã OTP đã được gửi. ID: $verificationId');
           if (!hasReplied) {
             hasReplied = true;
             onCodeSent(verificationId);
           }
         },
         codeAutoRetrievalTimeout: (String verificationId) {
-          // Handle timeout
+          debugPrint('[FIREBASE_AUTH] Hết thời gian tự động lấy mã OTP');
         },
       );
     } catch (e) {
+      debugPrint('[FIREBASE_AUTH] Lỗi ngoại lệ: $e');
       onError('Lỗi hệ thống khi gửi OTP: ${e.toString()}');
     }
   }
@@ -257,28 +305,73 @@ class AuthRemoteDatasource {
     String? displayName,
   }) async {
     try {
-      User user;
+      User? firebaseUser;
       String phoneValue = '';
 
-      // LUỒNG FIREBASE SMS THỰC TẾ VÀ TEST NUMBERS
+      // MOCK MODE: Handle mock OTP for development
+      if (isMockMode && verificationId == 'MOCK_VERIFICATION_ID') {
+        debugPrint('[MOCK_AUTH] Chế độ DEV: Đang xác thực OTP giả lập (Code: $smsCode)');
+        if (smsCode != '123456') {
+          throw Exception('Mã OTP giả lập không chính xác.');
+        }
+        
+        phoneValue = _lastPhoneForMock ?? '';
+        
+        // Fast path: always assume cache first or create a dummy to return immediately
+        final mockUid = 'MOCK_USER_${phoneValue.replaceAll('+', '')}'; 
+        
+        if (_lastMockUser != null && _lastMockUser!.phone == phoneValue) {
+           debugPrint('[MOCK_AUTH] Trả về thông tin người dùng giả lập từ cache (Instant).');
+           return _lastMockUser!;
+        }
+
+        debugPrint('[MOCK_AUTH] Tạo user giả lập tức thì (Background Sync).');
+        final newUser = UserModel(
+          id: mockUid,
+          email: '',
+          name: displayName ?? 'Người dùng Test',
+          phone: phoneValue,
+          role: 'patient',
+          createdAt: DateTime.now(),
+        );
+        
+        _lastMockUser = newUser;
+
+        // Run Firestore operations in the background so it doesn't block the UI
+        _firestore.collection('users').doc(mockUid).get().then((doc) {
+          if (doc.exists && doc.data() != null) {
+            debugPrint('[MOCK_AUTH] Đã tìm thấy profile người dùng cũ (Background).');
+            _lastMockUser = UserModel.fromJson(doc.data() as Map<String, dynamic>, mockUid);
+          } else {
+            debugPrint('[MOCK_AUTH] Đang lưu user giả lập mới vào Firestore (Background).');
+            _firestore.collection('users').doc(mockUid).set(newUser.toJson());
+          }
+        }).catchError((e) {
+            debugPrint('[MOCK_AUTH] Lỗi khi sync Firestore ngầm: $e');
+        });
+        
+        return newUser;
+      }
+
+      // LUỒNG FIREBASE SMS THỰC TẾ
       final credential = PhoneAuthProvider.credential(
         verificationId: verificationId,
         smsCode: smsCode,
       );
 
       final result = await _firebaseAuth.signInWithCredential(credential);
-      user = result.user!;
-      phoneValue = user.phoneNumber ?? '';
+      firebaseUser = result.user!;
+      phoneValue = firebaseUser.phoneNumber ?? '';
       // Check if profile exists
-      final profile = await getUserProfile(user.uid);
+      final profile = await getUserProfile(firebaseUser.uid);
       if (profile != null) return profile;
 
       // If NEW user, create profile with displayName
       final newUser = UserModel(
-        id: user.uid,
-        email: user.email ?? '',
-        name: displayName ?? user.displayName ?? 'Người dùng mới',
-        phone: phoneValue.isNotEmpty ? phoneValue : user.phoneNumber ?? '',
+        id: firebaseUser.uid,
+        email: firebaseUser.email ?? '',
+        name: displayName ?? firebaseUser.displayName ?? 'Người dùng mới',
+        phone: phoneValue.isNotEmpty ? phoneValue : firebaseUser.phoneNumber ?? '',
         role: 'patient',
         createdAt: DateTime.now(),
       );
@@ -286,11 +379,11 @@ class AuthRemoteDatasource {
       try {
         await _firestore
             .collection('users')
-            .doc(user.uid)
+            .doc(firebaseUser.uid)
             .set(newUser.toJson());
         
         if (displayName != null) {
-          await user.updateDisplayName(displayName);
+          await firebaseUser.updateDisplayName(displayName);
         }
       } catch (e) {
         debugPrint('Firestore save profile error: $e');
@@ -307,6 +400,22 @@ class AuthRemoteDatasource {
   /// CREATE PASSWORD (Link Phone Auth with Email/Password)
   Future<void> createPassword(String phone, String password) async {
     final user = _firebaseAuth.currentUser;
+    
+    // MOCK MODE check
+    if (isMockMode && _lastMockUser != null) {
+      debugPrint('[MOCK_AUTH] Đang tạo tài khoản Firebase Auth ngầm trong chế độ DEV');
+      final normalizedPhone = _normalizePhone(phone);
+      final fakeEmail = '$normalizedPhone@smartclinic.com';
+      try {
+        await _firebaseAuth.createUserWithEmailAndPassword(email: fakeEmail, password: password);
+      } catch (e) {
+         if (e is FirebaseAuthException && e.code != 'email-already-in-use') {
+             throw Exception('Lỗi tạo mật khẩu mô phỏng: ${e.message}');
+         }
+      }
+      return; 
+    }
+
     if (user == null) {
       throw Exception('Không có người dùng nào đang đăng nhập');
     }
@@ -359,6 +468,10 @@ class AuthRemoteDatasource {
         return 'Yêu cầu xác thực đã hết hạn';
       case 'session-expired':
         return 'Phiên làm việc đã hết hạn. Vui lòng gửi lại mã.';
+      case 'unavailable':
+        return 'Dịch vụ Firebase hiện không khả dụng. Vui lòng kiểm tra: 1. Kết nối mạng. 2. Cloud Firestore đã được bật trong Console chưa? 3. Bạn có đang dùng VPN không?';
+      case 'permission-denied':
+        return 'Bạn không có quyền truy cập dữ liệu này. Vui lòng kiểm tra Security Rules.';
       case 'quota-exceeded':
         return 'Đã vượt quá số lượng tin nhắn SMS cho phép hôm nay.';
       default:

@@ -1,6 +1,6 @@
 name: smart_clinic_booking
 description: Smart Clinic Booking Mobile App
-publish_to: 'none'
+publish_to: "none"
 
 version: 1.0.0+1
 
@@ -17,10 +17,18 @@ dependencies:
   provider: ^6.1.2
   flutter_bloc: ^8.1.5
   equatable: ^2.0.5
+  bloc: ^8.1.4
+
+  # Error Handling
+  dartz: ^0.10.1
+
+  # Push Notifications
+  firebase_messaging: ^16.1.3
+  flutter_local_notifications: ^18.0.1
 
   # Dependency Injection
-  get_it: ^7.7.0
-  injectable: ^2.4.2
+  get_it: ^9.2.1
+  injectable: ^2.7.1
 
   # Networking
   dio: ^5.4.3
@@ -52,9 +60,11 @@ dependencies:
   formz: ^0.7.0
 
   # Firebase
-  firebase_core: ^4.5.0
-  firebase_auth: ^6.2.0
-  cloud_firestore: ^6.1.3
+  firebase_core: ^4.6.0
+  firebase_auth: ^6.3.0
+  cloud_firestore: ^6.2.0
+  firebase_storage: 
+  cloud_functions: 
 
   # Maps (free - OpenStreetMap)
   flutter_map: ^6.1.0
@@ -70,9 +80,9 @@ dev_dependencies:
   flutter_lints: ^3.0.2
 
   # Code Generation
-  build_runner: ^2.4.9
+  build_runner: ^2.4.13
   json_serializable: ^6.8.0
-  injectable_generator: ^2.6.1
+  injectable_generator: ^2.6.2
   hive_generator: ^2.0.1
 
 flutter:

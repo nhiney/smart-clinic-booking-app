@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../controllers/auth_controller.dart';
-import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,6 +19,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool hidePassword = true;
   bool saveLoginInfo = false;
+  String selectedCountryCode = "+84";
+  final List<String> countryCodes = ["+84", "+1", "+44", "+81", "+82", "+86", "+61", "+65"];
 
   @override
   void dispose() {
@@ -28,28 +30,30 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void goToRegister() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const RegisterScreen()),
-    );
+    context.push('/sign-up');
   }
 
   Future<void> handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
     
     final authController = context.read<AuthController>();
-    final phone = phoneController.text.trim();
+    String phone = phoneController.text.trim();
+    if (selectedCountryCode == "+84" && phone.startsWith('0')) {
+      phone = phone.substring(1);
+    }
+    
+    final fullPhone = "$selectedCountryCode$phone";
     
     // Logic for Password Login
     final success = await authController.login(
-      phone,
+      fullPhone,
       passwordController.text.trim(),
     );
 
     if (!mounted) return;
 
     if (success) {
-      Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+      context.go('/home');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -74,7 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
         elevation: 0,
         leadingWidth: 150,
         leading: TextButton.icon(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.go('/'),
           icon: const Icon(Icons.arrow_back, color: primaryBlue),
           label: const Text(
             "Quay lại",
@@ -173,7 +177,43 @@ class _LoginScreenState extends State<LoginScreen> {
                   decoration: InputDecoration(
                     hintText: "Nhập số điện thoại...",
                     hintStyle: const TextStyle(color: Colors.grey),
-                    prefixIcon: const Icon(Icons.smartphone_outlined, color: Colors.grey, size: 22),
+                    prefixIcon: Container(
+                      width: 100,
+                      padding: const EdgeInsets.only(left: 12, right: 8),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.phone_android, color: Colors.grey, size: 20),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: selectedCountryCode,
+                                isExpanded: true,
+                                icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
+                                style: const TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 15),
+                                items: countryCodes.map((String value) {
+                                  return DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Text(value),
+                                  );
+                                }).toList(),
+                                onChanged: (val) {
+                                  setState(() {
+                                    selectedCountryCode = val!;
+                                  });
+                                },
+                              ),
+                            ),
+                          ),
+                          Container(
+                            width: 1,
+                            height: 24,
+                            color: Colors.grey.shade300,
+                          ),
+                        ],
+                      ),
+                    ),
                     filled: true,
                     fillColor: Colors.white,
                     contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),

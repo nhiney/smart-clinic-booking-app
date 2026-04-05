@@ -43,3 +43,18 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# AI Related files (AI Task Tracking & Context)
+tasks.md
+tasks_users.md
+grant.tasks.md
+PROJECT_PLANNING.md
+user.md
+
+# Logs and developer ephemeral files
+*.log
+build_error.log
+.DS_Store
+.idea/
+*.iml
+.vscode/

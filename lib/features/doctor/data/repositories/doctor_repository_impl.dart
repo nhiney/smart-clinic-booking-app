@@ -1,7 +1,8 @@
 import '../../domain/entities/doctor_entity.dart';
 import '../../domain/repositories/doctor_repository.dart';
 import '../datasources/doctor_remote_datasource.dart';
-
+import 'package:injectable/injectable.dart';
+@LazySingleton(as: DoctorRepository)
 class DoctorRepositoryImpl implements DoctorRepository {
   final DoctorRemoteDatasource remoteDatasource;
 

@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/doctor_model.dart';
+import 'package:injectable/injectable.dart';
 
+@lazySingleton
 class DoctorRemoteDatasource {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
