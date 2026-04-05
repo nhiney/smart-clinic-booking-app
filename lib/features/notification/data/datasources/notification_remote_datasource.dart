@@ -8,11 +8,14 @@ class NotificationRemoteDatasource {
     final snapshot = await _firestore
         .collection('notifications')
         .where('userId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
         .get();
-    return snapshot.docs
+        
+    final notifications = snapshot.docs
         .map((doc) => NotificationModel.fromJson(doc.data(), doc.id))
         .toList();
+        
+    notifications.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return notifications;
   }
 
   Future<void> markAsRead(String id) async {
@@ -25,12 +28,13 @@ class NotificationRemoteDatasource {
     final snapshot = await _firestore
         .collection('notifications')
         .where('userId', isEqualTo: userId)
-        .where('isRead', isEqualTo: false)
         .get();
 
     final batch = _firestore.batch();
     for (final doc in snapshot.docs) {
-      batch.update(doc.reference, {'isRead': true});
+      if (doc.data()['isRead'] == false) {
+        batch.update(doc.reference, {'isRead': true});
+      }
     }
     await batch.commit();
   }

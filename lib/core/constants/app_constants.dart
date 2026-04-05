@@ -1,8 +1,16 @@
+import '../../config/dependency_injection/injection.dart';
+import '../services/app_config_service.dart';
+
 class AppConstants {
   static const String appName = "ICare";
 
-  // Legal & Privacy
-  static const String privacyPolicyUrl = 'https://YOUR_FIREBASE_STORAGE_URL_HERE/privacy_policy.pdf'; // TODO: Replace with real URL after upload
+  // Legal & Privacy (Dynamic & Versioned)
+  static String get privacyPolicyUrl => 
+      getIt<AppConfigService>().privacyPolicy.pdfUrl ?? 
+      getIt<AppConfigService>().config.privacyPolicyUrl;
+
+  static String get privacyPolicyContent => 
+      getIt<AppConfigService>().privacyPolicy.content;
 
   // Routes
   static const String splashRoute = "/";

@@ -8,11 +8,14 @@ class AppointmentRemoteDatasource {
     final snapshot = await _firestore
         .collection('appointments')
         .where('patientId', isEqualTo: patientId)
-        .orderBy('dateTime', descending: true)
         .get();
-    return snapshot.docs
+        
+    final appointments = snapshot.docs
         .map((doc) => AppointmentModel.fromJson(doc.data(), doc.id))
         .toList();
+        
+    appointments.sort((a, b) => b.dateTime.compareTo(a.dateTime));
+    return appointments;
   }
 
   Future<AppointmentModel> createAppointment(AppointmentModel appointment) async {

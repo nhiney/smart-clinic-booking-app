@@ -44,17 +44,36 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# AI Related files (AI Task Tracking & Context)
-tasks.md
-tasks_users.md
-grant.tasks.md
+# AI-Related Task Tracking & Planning
+*.task.md
+*.tasks.md
 PROJECT_PLANNING.md
 user.md
+tasks.md
+tasks_users.md
 
-# Logs and developer ephemeral files
+# Logs and developer-specific ephemeral files
 *.log
 build_error.log
 .DS_Store
 .idea/
 *.iml
 .vscode/
+.metadata
+.flutter-plugins
+.flutter-plugins-dependencies
+.dart_tool/
+
+# Firebase functions
+functions/node_modules/
+functions/lib/
+functions/.runtimeconfig.json
+
+# Platform-specific builds
+build/
+/ios/Flutter/.last_build_id
+/ios/Pods/
+/android/.gradle/
+/windows/flutter/generated/
+/linux/flutter/generated/
+/macos/Flutter/GeneratedPluginRegistrant.swift

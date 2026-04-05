@@ -8,11 +8,14 @@ class MedicalRecordRemoteDatasource {
     final snapshot = await _firestore
         .collection('medical_records')
         .where('patientId', isEqualTo: patientId)
-        .orderBy('date', descending: true)
         .get();
-    return snapshot.docs
+        
+    final records = snapshot.docs
         .map((doc) => MedicalRecordModel.fromJson(doc.data(), doc.id))
         .toList();
+        
+    records.sort((a, b) => b.date.compareTo(a.date));
+    return records;
   }
 
   Future<MedicalRecordModel?> getRecordById(String id) async {

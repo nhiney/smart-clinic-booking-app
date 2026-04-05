@@ -2,6 +2,7 @@ import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
 
 import 'injection.config.dart';
+import '../../core/services/app_config_service.dart';
 
 // Manual imports for the features lacking @lazySingleton annotations
 import '../../features/appointment/data/datasources/appointment_remote_datasource.dart';
@@ -35,9 +36,11 @@ final getIt = GetIt.instance;
 Future<void> configureDependencies() async {
   getIt.init();
 
-  // --- MANUAL DI REGISTRATIONS ---
   // Registers newly added modules that haven't been picked up by build_runner.
   // Replace these with @lazySingleton annotations in the future if preferred.
+
+  // App Config Service (Dynamic Settings)
+  getIt.registerLazySingleton(() => AppConfigService());
 
   // Appointment
   getIt.registerLazySingleton(() => AppointmentRemoteDatasource());

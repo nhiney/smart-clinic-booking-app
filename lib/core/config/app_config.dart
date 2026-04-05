@@ -1,58 +1,44 @@
-import 'package:flutter/foundation.dart';
-
-/// Centralized application configuration.
-/// Controls environment-specific behavior (dev/staging/prod).
 class AppConfig {
-  AppConfig._();
+  final Map<String, dynamic> _settings;
 
-  /// Whether the app is running in development mode.
-  static bool get isDev => kDebugMode;
+  AppConfig(this._settings);
 
-  /// Whether to use mock data instead of real Firebase calls.
-  static bool get useMockData => kDebugMode;
+  /// Helper to get a typed value or a default
+  T _get<T>(String key, T defaultValue) {
+    if (_settings.containsKey(key) && _settings[key] is T) {
+      return _settings[key] as T;
+    }
+    return defaultValue;
+  }
 
-  /// Mock OTP code for development mode.
-  static const String mockOtpCode = '123456';
+  // Specific Typed Getters (Professionally Structured)
+  
+  /// Legal & Privacy Policy URL
+  String get privacyPolicyUrl => _get<String>(
+        'privacyPolicyUrl',
+        'https://pub-bc3669a9821248918f203546714adf67.r2.dev/consent/PRIVACY_POLICY.pdf',
+      );
 
-  /// Mock verification ID for development mode.
-  static const String mockVerificationId = 'MOCK_VERIFICATION_ID';
+  /// API Base URL (Example of future expansion)
+  String get apiBaseUrl => _get<String>('apiBaseUrl', '');
 
-  /// Application name.
-  static const String appName = 'ICare';
+  /// Maintenance Mode flag
+  bool get isMaintenanceMode => _get<bool>('isMaintenanceMode', false);
 
-  /// Application version.
-  static const String appVersion = '1.0.0';
+  /// Default Privacy Policy Version ID
+  String get currentPolicyId => _get<String>('currentPolicyId', 'stable');
 
-  /// Maximum retry attempts for network requests.
-  static const int maxRetryAttempts = 3;
+  /// Feature Flags
+  bool get useMockData => _get<bool>('useMockData', false);
 
-  /// Default timeout for network requests (seconds).
-  static const int requestTimeoutSeconds = 30;
+  /// Firestore Collections Configuration
+  String get healthSummaryCollection => _get<String>('healthSummaryCollection', 'health_summary');
+  String get medicationsCollection => _get<String>('medicationsCollection', 'medications');
+  String get newsCollection => _get<String>('newsCollection', 'health_news');
 
-  /// Firebase Firestore collection names.
-  static const String usersCollection = 'users';
-  static const String doctorsCollection = 'doctors';
-  static const String appointmentsCollection = 'appointments';
-  static const String medicalRecordsCollection = 'medical_records';
-  static const String medicationsCollection = 'medications';
-  static const String notificationsCollection = 'notifications';
-  static const String reviewsCollection = 'reviews';
-  static const String supportTicketsCollection = 'support_tickets';
-  static const String healthSummaryCollection = 'health_summary';
-  static const String newsCollection = 'health_news';
+  /// Generic access for unknown configuration keys
+  dynamic operator [](String key) => _settings[key];
 
-  /// User roles for RBAC.
-  static const String rolePatient = 'patient';
-  static const String roleDoctor = 'doctor';
-  static const String roleAdmin = 'admin';
-
-  /// Pagination defaults.
-  static const int defaultPageSize = 20;
-
-  /// Health metric thresholds.
-  static const double normalBmiMin = 18.5;
-  static const double normalBmiMax = 24.9;
-  static const int normalHeartRateMin = 60;
-  static const int normalHeartRateMax = 100;
-  static const double normalBloodSugarMax = 100.0;
+  @override
+  String toString() => 'AppConfig($_settings)';
 }

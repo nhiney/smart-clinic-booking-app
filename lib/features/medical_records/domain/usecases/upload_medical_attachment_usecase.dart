@@ -1,0 +1,30 @@
+import 'dart:io';
+import 'package:dartz/dartz.dart';
+import 'package:equatable/equatable.dart';
+import '../../../../core/error/failure.dart';
+import '../../../../core/usecase/usecase.dart';
+import '../repositories/medical_record_repository.dart';
+
+class UploadMedicalAttachmentUseCase implements UseCase<String, UploadMedicalAttachmentParams> {
+  final MedicalRecordRepository repository;
+
+  UploadMedicalAttachmentUseCase(this.repository);
+
+  @override
+  Future<Either<Failure, String>> call(UploadMedicalAttachmentParams params) async {
+    return await repository.uploadAttachment(params.file, params.recordId);
+  }
+}
+
+class UploadMedicalAttachmentParams extends Equatable {
+  final File file;
+  final String recordId;
+
+  const UploadMedicalAttachmentParams({
+    required this.file,
+    required this.recordId,
+  });
+
+  @override
+  List<Object?> get props => [file, recordId];
+}

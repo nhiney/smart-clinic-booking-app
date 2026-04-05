@@ -10,6 +10,7 @@ import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'config/dependency_injection/injection.dart';
 import 'core/router/app_router.dart';
+import 'core/services/app_config_service.dart';
 import 'features/auth/presentation/bloc/sign_up_bloc.dart';
 
 // Auth
@@ -111,6 +112,9 @@ Future<void> main() async {
 
   // Initialize Dependency Injection
   await configureDependencies();
+
+  // Initialize Dynamic Configuration (Firestore)
+  await getIt<AppConfigService>().initialize();
 
   // Seed sample data (non-blocking, don't prevent app from starting)
   getIt<DoctorRemoteDatasource>().seedDoctors().catchError((e) {

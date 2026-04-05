@@ -3,7 +3,8 @@ import 'package:flutter/foundation.dart';
 import '../../domain/entities/health_summary.dart';
 import '../../domain/entities/medication_reminder.dart';
 import '../../domain/entities/health_article.dart';
-import '../../../../core/config/app_config.dart';
+import '../../../../core/services/app_config_service.dart';
+import '../../../../config/dependency_injection/injection.dart';
 import '../../../../core/error/exceptions.dart';
 import '../models/home_models.dart';
 
@@ -22,13 +23,13 @@ class HomeRemoteDatasourceImpl implements HomeRemoteDatasource {
 
   @override
   Future<HealthSummary> getHealthSummary(String userId) async {
-    if (AppConfig.useMockData) {
+    if (getIt<AppConfigService>().config.useMockData) {
       debugPrint('[HOME] Using mock health summary');
       return HealthSummaryModel.mock(userId);
     }
     try {
       final doc = await _firestore
-          .collection(AppConfig.healthSummaryCollection)
+          .collection(getIt<AppConfigService>().config.healthSummaryCollection)
           .doc(userId)
           .get();
       if (doc.exists && doc.data() != null) {
@@ -42,7 +43,7 @@ class HomeRemoteDatasourceImpl implements HomeRemoteDatasource {
 
   @override
   Future<List<MedicationReminder>> getMedicationReminders(String userId) async {
-    if (AppConfig.useMockData) {
+    if (getIt<AppConfigService>().config.useMockData) {
       debugPrint('[HOME] Using mock medication reminders');
       return MedicationReminderModel.mockList();
     }
@@ -52,17 +53,28 @@ class HomeRemoteDatasourceImpl implements HomeRemoteDatasource {
       final endOfDay = startOfDay.add(const Duration(days: 1));
 
       final snapshot = await _firestore
-          .collection(AppConfig.medicationsCollection)
+          .collection(getIt<AppConfigService>().config.medicationsCollection)
           .where('userId', isEqualTo: userId)
-          .where('scheduledTime',
-              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
-          .where('scheduledTime', isLessThan: Timestamp.fromDate(endOfDay))
-          .orderBy('scheduledTime')
           .get();
 
-      return snapshot.docs
+      final startTimestamp = Timestamp.fromDate(startOfDay);
+      final endTimestamp = Timestamp.fromDate(endOfDay);
+
+      // Filter and sort locally to avoid the need for a composite index in Firestore
+      final reminders = snapshot.docs
+          .where((doc) {
+            final data = doc.data();
+            final scheduledTime = data['scheduledTime'] as Timestamp?;
+            if (scheduledTime == null) return false;
+            return scheduledTime.compareTo(startTimestamp) >= 0 &&
+                   scheduledTime.compareTo(endTimestamp) < 0;
+          })
           .map((doc) => MedicationReminderModel.fromJson(doc.data(), doc.id))
           .toList();
+
+      reminders.sort((a, b) => a.scheduledTime.compareTo(b.scheduledTime));
+
+      return reminders;
     } catch (e) {
       throw ServerException(message: 'Failed to load medication reminders: $e');
     }
@@ -70,7 +82,7 @@ class HomeRemoteDatasourceImpl implements HomeRemoteDatasource {
 
   @override
   Future<MedicationReminder> markMedicationTaken(String reminderId) async {
-    if (AppConfig.useMockData) {
+    if (getIt<AppConfigService>().config.useMockData) {
       final mock = MedicationReminderModel.mockList()
           .firstWhere((m) => m.id == reminderId,
               orElse: () => MedicationReminderModel.mockList().first);
@@ -78,7 +90,7 @@ class HomeRemoteDatasourceImpl implements HomeRemoteDatasource {
     }
     try {
       final ref = _firestore
-          .collection(AppConfig.medicationsCollection)
+          .collection(getIt<AppConfigService>().config.medicationsCollection)
           .doc(reminderId);
       await ref.update({'isTaken': true});
       final doc = await ref.get();
@@ -90,13 +102,13 @@ class HomeRemoteDatasourceImpl implements HomeRemoteDatasource {
 
   @override
   Future<List<HealthArticle>> getHealthNews({int limit = 5}) async {
-    if (AppConfig.useMockData) {
+    if (getIt<AppConfigService>().config.useMockData) {
       debugPrint('[HOME] Using mock health news');
       return HealthArticleModel.mockList();
     }
     try {
       final snapshot = await _firestore
-          .collection(AppConfig.newsCollection)
+          .collection(getIt<AppConfigService>().config.newsCollection)
           .orderBy('publishedAt', descending: true)
           .limit(limit)
           .get();
