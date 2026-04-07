@@ -67,7 +67,10 @@ class AuthRemoteDatasource {
     required String name,
     required String phone,
     required String password,
-    String role = 'patient',
+    required String role,
+    String? hospitalId,
+    String? idCardUrl,
+    String? medicalCertUrl,
   }) async {
     try {
       final normalizedPhone = _normalizePhone(phone);
@@ -87,10 +90,14 @@ class AuthRemoteDatasource {
 
       final userModel = UserModel(
         id: result.user!.uid,
-        email: '',
+        email: fakeEmail,
         name: name,
         phone: phone,
         role: role,
+        hospitalId: hospitalId,
+        idCardUrl: idCardUrl,
+        medicalCertUrl: medicalCertUrl,
+        verified: role == 'patient', // Patients are auto-verified, doctors need review
         createdAt: DateTime.now(),
       );
 
@@ -102,8 +109,6 @@ class AuthRemoteDatasource {
             .set(userModel.toJson());
       } catch (e) {
         debugPrint('Firestore save profile error: $e');
-        // Auth account was created successfully, profile save failed
-        // We still return success - profile can be created later
       }
 
       return userModel;

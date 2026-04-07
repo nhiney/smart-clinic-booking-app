@@ -28,7 +28,7 @@ class GetPendingApplicationsUseCase extends AuthorizedUseCase<List<dynamic>, Get
        final result = await repository.getPendingApplications(params.requestedTenantId);
        return Right(result);
      } catch (e) {
-       return Left(ServerFailure(e.toString()));
+       return Left(ServerFailure(message: e.toString()));
      }
   }
 }

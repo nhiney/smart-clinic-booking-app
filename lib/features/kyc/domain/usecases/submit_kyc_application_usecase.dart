@@ -29,7 +29,7 @@ class SubmitKYCApplicationUseCase extends AuthorizedUseCase<void, SubmitKYCParam
       return const Right(null);
     } catch (e) {
       // In a real implementation, map specific exceptions to Failures.
-      return Left(ServerFailure(e.toString()));
+      return Left(ServerFailure(message: e.toString()));
     }
   }
 }

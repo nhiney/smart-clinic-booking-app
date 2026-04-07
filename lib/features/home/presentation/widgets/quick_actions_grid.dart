@@ -25,6 +25,10 @@ class QuickActionsGrid extends StatelessWidget {
   final VoidCallback onPrescriptions;
   final VoidCallback onContactSupport;
   final VoidCallback onVoiceAssistant;
+  final VoidCallback onInpatientAdmission;
+  final VoidCallback onNotificationSettings;
+  final VoidCallback onPricing;
+  final VoidCallback onSurveys;
 
   const QuickActionsGrid({
     super.key,
@@ -35,6 +39,10 @@ class QuickActionsGrid extends StatelessWidget {
     required this.onPrescriptions,
     required this.onContactSupport,
     required this.onVoiceAssistant,
+    required this.onInpatientAdmission,
+    required this.onNotificationSettings,
+    required this.onPricing,
+    required this.onSurveys,
   });
 
   @override
@@ -58,14 +66,14 @@ class QuickActionsGrid extends StatelessWidget {
         label: 'Thanh toán',
         icon: Icons.account_balance_wallet_rounded,
         color: AppColors.primary,
-        onTap: () {},
+        onTap: onPricing,
         role: 'patient',
       ),
       QuickAction(
-        label: 'Hóa đơn',
-        icon: Icons.receipt_long_rounded,
+        label: 'Khảo sát',
+        icon: Icons.poll_rounded,
         color: AppColors.warning,
-        onTap: () {},
+        onTap: onSurveys,
         role: 'patient',
       ),
       QuickAction(
@@ -74,6 +82,19 @@ class QuickActionsGrid extends StatelessWidget {
         color: AppColors.warning,
         onTap: onPrescriptions,
         role: 'patient',
+      ),
+      QuickAction(
+        label: 'Nhập viện',
+        icon: Icons.hotel_rounded,
+        color: Colors.orange,
+        onTap: onInpatientAdmission,
+        role: 'patient',
+      ),
+      QuickAction(
+        label: 'Cài đặt TB',
+        icon: Icons.settings_suggest_rounded,
+        color: AppColors.primary,
+        onTap: onNotificationSettings,
       ),
       QuickAction(
         label: 'Bệnh nhân',

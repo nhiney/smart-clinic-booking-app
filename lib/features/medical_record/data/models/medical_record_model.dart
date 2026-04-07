@@ -1,40 +1,41 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../domain/entities/medical_record_entity.dart';
+import 'package:smart_clinic_booking/features/medical_record/domain/entities/medical_record_entity.dart';
 
 class MedicalRecordModel extends MedicalRecordEntity {
   const MedicalRecordModel({
     required super.id,
-    required super.patientId,
-    required super.doctorId,
-    super.doctorName,
+    required super.userId,
+    required super.doctor,
     required super.diagnosis,
-    super.prescription,
-    super.notes,
+    required super.prescription,
     required super.date,
+    super.symptoms,
+    super.notes,
   });
 
-  factory MedicalRecordModel.fromJson(Map<String, dynamic> json, String docId) {
+  factory MedicalRecordModel.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
     return MedicalRecordModel(
-      id: docId,
-      patientId: json['patientId'] ?? '',
-      doctorId: json['doctorId'] ?? '',
-      doctorName: json['doctorName'] ?? '',
-      diagnosis: json['diagnosis'] ?? '',
-      prescription: json['prescription'] ?? '',
-      notes: json['notes'] ?? '',
-      date: (json['date'] as Timestamp).toDate(),
+      id: doc.id,
+      userId: data['userId'] ?? '',
+      doctor: data['doctor'] ?? '',
+      diagnosis: data['diagnosis'] ?? '',
+      prescription: data['prescription'] ?? '',
+      date: (data['date'] as Timestamp).toDate(),
+      symptoms: (data['symptoms'] as List?)?.map((e) => e.toString()).toList(),
+      notes: data['notes'],
     );
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toFirestore() {
     return {
-      'patientId': patientId,
-      'doctorId': doctorId,
-      'doctorName': doctorName,
+      'userId': userId,
+      'doctor': doctor,
       'diagnosis': diagnosis,
       'prescription': prescription,
-      'notes': notes,
       'date': Timestamp.fromDate(date),
+      'symptoms': symptoms,
+      'notes': notes,
     };
   }
 }

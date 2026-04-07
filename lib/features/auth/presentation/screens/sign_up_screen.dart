@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smart_clinic_booking/l10n/app_localizations.dart';
 
 import '../bloc/sign_up_bloc.dart';
 import '../bloc/sign_up_event.dart';
@@ -8,9 +9,9 @@ import '../bloc/sign_up_state.dart';
 import '../widgets/role_selector_toggle.dart';
 import '../widgets/patient_registration_form.dart';
 import '../widgets/doctor_kyc_registration_form.dart';
-import '../widgets/auth_localizations.dart';
+import '../../../../core/extensions/context_extension.dart';
 import '../../../../core/widgets/icare_logo.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/colors/app_colors.dart';
 import '../../../../core/widgets/branded_app_bar.dart';
 
 class SignUpScreen extends StatelessWidget {
@@ -24,8 +25,9 @@ class SignUpScreen extends StatelessWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.error!),
-              backgroundColor: Theme.of(context).colorScheme.error,
+              backgroundColor: context.colors.error,
               behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: context.radius.mRadius),
             ),
           );
         } else if (state.isSuccess) {
@@ -37,23 +39,20 @@ class SignUpScreen extends StatelessWidget {
         }
       },
       builder: (context, state) {
-        final l10n = AuthLocalizations(state.isEnglish);
-        final theme = Theme.of(context);
+        final l10n = AppLocalizations.of(context)!;
 
         return Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: context.colors.background,
           appBar: BrandedAppBar(
             showLogo: true,
             leadingWidth: 120,
             leading: TextButton.icon(
               onPressed: () => context.pop(),
-              icon: const Icon(Icons.arrow_back, color: AppColors.primary),
-              label: const Text(
-                "Quay lại",
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+              icon: Icon(Icons.arrow_back, color: context.colors.primary),
+              label: Text(
+                l10n.register_back,
+                style: context.textStyles.bodyBold.copyWith(
+                  color: context.colors.primary,
                 ),
               ),
               style: TextButton.styleFrom(
@@ -61,53 +60,35 @@ class SignUpScreen extends StatelessWidget {
                 alignment: Alignment.centerLeft,
               ),
             ),
-            actions: [
-              Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: TextButton.icon(
-                  onPressed: () => context.read<SignUpBloc>().add(ToggleLanguageEvent()),
-                  icon: const Icon(
-                    Icons.language,
-                    size: 18,
-                    color: AppColors.primary,
-                  ),
-                  label: Text(
-                    state.isEnglish ? "VN" : "EN",
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ),
-              ),
-            ],
           ),
           body: SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+              padding: EdgeInsets.symmetric(
+                horizontal: context.spacing.l,
+                vertical: context.spacing.m,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Center(
                     child: Column(
                       children: [
-                        const SizedBox(height: 16),
+                        const ICareLogo(size: 60),
+                        SizedBox(height: context.spacing.m),
                         Text(
-                          l10n.signUpTitle,
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.primaryDark,
+                          l10n.register_title,
+                          style: context.textStyles.heading2.copyWith(
+                            color: context.colors.primaryDark,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  SizedBox(height: context.spacing.xl),
 
                   // Role Selector
                   const RoleSelectorToggle(),
-                  const SizedBox(height: 40),
+                  SizedBox(height: context.spacing.xxl),
 
                   // Animated Switcher to toggle forms cleanly
                   AnimatedSwitcher(
@@ -131,7 +112,7 @@ class SignUpScreen extends StatelessWidget {
                         : const PatientRegistrationForm(key: ValueKey('PatientForm')),
                   ),
                   
-                  const SizedBox(height: 40),
+                  SizedBox(height: context.spacing.xxl),
                 ],
               ),
             ),

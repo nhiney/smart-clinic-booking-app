@@ -1,54 +1,95 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
-import '../../../doctor/domain/entities/doctor_entity.dart';
 
-/// Section 7: Recommended Doctors — horizontal scrollable doctor cards.
-class RecommendedDoctorsSection extends StatelessWidget {
-  final List<DoctorEntity> doctors;
-  final VoidCallback onViewAll;
-  final ValueChanged<DoctorEntity> onBookDoctor;
-  final ValueChanged<DoctorEntity> onViewDoctor;
+class DoctorInfo {
+  final String name;
+  final String specialty;
+  final String imageUrl;
+  final double rating;
 
-  const RecommendedDoctorsSection({
-    super.key,
-    required this.doctors,
-    required this.onViewAll,
-    required this.onBookDoctor,
-    required this.onViewDoctor,
+  const DoctorInfo({
+    required this.name,
+    required this.specialty,
+    required this.imageUrl,
+    required this.rating,
   });
+}
+
+class RecommendedDoctorsSection extends StatelessWidget {
+  const RecommendedDoctorsSection({super.key});
+
+  static const List<DoctorInfo> _doctors = [
+    DoctorInfo(
+      name: 'PGS. TS. BS. Nguyễn Văn A',
+      specialty: 'Khoa Nội Tim mạch',
+      imageUrl: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=2070&auto=format&fit=crop',
+      rating: 4.9,
+    ),
+    DoctorInfo(
+      name: 'ThS. BS. Trần Thị B',
+      specialty: 'Khoa Nội Tổng quát',
+      imageUrl: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=2070&auto=format&fit=crop',
+      rating: 4.8,
+    ),
+    DoctorInfo(
+      name: 'BSCKII. Lê Văn C',
+      specialty: 'Khoa Chấn thương chỉnh hình',
+      imageUrl: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=2070&auto=format&fit=crop',
+      rating: 4.7,
+    ),
+    DoctorInfo(
+      name: 'BSCKI. Phạm Hoàng D',
+      specialty: 'Khoa Nhi',
+      imageUrl: 'https://images.unsplash.com/photo-1559839734-2b71f1536785?q=80&w=2070&auto=format&fit=crop',
+      rating: 5.0,
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    if (doctors.isEmpty) return const SizedBox.shrink();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(child: Text('Bác sĩ nổi bật', style: AppTextStyles.heading3)),
+              Expanded(
+                child: const Text(
+                  'Bác sĩ chuyên gia nổi bật',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
               TextButton(
-                onPressed: onViewAll,
-                child: Text('Xem tất cả', style: AppTextStyles.link.copyWith(fontSize: 13)),
+                onPressed: () {},
+                child: const Text(
+                  'Xem tất cả',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 200,
+          height: 180,
           child: ListView.builder(
-            scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: doctors.length > 5 ? 5 : doctors.length,
-            itemBuilder: (_, index) => _DoctorCard(
-              doctor: doctors[index],
-              onBook: () => onBookDoctor(doctors[index]),
-              onTap: () => onViewDoctor(doctors[index]),
-            ),
+            scrollDirection: Axis.horizontal,
+            itemCount: _doctors.length,
+            itemBuilder: (context, index) {
+              final doctor = _doctors[index];
+              return _DoctorCard(doctor: doctor);
+            },
           ),
         ),
       ],
@@ -57,91 +98,120 @@ class RecommendedDoctorsSection extends StatelessWidget {
 }
 
 class _DoctorCard extends StatelessWidget {
-  final DoctorEntity doctor;
-  final VoidCallback onBook;
-  final VoidCallback onTap;
+  final DoctorInfo doctor;
 
-  const _DoctorCard({required this.doctor, required this.onBook, required this.onTap});
+  const _DoctorCard({required this.doctor});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 160,
-        margin: const EdgeInsets.only(right: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: const [BoxShadow(color: AppColors.shadow, blurRadius: 8)],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      width: 280,
+      margin: const EdgeInsets.only(right: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadow.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Row(
           children: [
-            // Doctor avatar section
+            // Left: Circular Avatar
             Container(
+              width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: AppColors.primarySurface,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.primary.withOpacity(0.1), width: 3),
               ),
-              child: Center(
-                child: CircleAvatar(
-                  radius: 30,
-                  backgroundColor: AppColors.primaryLight,
-                  child: const Icon(Icons.person, color: AppColors.primary, size: 30),
+              child: ClipOval(
+                child: Image.network(
+                  doctor.imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    color: AppColors.primarySurface,
+                    padding: const EdgeInsets.all(16),
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(10),
+            const SizedBox(width: 16),
+            // Right: Details
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     doctor.name,
-                    style: AppTextStyles.bodySmall.copyWith(
+                    style: const TextStyle(
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Text(
                     doctor.specialty,
-                    style: AppTextStyles.caption,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(Icons.star_rounded, color: Color(0xFFFFA41B), size: 14),
-                      const SizedBox(width: 3),
+                      const Icon(Icons.star_rounded, size: 16, color: Colors.amber),
+                      const SizedBox(width: 4),
                       Text(
-                        doctor.rating.toStringAsFixed(1),
-                        style: AppTextStyles.caption.copyWith(
-                          color: AppColors.textPrimary,
+                        doctor.rating.toString(),
+                        style: const TextStyle(
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: onBook,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                  const Spacer(),
+                  Align(
+                    alignment: Alignment.bottomRight,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                      child: const Text('Đặt khám'),
+                      child: const Text(
+                        'Đặt khám',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
                     ),
                   ),
                 ],

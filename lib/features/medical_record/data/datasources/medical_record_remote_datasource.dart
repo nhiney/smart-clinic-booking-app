@@ -1,26 +1,45 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/medical_record_model.dart';
+import '../../domain/entities/encounter_fhir.dart';
+import '../../domain/entities/observation_fhir.dart';
 
-class MedicalRecordRemoteDatasource {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+abstract class MedicalRecordRemoteDataSource {
+  Future<List<EncounterFhir>> getEncounters(String patientId);
+  Future<void> createEncounter(EncounterFhir encounter);
+  Future<List<ObservationFhir>> getObservations(String encounterId);
+}
 
-  Future<List<MedicalRecordModel>> getRecordsByPatient(String patientId) async {
-    final snapshot = await _firestore
-        .collection('medical_records')
-        .where('patientId', isEqualTo: patientId)
+class MedicalRecordRemoteDataSourceImpl implements MedicalRecordRemoteDataSource {
+  final FirebaseFirestore firestore;
+
+  MedicalRecordRemoteDataSourceImpl(this.firestore);
+
+  @override
+  Future<List<EncounterFhir>> getEncounters(String patientId) async {
+    final snapshot = await firestore
+        .collection('encounters')
+        .where('subject.reference', isEqualTo: 'Patient/$patientId')
+        .orderBy('period.start', descending: true)
         .get();
-        
-    final records = snapshot.docs
-        .map((doc) => MedicalRecordModel.fromJson(doc.data(), doc.id))
+
+    return snapshot.docs
+        .map((doc) => EncounterFhir.fromJson(doc.data()))
         .toList();
-        
-    records.sort((a, b) => b.date.compareTo(a.date));
-    return records;
   }
 
-  Future<MedicalRecordModel?> getRecordById(String id) async {
-    final doc = await _firestore.collection('medical_records').doc(id).get();
-    if (!doc.exists) return null;
-    return MedicalRecordModel.fromJson(doc.data()!, doc.id);
+  @override
+  Future<void> createEncounter(EncounterFhir encounter) async {
+    await firestore.collection('encounters').doc(encounter.id).set(encounter.toJson());
+  }
+
+  @override
+  Future<List<ObservationFhir>> getObservations(String encounterId) async {
+    final snapshot = await firestore
+        .collection('observations')
+        .where('encounter.reference', isEqualTo: 'Encounter/$encounterId')
+        .get();
+
+    return snapshot.docs
+        .map((doc) => ObservationFhir.fromJson(doc.data()))
+        .toList();
   }
 }

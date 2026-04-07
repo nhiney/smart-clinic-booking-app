@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:smart_clinic_booking/l10n/app_localizations.dart';
 
 import '../bloc/sign_up_bloc.dart';
 import '../bloc/sign_up_event.dart';
 import '../bloc/sign_up_state.dart';
-import 'auth_localizations.dart';
 
 class RoleSelectorToggle extends StatelessWidget {
   const RoleSelectorToggle({super.key});
@@ -15,20 +15,12 @@ class RoleSelectorToggle extends StatelessWidget {
 
     return BlocBuilder<SignUpBloc, SignUpState>(
       buildWhen: (previous, current) => 
-          previous.isDoctor != current.isDoctor || 
-          previous.isEnglish != current.isEnglish,
+          previous.isDoctor != current.isDoctor,
       builder: (context, state) {
-        final l10n = AuthLocalizations(state.isEnglish);
+        final l10n = AppLocalizations.of(context)!;
 
         return Column(
           children: [
-            Text(
-              l10n.roleSelectionLabel,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
             const SizedBox(height: 16),
             Container(
               decoration: BoxDecoration(
@@ -42,7 +34,7 @@ class RoleSelectorToggle extends StatelessWidget {
                     Expanded(
                       child: _buildRoleTab(
                         context: context,
-                        label: l10n.patientRole,
+                        label: l10n.role_patient,
                         icon: Icons.person_outline,
                         isSelected: !state.isDoctor,
                         onTap: () {
@@ -53,7 +45,7 @@ class RoleSelectorToggle extends StatelessWidget {
                     Expanded(
                       child: _buildRoleTab(
                         context: context,
-                        label: l10n.doctorRole,
+                        label: l10n.role_doctor,
                         icon: Icons.medical_services_outlined,
                         isSelected: state.isDoctor,
                         onTap: () {

@@ -39,4 +39,16 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   Future<void> cancelAppointment(String id) async {
     await remoteDatasource.cancelAppointment(id);
   }
+
+  @override
+  Future<void> rescheduleAppointment(String id, DateTime newDate, String newTime) async {
+    // For now, we update the main dateTime field. In a real app, this might be separate.
+    await remoteDatasource.updateAppointmentStatus(id, 'rescheduled');
+  }
+
+  @override
+  Future<bool> lockSlot(String doctorId, DateTime date, String time) async {
+    // Placeholder implementation
+    return true;
+  }
 }

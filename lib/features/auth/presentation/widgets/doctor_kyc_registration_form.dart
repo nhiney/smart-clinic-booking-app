@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:smart_clinic_booking/l10n/app_localizations.dart';
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_text_field.dart';
+import '../../../../core/extensions/context_extension.dart';
 
 import '../bloc/sign_up_bloc.dart';
 import '../bloc/sign_up_event.dart';
 import '../bloc/sign_up_state.dart';
-import 'auth_localizations.dart';
 import 'terms_and_conditions_checkbox.dart';
 
 class DoctorKycRegistrationForm extends StatefulWidget {
@@ -39,20 +42,23 @@ class _DoctorKycRegistrationFormState extends State<DoctorKycRegistrationForm> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
+      final l10n = AppLocalizations.of(context)!;
       if (_selectedHospital == null) {
-        final state = context.read<SignUpBloc>().state;
-        final l10n = AuthLocalizations(state.isEnglish);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.requiredField)),
+          SnackBar(
+            content: Text(l10n.required_field),
+            backgroundColor: context.colors.error,
+          ),
         );
         return;
       }
       
       if (!_termsAccepted) {
-        final state = context.read<SignUpBloc>().state;
-        final l10n = AuthLocalizations(state.isEnglish);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.mustAcceptTerms)),
+          SnackBar(
+            content: Text(l10n.must_accept_terms),
+            backgroundColor: context.colors.warning,
+          ),
         );
         return;
       }
@@ -72,8 +78,7 @@ class _DoctorKycRegistrationFormState extends State<DoctorKycRegistrationForm> {
   Widget build(BuildContext context) {
     return BlocBuilder<SignUpBloc, SignUpState>(
       builder: (context, state) {
-        final l10n = AuthLocalizations(state.isEnglish);
-        final theme = Theme.of(context);
+        final l10n = AppLocalizations.of(context)!;
 
         return Form(
           key: _formKey,
@@ -81,93 +86,77 @@ class _DoctorKycRegistrationFormState extends State<DoctorKycRegistrationForm> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Basic Info
-              _buildLabel(l10n.fullNameLabel),
-              const SizedBox(height: 8),
-              TextFormField(
+              AppTextField(
                 controller: _nameController,
                 enabled: !state.isLoading,
-                decoration: InputDecoration(
-                  hintText: l10n.fullNameHint,
-                  prefixIcon: const Icon(Icons.person_outline),
-                ),
-                validator: (v) => v!.isEmpty ? l10n.requiredField : null,
+                labelText: l10n.full_name_label,
+                hintText: l10n.full_name_hint,
+                prefixIcon: Icon(Icons.person_outline, color: context.colors.textHint),
+                validator: (v) => v!.isEmpty ? l10n.required_field : null,
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: context.spacing.m),
 
-              _buildLabel(l10n.emailLabel),
-              const SizedBox(height: 8),
-              TextFormField(
+              AppTextField(
                 controller: _emailController,
                 enabled: !state.isLoading,
+                labelText: l10n.email_label,
+                hintText: l10n.email_hint,
                 keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  hintText: l10n.emailHint,
-                  prefixIcon: const Icon(Icons.email_outlined),
-                ),
-                validator: (v) => (v!.isEmpty || !v.contains('@')) ? l10n.invalidEmail : null,
+                prefixIcon: Icon(Icons.email_outlined, color: context.colors.textHint),
+                validator: (v) => (v!.isEmpty || !v.contains('@')) ? l10n.invalid_email : null,
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: context.spacing.m),
 
-              _buildLabel(l10n.passwordLabel),
-              const SizedBox(height: 8),
-              TextFormField(
+              AppTextField(
                 controller: _passwordController,
                 enabled: !state.isLoading,
+                labelText: l10n.password_label,
+                hintText: l10n.password_hint,
                 obscureText: true,
-                decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.lock_outline),
-                ),
-                validator: (v) => v!.length < 6 ? l10n.passwordShort : null,
+                prefixIcon: Icon(Icons.lock_outline, color: context.colors.textHint),
+                validator: (v) => v!.length < 6 ? l10n.password_too_short : null,
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: context.spacing.l),
 
               // B2B KYC Fields
-              _buildLabel(l10n.hospitalLabel),
+              Text(
+                l10n.hospital_label,
+                style: context.textStyles.subtitle.copyWith(
+                  color: context.colors.textPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 value: _selectedHospital,
-                decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.local_hospital_outlined),
+                decoration: InputDecoration(
+                  hintText: l10n.hospital_hint,
+                  prefixIcon: Icon(Icons.local_hospital_outlined, color: context.colors.textHint),
                 ),
                 items: _hospitals.map((h) => DropdownMenuItem(value: h, child: Text(h))).toList(),
                 onChanged: state.isLoading ? null : (val) => setState(() => _selectedHospital = val),
-                 validator: (v) => v == null ? l10n.requiredField : null,
+                 validator: (v) => v == null ? l10n.required_field : null,
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: context.spacing.l),
 
               // Certification Uploads (Mock buttons)
-              _buildKycUploadButton(l10n.idUploadLabel, Icons.badge_outlined, state.isLoading),
-              const SizedBox(height: 12),
-              _buildKycUploadButton(l10n.degreeUploadLabel, Icons.school_outlined, state.isLoading),
-              const SizedBox(height: 24),
+              _buildKycUploadButton(l10n.upload_id_card, Icons.badge_outlined, state.isLoading),
+              SizedBox(height: context.spacing.s),
+              _buildKycUploadButton(l10n.upload_medical_cert, Icons.school_outlined, state.isLoading),
+              SizedBox(height: context.spacing.l),
 
               // Terms & Conditions
               TermsAndConditionsCheckbox(
                 value: _termsAccepted,
                 onChanged: (val) => setState(() => _termsAccepted = val ?? false),
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: context.spacing.xl),
 
               // Final Submit Button
-              ElevatedButton(
-                onPressed: state.isLoading ? null : _submit,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: theme.colorScheme.onPrimary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 0,
-                ),
-                child: state.isLoading
-                    ? const SizedBox(
-                        height: 24,
-                        width: 24,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                      )
-                    : Text(
-                        l10n.submitButton,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
+              AppButton(
+                text: l10n.create_account_button,
+                onPressed: _submit,
+                isLoading: state.isLoading,
               ),
             ],
           ),
@@ -176,25 +165,18 @@ class _DoctorKycRegistrationFormState extends State<DoctorKycRegistrationForm> {
     );
   }
 
-  Widget _buildLabel(String text) {
-    return Text(
-      text,
-      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-    );
-  }
-
   Widget _buildKycUploadButton(String label, IconData icon, bool isLoading) {
-    final theme = Theme.of(context);
     return OutlinedButton.icon(
       onPressed: isLoading ? null : () {}, // Mock upload logic
-      icon: Icon(icon, size: 20),
-      label: Text(label),
+      icon: Icon(icon, size: 20, color: context.colors.primary),
+      label: Text(
+        label,
+        style: context.textStyles.body.copyWith(color: context.colors.primary),
+      ),
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 14),
-        side: BorderSide(color: theme.colorScheme.primary.withOpacity(0.5)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        side: BorderSide(color: context.colors.primary.withOpacity(0.5)),
+        shape: RoundedRectangleBorder(borderRadius: context.radius.mRadius),
       ),
     );
   }

@@ -29,7 +29,7 @@ class ApproveDoctorAccountUseCase extends AuthorizedUseCase<void, ApproveDoctorP
       await repository.approveDoctor(params.targetDoctorUid, params.targetTenantId);
       return const Right(null);
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return Left(ServerFailure(message: e.toString()));
     }
   }
 }

@@ -1,12 +1,15 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../controllers/auth_controller.dart';
 
 import 'sign_up_event.dart';
 import 'sign_up_state.dart';
 
 class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
-  SignUpBloc() : super(const SignUpState()) {
+  final AuthController authController;
+
+  SignUpBloc({required this.authController}) : super(const SignUpState()) {
     on<ToggleRoleEvent>(_onToggleRole);
-    on<ToggleLanguageEvent>(_onToggleLanguage); // Handling language toggle
+    on<ToggleLanguageEvent>(_onToggleLanguage);
     on<SubmitPatientRegistration>(_onSubmitPatient);
     on<SubmitDoctorRegistration>(_onSubmitDoctor);
   }
@@ -25,15 +28,19 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
   ) async {
     emit(state.copyWith(isLoading: true, error: null));
     
-    // Simulate generic B2C API / Auth registration delay
-    await Future.delayed(const Duration(seconds: 2));
-
     try {
-      if (event.phoneNumber.isEmpty || event.fullName.isEmpty) {
-        throw Exception(state.isEnglish ? "Please fill out all required fields." : "Vui lòng điền đầy đủ các thông tin bắt buộc.");
+      final success = await authController.register(
+        name: event.fullName,
+        phone: event.phoneNumber,
+        password: 'default_password', // In real app, this should come from UI
+        role: 'patient',
+      );
+
+      if (success) {
+        emit(state.copyWith(isLoading: false, isSuccess: true));
+      } else {
+        throw Exception(authController.errorMessage ?? "Registration failed");
       }
-      
-      emit(state.copyWith(isLoading: false, isSuccess: true));
     } catch (e) {
       emit(state.copyWith(
         isLoading: false,
@@ -48,15 +55,23 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
   ) async {
     emit(state.copyWith(isLoading: true, error: null));
 
-    // Simulate extensive B2B KYC API uploads and processing delay
-    await Future.delayed(const Duration(seconds: 3));
-
     try {
-      if (event.email.isEmpty || event.password.isEmpty || event.targetHospitalId.isEmpty) {
-        throw Exception(state.isEnglish ? "Missing required KYC fields or credentials." : "Thiếu các thông tin KYC bắt buộc hoặc tài khoản.");
-      }
+      final success = await authController.register(
+        name: event.fullName,
+        phone: '', // Doctors use email/password in this mock
+        password: event.password,
+        role: 'doctor',
+        hospitalId: event.targetHospitalId,
+        // In real app, upload files first and get URLs
+        idCardUrl: 'mock_id_url',
+        medicalCertUrl: 'mock_cert_url',
+      );
 
-      emit(state.copyWith(isLoading: false, isSuccess: true));
+      if (success) {
+        emit(state.copyWith(isLoading: false, isSuccess: true));
+      } else {
+        throw Exception(authController.errorMessage ?? "Registration failed");
+      }
     } catch (e) {
       emit(state.copyWith(
         isLoading: false,

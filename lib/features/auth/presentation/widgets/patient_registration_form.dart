@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:smart_clinic_booking/l10n/app_localizations.dart';
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_text_field.dart';
+import '../../../../core/extensions/context_extension.dart';
 
 import '../bloc/sign_up_bloc.dart';
 import '../bloc/sign_up_event.dart';
 import '../bloc/sign_up_state.dart';
-import 'auth_localizations.dart';
 import 'terms_and_conditions_checkbox.dart';
 
 class PatientRegistrationForm extends StatefulWidget {
@@ -29,11 +32,14 @@ class _PatientRegistrationFormState extends State<PatientRegistrationForm> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
+      final l10n = AppLocalizations.of(context)!;
       if (!_termsAccepted) {
-        final state = context.read<SignUpBloc>().state;
-        final l10n = AuthLocalizations(state.isEnglish);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.mustAcceptTerms)),
+          SnackBar(
+            content: Text(l10n.must_accept_terms),
+            backgroundColor: context.colors.warning,
+            behavior: SnackBarBehavior.floating,
+          ),
         );
         return;
       }
@@ -51,8 +57,7 @@ class _PatientRegistrationFormState extends State<PatientRegistrationForm> {
   Widget build(BuildContext context) {
     return BlocBuilder<SignUpBloc, SignUpState>(
       builder: (context, state) {
-        final l10n = AuthLocalizations(state.isEnglish);
-        final theme = Theme.of(context);
+        final l10n = AppLocalizations.of(context)!;
 
         return Form(
           key: _formKey,
@@ -60,77 +65,47 @@ class _PatientRegistrationFormState extends State<PatientRegistrationForm> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Full Name field
-              _buildLabel(l10n.fullNameLabel),
-              const SizedBox(height: 8),
-              TextFormField(
+              AppTextField(
                 controller: _nameController,
                 enabled: !state.isLoading,
-                decoration: InputDecoration(
-                  hintText: l10n.fullNameHint,
-                  prefixIcon: const Icon(Icons.person_outline),
-                ),
+                labelText: l10n.full_name_label,
+                hintText: l10n.full_name_hint,
+                prefixIcon: Icon(Icons.person_outline, color: context.colors.textHint),
                 validator: (value) => 
-                  (value == null || value.isEmpty) ? l10n.requiredField : null,
+                  (value == null || value.isEmpty) ? l10n.required_field : null,
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: context.spacing.m),
 
               // Phone number field
-              _buildLabel(l10n.phoneLabel),
-              const SizedBox(height: 8),
-              TextFormField(
+              AppTextField(
                 controller: _phoneController,
                 enabled: !state.isLoading,
+                labelText: l10n.phone_label,
+                hintText: l10n.phone_hint,
                 keyboardType: TextInputType.phone,
-                decoration: InputDecoration(
-                  hintText: l10n.phoneHint,
-                  prefixIcon: const Icon(Icons.phone_outlined),
-                ),
+                prefixIcon: Icon(Icons.phone_outlined, color: context.colors.textHint),
                 validator: (value) => 
-                  (value == null || value.isEmpty) ? l10n.requiredField : null,
+                  (value == null || value.isEmpty) ? l10n.required_field : null,
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: context.spacing.m),
 
               // Terms & Conditions
               TermsAndConditionsCheckbox(
                 value: _termsAccepted,
                 onChanged: (val) => setState(() => _termsAccepted = val ?? false),
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: context.spacing.xl),
 
               // Final Submit Button
-              ElevatedButton(
-                onPressed: state.isLoading ? null : _submit,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: theme.colorScheme.onPrimary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 0,
-                ),
-                child: state.isLoading
-                    ? const SizedBox(
-                        height: 24,
-                        width: 24,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                      )
-                    : Text(
-                        l10n.submitButton,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
+              AppButton(
+                text: l10n.create_account_button,
+                onPressed: _submit,
+                isLoading: state.isLoading,
               ),
             ],
           ),
         );
       },
-    );
-  }
-
-  Widget _buildLabel(String text) {
-    return Text(
-      text,
-      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
     );
   }
 }

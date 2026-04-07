@@ -72,4 +72,46 @@ class AppointmentController extends ChangeNotifier {
       return false;
     }
   }
+
+  // --- Advanced Booking Logic ---
+
+  Future<bool> rescheduleAppointment(String id, DateTime newDate, String newTime) async {
+    try {
+      isLoading = true;
+      notifyListeners();
+      
+      // Update appointment via repository
+      await repository.rescheduleAppointment(id, newDate, newTime);
+      
+      final index = appointments.indexWhere((a) => a.id == id);
+      if (index != -1) {
+        appointments[index] = appointments[index].copyWith(dateTime: newDate);
+      }
+      return true;
+    } catch (e) {
+      errorMessage = 'Không thể đổi lịch hẹn';
+      return false;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> autoCancelIfUnpaid(String id) async {
+    // Logic: If not paid within 15 mins, cancel
+    await Future.delayed(const Duration(minutes: 15));
+    final appointment = appointments.firstWhere((a) => a.id == id);
+    if (appointment.status == 'pending_payment') {
+      await cancelAppointment(id);
+    }
+  }
+
+  Future<bool> lockSlot(String doctorId, DateTime date, String time) async {
+    // Optimistic locking for slots
+    try {
+      return await repository.lockSlot(doctorId, date, time);
+    } catch (e) {
+      return false;
+    }
+  }
 }

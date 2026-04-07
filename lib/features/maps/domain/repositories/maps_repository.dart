@@ -1,5 +1,5 @@
-import '../entities/clinic_entity.dart';
+import '../entities/hospital_entity.dart';
 
 abstract class MapsRepository {
-  Future<List<ClinicEntity>> getClinics();
+  Future<List<HospitalEntity>> getHospitals();
 }

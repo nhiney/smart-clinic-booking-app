@@ -19,17 +19,23 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<UserEntity> register(
-    String name,
-    String phone,
-    String password, {
-    String role = 'patient',
+  Future<UserEntity> register({
+    required String name,
+    required String phone,
+    required String password,
+    required String role,
+    String? hospitalId,
+    String? idCardUrl,
+    String? medicalCertUrl,
   }) async {
     return await remoteDatasource.register(
       name: name,
       phone: phone,
       password: password,
       role: role,
+      hospitalId: hospitalId,
+      idCardUrl: idCardUrl,
+      medicalCertUrl: medicalCertUrl,
     );
   }
 

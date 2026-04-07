@@ -44,20 +44,28 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  Future<bool> register(
-    String name,
-    String phone,
-    String password,
-  ) async {
+  Future<bool> register({
+    required String name,
+    required String phone,
+    required String password,
+    String? role,
+    String? hospitalId,
+    String? idCardUrl,
+    String? medicalCertUrl,
+  }) async {
     try {
       isLoading = true;
       errorMessage = null;
       notifyListeners();
 
       currentUser = await registerUseCase(
-        name,
-        phone,
-        password,
+        name: name,
+        phone: phone,
+        password: password,
+        role: role ?? 'patient',
+        hospitalId: hospitalId,
+        idCardUrl: idCardUrl,
+        medicalCertUrl: medicalCertUrl,
       );
 
       return true;
