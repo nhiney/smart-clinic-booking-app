@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
+import '../extensions/context_extension.dart';
 import 'icare_logo.dart';
 
 class BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -29,7 +29,7 @@ class BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: backgroundColor ?? AppColors.background,
+      backgroundColor: backgroundColor ?? context.colors.background,
       elevation: elevation,
       centerTitle: centerTitle,
       leadingWidth: leadingWidth ?? (leading != null ? 100 : 56),
@@ -48,19 +48,16 @@ class BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
           if (title != null)
             Text(
               title!,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
+              style: context.textStyles.heading3.copyWith(
+                color: context.colors.textPrimary,
               ),
             )
           else
-            const Text(
+            Text(
               "ICARE",
-              style: TextStyle(
-                color: AppColors.primaryDark,
+              style: context.textStyles.heading2.copyWith(
+                color: context.colors.primaryDark,
                 fontWeight: FontWeight.w900,
-                fontSize: 20,
                 letterSpacing: 1.2,
               ),
             ),

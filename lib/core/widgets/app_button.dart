@@ -1,40 +1,60 @@
 import 'package:flutter/material.dart';
+import '../extensions/context_extension.dart';
+import '../theme/radius/app_radius.dart';
+import '../theme/typography/app_text_styles.dart';
 
 class AppButton extends StatelessWidget {
   final String text;
-  final VoidCallback onPressed;
-  final bool loading;
+  final VoidCallback? onPressed;
+  final bool isLoading;
+  final Color? backgroundColor;
+  final Color? foregroundColor;
+  final double? width;
+  final double height;
+  final bool isSecondary;
 
   const AppButton({
     super.key,
     required this.text,
-    required this.onPressed,
-    this.loading = false,
+    this.onPressed,
+    this.isLoading = false,
+    this.backgroundColor,
+    this.foregroundColor,
+    this.width,
+    this.height = 56,
+    this.isSecondary = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final bgColor = backgroundColor ?? (isSecondary ? context.colors.secondary : context.colors.primary);
+    final fgColor = foregroundColor ?? Colors.white;
+
     return SizedBox(
-      width: double.infinity,
-      height: 50,
+      width: width ?? double.infinity,
+      height: height,
       child: ElevatedButton(
-        onPressed: loading ? null : onPressed,
+        onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue,
+          backgroundColor: bgColor,
+          foregroundColor: fgColor,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: AppRadius.mRadius,
           ),
+          elevation: 0,
         ),
-        child: loading
-            ? const CircularProgressIndicator(
-                color: Colors.white,
+        child: isLoading
+            ? const SizedBox(
+                height: 24,
+                width: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
               )
             : Text(
                 text,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: AppTextStyles.button.copyWith(color: fgColor),
               ),
       ),
     );

@@ -1,13 +1,19 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' hide ChangeNotifierProvider;
+
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:smart_clinic_booking/l10n/app_localizations.dart';
+import 'core/localization/language_service.dart';
+import 'core/localization/language_controller.dart';
+import 'core/localization/app_language.dart';
 
 import 'firebase_options.dart';
-import 'core/theme/app_theme.dart';
+import 'core/theme/theme/app_theme.dart';
 import 'config/dependency_injection/injection.dart';
 import 'core/router/app_router.dart';
 import 'core/services/app_config_service.dart';
@@ -30,10 +36,6 @@ import 'features/doctor/presentation/controllers/doctor_controller.dart';
 import 'features/appointment/domain/repositories/appointment_repository.dart';
 import 'features/appointment/presentation/controllers/appointment_controller.dart';
 
-// Medical Record
-import 'features/medical_record/domain/repositories/medical_record_repository.dart';
-import 'features/medical_record/presentation/controllers/medical_record_controller.dart';
-
 // Medication
 import 'features/medication/domain/repositories/medication_repository.dart';
 import 'features/medication/presentation/controllers/medication_controller.dart';
@@ -44,33 +46,22 @@ import 'features/profile/presentation/controllers/profile_controller.dart';
 
 // Maps
 import 'features/maps/domain/repositories/maps_repository.dart';
-import 'features/maps/presentation/controllers/maps_controller.dart';
 
 // Notification
 import 'features/notification/domain/repositories/notification_repository.dart';
 import 'features/notification/presentation/controllers/notification_controller.dart';
 
 // Screens
-import 'features/auth/presentation/screens/splash_screen.dart';
-import 'features/auth/presentation/screens/login_screen.dart';
-import 'features/auth/presentation/screens/register_screen.dart';
-import 'features/home/presentation/screens/home_screen.dart';
+import 'features/appointment/domain/usecases/get_appointments_usecase.dart';
+import 'features/doctor/domain/usecases/get_doctors_usecase.dart';
+
+// Home
 import 'features/home/presentation/bloc/home_bloc_handler.dart';
 import 'features/home/data/datasources/home_remote_datasource.dart';
 import 'features/home/data/repositories/home_repository_impl.dart';
 import 'features/home/domain/usecases/get_health_summary_usecase.dart';
 import 'features/home/domain/usecases/medication_usecases.dart';
 import 'features/home/domain/usecases/get_health_news_usecase.dart';
-import 'features/doctor/presentation/screens/doctor_list_screen.dart';
-import 'features/appointment/presentation/screens/appointment_history_screen.dart';
-import 'features/medical_record/presentation/screens/medical_record_list_screen.dart';
-import 'features/medication/presentation/screens/medication_screen.dart';
-import 'features/profile/presentation/screens/profile_screen.dart';
-import 'features/maps/presentation/screens/clinic_map_screen.dart';
-import 'features/notification/presentation/screens/notification_screen.dart';
-import 'features/auth/presentation/screens/onboarding_screen.dart';
-import 'features/appointment/domain/usecases/get_appointments_usecase.dart';
-import 'features/doctor/domain/usecases/get_doctors_usecase.dart';
 
 
 Future<void> main() async {
@@ -113,6 +104,9 @@ Future<void> main() async {
   // Initialize Dependency Injection
   await configureDependencies();
 
+  // Initialize Localization
+  await LanguageService.init();
+
   // Initialize Dynamic Configuration (Firestore)
   await getIt<AppConfigService>().initialize();
 
@@ -140,16 +134,10 @@ Future<void> main() async {
           create: (_) => AppointmentController(repository: getIt<AppointmentRepository>()),
         ),
         ChangeNotifierProvider(
-          create: (_) => MedicalRecordController(repository: getIt<MedicalRecordRepository>()),
-        ),
-        ChangeNotifierProvider(
           create: (_) => MedicationController(repository: getIt<MedicationRepository>()),
         ),
         ChangeNotifierProvider(
           create: (_) => ProfileController(repository: getIt<ProfileRepository>()),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => MapsController(repository: getIt<MapsRepository>()),
         ),
         ChangeNotifierProvider(
           create: (_) => NotificationController(repository: getIt<NotificationRepository>()),
@@ -168,24 +156,50 @@ Future<void> main() async {
           },
         ),
         BlocProvider<SignUpBloc>(
-          create: (_) => SignUpBloc(),
+          create: (context) => SignUpBloc(authController: context.read<AuthController>()),
         ),
       ],
-      child: const MyApp(),
+      child: const ProviderScope(child: MyApp()),
     ),
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final language = ref.watch(languageControllerProvider);
+
     return MaterialApp.router(
       title: 'ICare',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.light, // Change to system if you want automatic dark mode
       routerConfig: appRouter,
+      locale: language.locale,
+      supportedLocales: const [
+        Locale('vi'),
+        Locale('en'),
+        Locale('zh'),
+        Locale('ja'),
+        Locale('ko'),
+      ],
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      localeResolutionCallback: (locale, supportedLocales) {
+        for (var supportedLocale in supportedLocales) {
+          if (supportedLocale.languageCode == locale?.languageCode) {
+            return supportedLocale;
+          }
+        }
+        return supportedLocales.first;
+      },
     );
   }
 }

@@ -1,31 +1,50 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
     
-    // Function to verify if user is a super admin
+    match /doctors/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || request.auth.uid == docId);
+    }
+    
     function isSuperAdmin() {
-      return request.auth != null && request.auth.token.role == 'super_admin';
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isDoctor() {
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'doctor';
     }
 
     match /doctor_applications/{userId} {
-      // Unverified Doctors can only read and create their own application securely
       allow read, create: if request.auth != null && request.auth.uid == userId;
-      // Admins can read all applications for verification 
       allow read: if isSuperAdmin();
-      // No updates directly from the client. Update must happen via Cloud Functions!
       allow update, delete: if false; 
     }
 
-    match /verification_audit_logs/{logId} {
-      // ONLY allow reading by admins.
-      // NO WRITING ALLOWED FROM ANY CLIENT. (Written strictly by admin SDK in Cloud Functions).
-      allow read: if isSuperAdmin();
-      allow write: if false; 
+    // --- HL7 FHIR RESOURCES ---
+    match /patients/{patientId} {
+      allow read: if request.auth != null && (request.auth.uid == patientId || isDoctor() || isSuperAdmin());
+      allow write: if isSuperAdmin();
     }
-    
-    // Add strict default deny for unmatched paths
+
+    match /encounters/{encounterId} {
+      allow read: if request.auth != null && (
+        resource.data.subject.reference == 'Patient/' + request.auth.uid || 
+        isDoctor() || isSuperAdmin()
+      );
+      allow create: if isDoctor();
+      allow update: if request.auth != null && (
+        isDoctor() || isSuperAdmin()
+      );
+    }
+
+    // Default Deny
     match /{document=**} {
-      allow read, write: if false;
+      allow read, write: if request.auth != null && (request.auth.uid == resource.data.userId || isSuperAdmin());
     }
   }
 }

@@ -10,6 +10,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   lottie: ^3.1.0
   cupertino_icons: ^1.0.8
 
@@ -22,8 +24,19 @@ dependencies:
   # Error Handling
   dartz: ^0.10.1
 
+  # Firebase
+  firebase_core: ^3.11.0
+  firebase_auth: ^5.5.0
+  cloud_firestore: ^5.6.1
+  firebase_messaging: ^15.2.2
+  firebase_storage: ^12.4.0
+  cloud_functions: ^5.2.0
+  # Maps & Location
+  google_maps_flutter: ^2.5.3
+  geolocator: ^11.0.1
+  geocoding: ^3.0.0
+
   # Push Notifications
-  firebase_messaging: ^16.1.3
   flutter_local_notifications: ^18.0.1
 
   # Dependency Injection
@@ -45,7 +58,7 @@ dependencies:
   json_annotation: ^4.9.0
 
   # Utils
-  intl: ^0.19.0
+  intl: ^0.20.2
   logger: ^2.3.0
   uuid: ^4.3.3
   url_launcher: ^6.2.5
@@ -55,23 +68,24 @@ dependencies:
   cached_network_image: ^3.3.1
   shimmer: ^3.0.0
   table_calendar: ^3.1.0
+  qr_flutter: ^4.1.0
+  crypto: ^3.0.6
 
   # Form validation
   formz: ^0.7.0
 
-  # Firebase
-  firebase_core: ^4.6.0
-  firebase_auth: ^6.3.0
-  cloud_firestore: ^6.2.0
-  firebase_storage: 
-  cloud_functions: 
-
-  # Maps (free - OpenStreetMap)
-  flutter_map: ^6.1.0
-  latlong2: ^0.9.1
-
   # Image
   image_picker: ^1.1.0
+  sqflite: ^2.4.2
+  path: ^1.9.1
+  path_provider: ^2.1.5
+  flutter_riverpod: ^2.6.1
+  connectivity_plus: ^7.1.0
+  timezone: ^0.10.1
+  speech_to_text: ^7.3.0
+  flutter_tts: ^4.2.5
+  permission_handler: ^12.0.1
+  skeletonizer: ^2.1.3
 
 dev_dependencies:
   flutter_test:
@@ -86,9 +100,11 @@ dev_dependencies:
   hive_generator: ^2.0.1
 
 flutter:
+  generate: true
   uses-material-design: true
 
   assets:
     - assets/images/
     - assets/icons/
     - assets/fonts/
+    - assets/animations/

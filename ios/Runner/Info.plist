@@ -4,6 +4,14 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Ứng dụng cần quyền truy cập Microphone để thực hiện các lệnh điều khiển bằng giọng nói.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Ứng dụng cần quyền nhận diện giọng nói để chuyển đổi khẩu lệnh của bạn thành văn bản.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Ứng dụng cần quyền truy cập vị trí để tìm bệnh viện gần bạn nhất.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Ứng dụng cần quyền truy cập vị trí để tìm bệnh viện gần bạn nhất.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

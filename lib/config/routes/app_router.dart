@@ -108,6 +108,14 @@ class AppRouter {
           ),
         ),
       ),
+      GoRoute(
+        path: '/maps',
+        builder: (context, state) {
+          // Dynamic load to prevent parsing dependency if not imported
+          // But safe to import it at top since GoRouter usually is bundled
+          return const Scaffold();
+        },
+      ),
     ],
   );
 }
