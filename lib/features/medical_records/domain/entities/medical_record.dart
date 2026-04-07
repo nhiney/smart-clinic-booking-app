@@ -1,6 +1,13 @@
 import 'package:equatable/equatable.dart';
+import 'attachment.dart';
 
-enum MedicalRecordType { lab, prescription, general }
+enum MedicalRecordType {
+  prescription,
+  labResult,
+  imaging,
+  vitals,
+  other,
+}
 
 class MedicalRecord extends Equatable {
   final String id;
@@ -8,9 +15,10 @@ class MedicalRecord extends Equatable {
   final String doctorId;
   final String diagnosis;
   final MedicalRecordType type;
-  final List<String> attachments;
-  final int version;
+  final String notes;
   final DateTime createdAt;
+  final DateTime updatedAt;
+  final List<Attachment> attachments;
 
   const MedicalRecord({
     required this.id,
@@ -18,9 +26,10 @@ class MedicalRecord extends Equatable {
     required this.doctorId,
     required this.diagnosis,
     required this.type,
-    required this.attachments,
-    required this.version,
+    required this.notes,
     required this.createdAt,
+    required this.updatedAt,
+    this.attachments = const [],
   });
 
   @override
@@ -30,8 +39,9 @@ class MedicalRecord extends Equatable {
         doctorId,
         diagnosis,
         type,
-        attachments,
-        version,
+        notes,
         createdAt,
+        updatedAt,
+        attachments,
       ];
 }

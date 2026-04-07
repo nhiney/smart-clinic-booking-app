@@ -6,6 +6,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../shared/widgets/empty_state_widget.dart';
 import '../../../../shared/widgets/loading_widget.dart';
 import '../../domain/entities/notification_entity.dart';
+import '../../domain/entities/notification_data_entities.dart';
 import '../controllers/notification_controller.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../../core/widgets/branded_app_bar.dart';
@@ -17,10 +18,13 @@ class NotificationScreen extends StatefulWidget {
   State<NotificationScreen> createState() => _NotificationScreenState();
 }
 
-class _NotificationScreenState extends State<NotificationScreen> {
+class _NotificationScreenState extends State<NotificationScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = context.read<AuthController>();
       if (auth.currentUser != null) {
@@ -29,26 +33,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
     });
   }
 
-  IconData _getNotificationIcon(String type) {
-    switch (type) {
-      case 'appointment':
-        return Icons.calendar_today;
-      case 'medication':
-        return Icons.medication;
-      default:
-        return Icons.notifications;
-    }
-  }
-
-  Color _getNotificationColor(String type) {
-    switch (type) {
-      case 'appointment':
-        return AppColors.primary;
-      case 'medication':
-        return AppColors.success;
-      default:
-        return AppColors.info;
-    }
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
@@ -56,7 +44,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: BrandedAppBar(
-        title: "Thông báo",
+        title: "Trung tâm Thông báo",
         actions: [
           Consumer<NotificationController>(
             builder: (_, controller, __) {
@@ -78,35 +66,145 @@ class _NotificationScreenState extends State<NotificationScreen> {
             },
           ),
         ],
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: AppColors.primary,
+          unselectedLabelColor: Colors.grey,
+          indicatorColor: AppColors.primary,
+          tabs: const [
+            Tab(text: "Thông báo Push"),
+            Tab(text: "Lịch sử SMS/Email"),
+          ],
+        ),
       ),
       body: Consumer<NotificationController>(
         builder: (_, controller, __) {
           if (controller.isLoading) {
             return const LoadingWidget(itemCount: 4);
           }
-          if (controller.notifications.isEmpty) {
-            return const EmptyStateWidget(
-              icon: Icons.notifications_off_outlined,
-              title: "Chưa có thông báo",
-              subtitle: "Bạn sẽ nhận thông báo khi có lịch hẹn hoặc nhắc thuốc",
-            );
-          }
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: controller.notifications.length,
-            itemBuilder: (context, index) {
-              final notification = controller.notifications[index];
-              return _buildNotificationCard(notification, controller);
-            },
+          return TabBarView(
+            controller: _tabController,
+            children: [
+              _buildPushNotificationsTab(controller),
+              _buildCommunicationLogsTab(controller),
+            ],
           );
         },
       ),
     );
   }
 
+  Widget _buildPushNotificationsTab(NotificationController controller) {
+    if (controller.notifications.isEmpty) {
+      return const EmptyStateWidget(
+        icon: Icons.notifications_off_outlined,
+        title: "Chưa có thông báo",
+        subtitle: "Bạn sẽ nhận thông báo khi có lịch hẹn hoặc nhắc thuốc",
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: controller.notifications.length,
+      itemBuilder: (context, index) {
+        final notification = controller.notifications[index];
+        return _buildNotificationCard(notification, controller);
+      },
+    );
+  }
+
+  Widget _buildCommunicationLogsTab(NotificationController controller) {
+    if (controller.notificationLogs.isEmpty) {
+      return const EmptyStateWidget(
+        icon: Icons.history_edu_outlined,
+        title: "Chưa có liên lạc",
+        subtitle: "Các tin nhắn SMS và Email giả lập sẽ được lưu tại đây (\$0 phí)",
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: controller.notificationLogs.length,
+      itemBuilder: (context, index) {
+        final log = controller.notificationLogs[index];
+        return _buildCommunicationLogCard(log);
+      },
+    );
+  }
+
+  Widget _buildCommunicationLogCard(NotificationLogEntity log) {
+    final isEmail = log.type == 'email';
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            backgroundColor: isEmail ? Colors.blue.withOpacity(0.1) : Colors.green.withOpacity(0.1),
+            child: Icon(
+              isEmail ? Icons.email_outlined : Icons.sms_outlined,
+              color: isEmail ? Colors.blue : Colors.green,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      isEmail ? "Email Đã Log" : "SMS Đã Log",
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                    Text(
+                      DateFormat('HH:mm, dd/MM').format(log.createdAt),
+                      style: TextStyle(color: Colors.grey[400], fontSize: 11),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "Đến: ${log.recipient}",
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  log.content,
+                  style: const TextStyle(fontSize: 14, color: Colors.black87),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildNotificationCard(NotificationEntity notification, NotificationController controller) {
-    final color = _getNotificationColor(notification.type);
-    final icon = _getNotificationIcon(notification.type);
+    // Legacy mapping or expansion
+    IconData icon = Icons.notifications;
+    Color color = AppColors.primary;
+    
+    if (notification.type == 'appointment') {
+      icon = Icons.calendar_today;
+      color = AppColors.primary;
+    } else if (notification.type == 'medication') {
+      icon = Icons.medication;
+      color = AppColors.success;
+    } else if (notification.type == 'admission') {
+      icon = Icons.hotel_outlined;
+      color = Colors.orange;
+    }
 
     return Dismissible(
       key: Key(notification.id),

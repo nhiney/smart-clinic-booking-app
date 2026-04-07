@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/notification_entity.dart';
+import '../../domain/entities/notification_data_entities.dart';
 import '../../domain/repositories/notification_repository.dart';
 
 class NotificationController extends ChangeNotifier {
@@ -8,6 +9,8 @@ class NotificationController extends ChangeNotifier {
   NotificationController({required this.repository});
 
   List<NotificationEntity> notifications = [];
+  List<NotificationLogEntity> notificationLogs = [];
+  UserBehaviorEntity? userBehavior;
   bool isLoading = false;
   String? errorMessage;
 
@@ -20,12 +23,32 @@ class NotificationController extends ChangeNotifier {
       notifyListeners();
 
       notifications = await repository.getNotifications(userId);
+      notificationLogs = await repository.getNotificationLogs(userId);
+      userBehavior = await repository.getUserBehavior(userId);
     } catch (e) {
       errorMessage = 'Không thể tải thông báo';
     } finally {
       isLoading = false;
       notifyListeners();
     }
+  }
+
+  // Smart Escalation Logic ($0 cost)
+  Future<void> trackMissedAppointment(String userId) async {
+    final current = await repository.getUserBehavior(userId);
+    final count = (current?.missedAppointmentsCount ?? 0) + 1;
+    final multiplier = count > 2 ? 2.0 : 1.0;
+
+    final updated = UserBehaviorEntity(
+      userId: userId,
+      missedAppointmentsCount: count,
+      urgencyMultiplier: multiplier,
+      lastUpdated: DateTime.now(),
+    );
+
+    await repository.updateUserBehavior(updated);
+    userBehavior = updated;
+    notifyListeners();
   }
 
   Future<void> markAsRead(String id) async {

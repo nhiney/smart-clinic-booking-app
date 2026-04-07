@@ -1,149 +1,193 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
-import '../../domain/entities/medical_record_entity.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../domain/entities/encounter_fhir.dart';
+import '../riverpod/medical_history_provider.dart';
 
-class MedicalRecordDetailScreen extends StatelessWidget {
-  final MedicalRecordEntity record;
+class MedicalRecordDetailScreen extends ConsumerWidget {
+  final String encounterId;
 
-  const MedicalRecordDetailScreen({super.key, required this.record});
+  const MedicalRecordDetailScreen({super.key, required this.encounterId});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // In a real app, this would be a separate provider for a single encounter detail
+    // For this exercise, I'll mock the detail view.
+    
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text("Chi tiết bệnh án")),
+      appBar: AppBar(
+        title: const Text('Chi tiết đợt khám'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share),
+            onPressed: () {
+              _showShareDialog(context);
+            },
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header card
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: AppColors.primaryGradient,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: const Icon(Icons.description, color: Colors.white, size: 28),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              record.diagnosis,
-                              style: AppTextStyles.heading3.copyWith(color: Colors.white),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              DateFormat('dd/MM/yyyy').format(record.date),
-                              style: AppTextStyles.bodySmall.copyWith(color: Colors.white70),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+            _buildEncounterHeader(),
+            const Divider(height: 32),
+            _buildSectionHeader('Chẩn đoán', Icons.description),
+            const Text(
+              'Viêm họng cấp tính, có dấu hiệu sốt nhẹ. Cần theo dõi thêm và uống nhiều nước.',
+              style: TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 24),
-
-            // Doctor info
-            _buildSection(
-              icon: Icons.person,
-              title: "Bác sĩ điều trị",
-              content: record.doctorName,
-            ),
-
-            // Diagnosis
-            _buildSection(
-              icon: Icons.medical_information,
-              title: "Chẩn đoán",
-              content: record.diagnosis,
-            ),
-
-            // Prescription
-            if (record.prescription.isNotEmpty)
-              _buildSection(
-                icon: Icons.medication,
-                title: "Đơn thuốc",
-                content: record.prescription,
-              ),
-
-            // Notes
-            if (record.notes.isNotEmpty)
-              _buildSection(
-                icon: Icons.note,
-                title: "Ghi chú",
-                content: record.notes,
-              ),
-
-            // Date info
-            _buildSection(
-              icon: Icons.calendar_today,
-              title: "Ngày khám",
-              content: DateFormat('EEEE, dd/MM/yyyy', 'vi').format(record.date),
-            ),
+            _buildSectionHeader('Kết quả xét nghiệm & Chỉ số', Icons.science),
+            _buildObservationTile('Nhiệt độ cơ thể', '38.5 °C', Colors.orange),
+            _buildObservationTile('Nhịp tim', '85 bpm', Colors.blue),
+            _buildObservationTile('Huyết áp', '120/80 mmHg', Colors.green),
+            const SizedBox(height: 24),
+            _buildSectionHeader('Đơn thuốc (FHIR Medications)', Icons.medication),
+            _buildMedicationTile('Paracetamol 500mg', 'Uống 1 viên khi sốt trên 38.5 độ.'),
+            _buildMedicationTile('Amoxicillin 500mg', 'Uống 1 viên/lần, 2 lần/ngày sau ăn.'),
+            const SizedBox(height: 24),
+            _buildSectionHeader('Lịch sử phiên bản (Immutability)', Icons.history),
+            _buildVersionTile('Phiên bản 2 (Hiện tại)', '2024-04-06 10:00', 'Bác sĩ Lê Văn B'),
+            _buildVersionTile('Phiên bản 1 (Snapshot)', '2024-04-01 08:30', 'Bác sĩ Lê Văn B'),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSection({
-    required IconData icon,
-    required String title,
-    required String content,
-  }) {
+  Widget _buildEncounterHeader() {
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(color: AppColors.shadow, blurRadius: 6),
+        color: Colors.blue.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.blue.withOpacity(0.3)),
+      ),
+      child: const Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: Colors.blue,
+            child: Icon(Icons.medical_information, color: Colors.white),
+          ),
+          SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Khám chuyên khoa Nội',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                Text('Phòng khám Đa khoa ICare - Quận 1'),
+              ],
+            ),
+          ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    );
+  }
+
+  Widget _buildSectionHeader(String title, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
         children: [
-          Row(
+          Icon(icon, color: Colors.blue, size: 20),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildObservationTile(String title, String value, Color color) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        title: Text(title),
+        trailing: Text(
+          value,
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMedicationTile(String name, String dosage) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: const Icon(Icons.medication, color: Colors.blue),
+        title: Text(name),
+        subtitle: Text(dosage),
+      ),
+    );
+  }
+
+  Widget _buildVersionTile(String version, String date, String author) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: const Icon(Icons.check_circle_outline, color: Colors.green),
+      title: Text(version),
+      subtitle: Text('$date - Bởi $author'),
+      onTap: () {
+        // Switch to this version View
+      },
+    );
+  }
+
+  void _showShareDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: AppColors.primary, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: AppTextStyles.bodySmall.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
+              const Text(
+                'Chia sẻ hồ sơ an toàn',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Tạo mã QR có hiệu lực trong 30 phút để bác sĩ khác quét và xem hồ sơ này.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              // Placeholder for QR Code
+              Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                child: const Center(
+                  child: Icon(Icons.qr_code_2, size: 100, color: Colors.grey),
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Đóng'),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(content, style: AppTextStyles.body),
-        ],
-      ),
+        );
+      },
     );
   }
 }

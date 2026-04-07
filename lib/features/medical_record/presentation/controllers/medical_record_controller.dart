@@ -1,43 +1,49 @@
-import 'package:flutter/material.dart';
-import '../../domain/entities/medical_record_entity.dart';
-import '../../domain/repositories/medical_record_repository.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smart_clinic_booking/features/medical_record/domain/entities/medical_record_entity.dart';
+import 'package:smart_clinic_booking/features/medical_record/domain/repositories/medical_record_repository.dart';
+import 'package:smart_clinic_booking/features/medical_record/data/repositories/medical_record_repository_impl.dart';
+import '../riverpod/medical_history_provider.dart';
 
-class MedicalRecordController extends ChangeNotifier {
+class MedicalRecordState {
+  final bool isLoading;
+  final List<MedicalRecordEntity> records;
+  final String? error;
+
+  MedicalRecordState({
+    this.isLoading = false,
+    this.records = const [],
+    this.error,
+  });
+
+  MedicalRecordState copyWith({
+    bool? isLoading,
+    List<MedicalRecordEntity>? records,
+    String? error,
+  }) {
+    return MedicalRecordState(
+      isLoading: isLoading ?? this.isLoading,
+      records: records ?? this.records,
+      error: error,
+    );
+  }
+}
+
+final medicalRecordControllerProvider = StateNotifierProvider<MedicalRecordController, MedicalRecordState>((ref) {
+  return MedicalRecordController(repository: ref.watch(medicalRecordRepositoryProvider));
+});
+
+class MedicalRecordController extends StateNotifier<MedicalRecordState> {
   final MedicalRecordRepository repository;
 
-  MedicalRecordController({required this.repository});
+  MedicalRecordController({required this.repository}) : super(MedicalRecordState());
 
-  List<MedicalRecordEntity> records = [];
-  MedicalRecordEntity? selectedRecord;
-  bool isLoading = false;
-  String? errorMessage;
-
-  Future<void> loadRecords(String patientId) async {
+  Future<void> fetchRecords(String userId) async {
+    state = state.copyWith(isLoading: true, error: null);
     try {
-      isLoading = true;
-      errorMessage = null;
-      notifyListeners();
-
-      records = await repository.getRecordsByPatient(patientId);
+      final records = await repository.getMedicalRecords(userId);
+      state = state.copyWith(isLoading: false, records: records);
     } catch (e) {
-      errorMessage = 'Không thể tải hồ sơ bệnh án';
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  Future<void> loadRecordDetail(String id) async {
-    try {
-      isLoading = true;
-      notifyListeners();
-
-      selectedRecord = await repository.getRecordById(id);
-    } catch (e) {
-      errorMessage = 'Không thể tải chi tiết bệnh án';
-    } finally {
-      isLoading = false;
-      notifyListeners();
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 }
