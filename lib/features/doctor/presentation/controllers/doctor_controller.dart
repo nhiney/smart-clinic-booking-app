@@ -1,81 +1,93 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../domain/entities/doctor_entity.dart';
 import '../../domain/repositories/doctor_repository.dart';
+import '../../../../core/services/file_storage_service.dart';
 
 class DoctorController extends ChangeNotifier {
-  final DoctorRepository repository;
+  final DoctorRepository doctorRepository;
+  final FileStorageService storageService;
 
-  DoctorController({required this.repository});
+  DoctorController({
+    required this.doctorRepository,
+    required this.storageService,
+  });
 
-  List<DoctorEntity> doctors = [];
-  List<DoctorEntity> filteredDoctors = [];
-  DoctorEntity? selectedDoctor;
   bool isLoading = false;
   String? errorMessage;
-  String searchQuery = '';
-  String selectedSpecialty = '';
+  DoctorEntity? currentDoctor;
 
-  final List<String> specialties = [
-    'Tất cả',
-    'Tim mạch',
-    'Da liễu',
-    'Thần kinh',
-    'Nhi khoa',
-    'Mắt',
-    'Tai mũi họng',
-    'Nội khoa',
-    'Ngoại khoa',
-  ];
-
-  Future<void> loadDoctors() async {
+  Future<void> fetchDoctorProfile(String doctorId) async {
     try {
       isLoading = true;
-      errorMessage = null;
       notifyListeners();
-
-      doctors = await repository.getDoctors();
-      filteredDoctors = List.from(doctors);
+      currentDoctor = await doctorRepository.getDoctorProfile(doctorId);
     } catch (e) {
-      errorMessage = 'Không thể tải danh sách bác sĩ';
+      errorMessage = e.toString();
     } finally {
       isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<void> loadDoctorDetail(String id) async {
+  Future<void> updateProfile(DoctorEntity updatedDoctor) async {
     try {
       isLoading = true;
       notifyListeners();
-
-      selectedDoctor = await repository.getDoctorById(id);
+      await doctorRepository.updateDoctorProfile(updatedDoctor);
+      currentDoctor = updatedDoctor;
     } catch (e) {
-      errorMessage = 'Không thể tải thông tin bác sĩ';
+      errorMessage = e.toString();
     } finally {
       isLoading = false;
       notifyListeners();
     }
   }
 
-  void searchDoctorsLocal(String query) {
-    searchQuery = query;
-    _applyFilters();
-  }
+  Future<void> pickAndUploadResume(String doctorId) async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
 
-  void filterBySpecialty(String specialty) {
-    selectedSpecialty = specialty == 'Tất cả' ? '' : specialty;
-    _applyFilters();
-  }
+      if (result != null && result.files.single.path != null) {
+        isLoading = true;
+        notifyListeners();
 
-  void _applyFilters() {
-    filteredDoctors = doctors.where((doctor) {
-      final matchesSearch = searchQuery.isEmpty ||
-          doctor.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
-          doctor.specialty.toLowerCase().contains(searchQuery.toLowerCase());
-      final matchesSpecialty = selectedSpecialty.isEmpty ||
-          doctor.specialty == selectedSpecialty;
-      return matchesSearch && matchesSpecialty;
-    }).toList();
-    notifyListeners();
+        final file = File(result.files.single.path!);
+        final downloadUrl = await storageService.uploadDoctorResume(
+          doctorId: doctorId,
+          file: file,
+        );
+
+        // Update local state and Firestore
+        final updatedDoctor = DoctorEntity(
+          id: currentDoctor!.id,
+          name: currentDoctor!.name,
+          specialty: currentDoctor!.specialty,
+          experience: currentDoctor!.experience,
+          about: currentDoctor!.about,
+          resumePdfUrl: downloadUrl,
+          departmentId: currentDoctor!.departmentId,
+        );
+
+        await doctorRepository.assignDoctorToDepartment(
+          doctorId: doctorId,
+          hospitalId: currentDoctor!.hospital,
+          departmentId: currentDoctor!.departmentId,
+          // resumePdfUrl should be added to the assignment/update logic in repository
+        );
+        
+        // Better: implement a specific updateResumeUrl in repo
+        currentDoctor = updatedDoctor;
+      }
+    } catch (e) {
+      errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 }

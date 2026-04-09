@@ -14,6 +14,10 @@ class AppTextField extends StatelessWidget {
   final String? Function(String?)? validator;
   final bool enabled;
   final int? maxLines;
+  final int? maxLength;
+  final bool showCounter;
+  final TextAlign textAlign;
+  final TextStyle? style;
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onFieldSubmitted;
 
@@ -29,6 +33,10 @@ class AppTextField extends StatelessWidget {
     this.validator,
     this.enabled = true,
     this.maxLines = 1,
+    this.maxLength,
+    this.showCounter = true,
+    this.textAlign = TextAlign.start,
+    this.style,
     this.textInputAction,
     this.onFieldSubmitted,
   });
@@ -55,14 +63,17 @@ class AppTextField extends StatelessWidget {
           validator: validator,
           enabled: enabled,
           maxLines: maxLines,
+          maxLength: maxLength,
+          textAlign: textAlign,
           textInputAction: textInputAction,
           onFieldSubmitted: onFieldSubmitted,
-          style: AppTextStyles.body.copyWith(color: context.colors.textPrimary),
+          style: style ?? AppTextStyles.body.copyWith(color: context.colors.textPrimary),
           decoration: InputDecoration(
             hintText: hintText,
             hintStyle: AppTextStyles.bodySmall.copyWith(color: context.colors.textHint),
             prefixIcon: prefixIcon,
             suffixIcon: suffixIcon,
+            counterText: showCounter ? null : "",
             filled: true,
             fillColor: context.colors.surface,
             contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),

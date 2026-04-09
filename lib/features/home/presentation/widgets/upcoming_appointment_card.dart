@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:smart_clinic_booking/features/appointment/domain/entities/appointment_entity.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/theme/colors/app_colors.dart';
+import '../../../../core/theme/typography/app_text_styles.dart';
 import '../../../appointment/domain/entities/appointment_entity.dart';
 
 /// Section 3: Upcoming Appointment — next scheduled appointment with actions.
@@ -26,7 +27,10 @@ class UpcomingAppointmentCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionTitle(title: 'Lịch hẹn sắp tới', actionText: 'Xem tất cả', onAction: onViewAll),
+        _SectionTitle(
+            title: 'Lịch hẹn sắp tới',
+            actionText: 'Xem tất cả',
+            onAction: onViewAll),
         const SizedBox(height: 12),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -63,7 +67,8 @@ class _AppointmentItem extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.blue.withValues(alpha: 0.1), width: 1.5),
+        border:
+            Border.all(color: Colors.blue.withValues(alpha: 0.1), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.03),
@@ -85,7 +90,8 @@ class _AppointmentItem extends StatelessWidget {
                   color: AppColors.primarySurface,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(Icons.person_rounded, color: AppColors.primary, size: 30),
+                child: const Icon(Icons.person_rounded,
+                    color: AppColors.primary, size: 30),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -124,7 +130,8 @@ class _AppointmentItem extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.calendar_today_rounded, color: AppColors.primary, size: 18),
+                const Icon(Icons.calendar_today_rounded,
+                    color: AppColors.primary, size: 18),
                 const SizedBox(width: 10),
                 Text(
                   dateFormatter.format(appointment.dateTime),
@@ -135,7 +142,8 @@ class _AppointmentItem extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                const Icon(Icons.access_time_rounded, color: AppColors.primary, size: 18),
+                const Icon(Icons.access_time_rounded,
+                    color: AppColors.primary, size: 18),
                 const SizedBox(width: 10),
                 Text(
                   timeFormatter.format(appointment.dateTime),
@@ -157,10 +165,13 @@ class _AppointmentItem extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF607D8B),
                     side: BorderSide(color: Colors.grey.shade300),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
                     minimumSize: const Size(double.infinity, 50),
                   ),
-                  child: const Text('Hủy', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  child: const Text('Hủy',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 ),
               ),
               const SizedBox(width: 12),
@@ -171,10 +182,13 @@ class _AppointmentItem extends StatelessWidget {
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
                     minimumSize: const Size(double.infinity, 50),
                   ),
-                  child: const Text('Đổi lịch', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  child: const Text('Đổi lịch',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 ),
               ),
             ],
@@ -210,22 +224,53 @@ class _StatusChip extends StatelessWidget {
   }
 
   Color _getStatusColor(String s) {
-    switch (s) {
-      case 'confirmed': return const Color(0xFF4CAF50);
-      case 'pending': return const Color(0xFFFF9800);
-      case 'completed': return const Color(0xFF2196F3);
-      case 'cancelled': return const Color(0xFFF44336);
-      default: return Colors.grey;
+    switch (AppointmentStatuses.normalize(s)) {
+      case AppointmentStatuses.confirmed:
+      case AppointmentStatuses.checkedIn:
+      case AppointmentStatuses.inQueue:
+      case AppointmentStatuses.inConsultation:
+      case AppointmentStatuses.postConsultation:
+        return const Color(0xFF4CAF50);
+      case AppointmentStatuses.pendingBooking:
+      case AppointmentStatuses.booked:
+      case AppointmentStatuses.rescheduled:
+        return const Color(0xFFFF9800);
+      case AppointmentStatuses.completed:
+        return const Color(0xFF2196F3);
+      case AppointmentStatuses.cancelled:
+      case AppointmentStatuses.noShow:
+      case AppointmentStatuses.noShowPending:
+        return const Color(0xFFF44336);
+      default:
+        return Colors.grey;
     }
   }
 
   String _formatStatus(String s) {
-    switch (s) {
-      case 'confirmed': return 'Đã xác nhận';
-      case 'pending': return 'Chờ';
-      case 'completed': return 'Xong';
-      case 'cancelled': return 'Hủy';
-      default: return s;
+    switch (AppointmentStatuses.normalize(s)) {
+      case AppointmentStatuses.confirmed:
+        return 'Da xac nhan';
+      case AppointmentStatuses.pendingBooking:
+        return 'Cho dat lich';
+      case AppointmentStatuses.booked:
+        return 'Da dat';
+      case AppointmentStatuses.checkedIn:
+        return 'Da check-in';
+      case AppointmentStatuses.inQueue:
+        return 'Dang cho';
+      case AppointmentStatuses.inConsultation:
+        return 'Dang kham';
+      case AppointmentStatuses.postConsultation:
+        return 'Sau kham';
+      case AppointmentStatuses.completed:
+        return 'Xong';
+      case AppointmentStatuses.cancelled:
+        return 'Huy';
+      case AppointmentStatuses.noShow:
+      case AppointmentStatuses.noShowPending:
+        return 'Vang mat';
+      default:
+        return s;
     }
   }
 }
@@ -247,7 +292,8 @@ class _EmptyState extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Icon(Icons.calendar_today_outlined, size: 40, color: AppColors.primary),
+          const Icon(Icons.calendar_today_outlined,
+              size: 40, color: AppColors.primary),
           const SizedBox(height: 12),
           Text('Chưa có lịch hẹn nào', style: AppTextStyles.subtitle),
           const SizedBox(height: 4),
@@ -259,10 +305,12 @@ class _EmptyState extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
-            child: const Text('Đặt lịch ngay', style: TextStyle(fontWeight: FontWeight.w600)),
+            child: const Text('Đặt lịch ngay',
+                style: TextStyle(fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -275,7 +323,8 @@ class _SectionTitle extends StatelessWidget {
   final String actionText;
   final VoidCallback onAction;
 
-  const _SectionTitle({required this.title, required this.actionText, required this.onAction});
+  const _SectionTitle(
+      {required this.title, required this.actionText, required this.onAction});
 
   @override
   Widget build(BuildContext context) {
@@ -286,7 +335,8 @@ class _SectionTitle extends StatelessWidget {
           Expanded(child: Text(title, style: AppTextStyles.heading3)),
           TextButton(
             onPressed: onAction,
-            child: Text(actionText, style: AppTextStyles.link.copyWith(fontSize: 13)),
+            child: Text(actionText,
+                style: AppTextStyles.link.copyWith(fontSize: 13)),
           ),
         ],
       ),

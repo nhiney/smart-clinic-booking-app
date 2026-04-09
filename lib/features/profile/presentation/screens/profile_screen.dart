@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import '../../../../core/theme/colors/app_colors.dart';
+import '../../../../core/theme/typography/app_text_styles.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
-import '../../../auth/presentation/screens/login_screen.dart';
 import '../controllers/profile_controller.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../../core/widgets/branded_app_bar.dart';
-import '../../../../core/widgets/icare_logo.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -98,6 +97,11 @@ class ProfileScreen extends StatelessWidget {
                   icon: Icons.medication_outlined,
                   title: "Nhắc uống thuốc",
                   onTap: () => Navigator.pushNamed(context, '/medication'),
+                ),
+                _buildMenuItem(
+                  icon: Icons.qr_code_2_rounded,
+                  title: "Tạo mã QR đăng nhập thiết bị khác",
+                  onTap: () => _showQrLoginDialog(context),
                 ),
                 const SizedBox(height: 24),
 
@@ -229,6 +233,40 @@ class ProfileScreen extends StatelessWidget {
             },
             child: const Text("Cập nhật"),
           ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showQrLoginDialog(BuildContext context) async {
+    final authController = context.read<AuthController>();
+    final qrData = await authController.createQrLoginToken(persistent: true);
+    if (!context.mounted) return;
+    if (qrData == null || (qrData['token'] as String?)?.isEmpty != false) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(authController.errorMessage ?? 'Không thể tạo mã QR đăng nhập.')),
+      );
+      return;
+    }
+
+    final token = qrData['token'] as String;
+    final expiresAt = qrData['expiresAt'] as String? ?? '';
+    final payload = 'icare://qr-login?token=$token';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Mã QR đăng nhập'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            QrImageView(data: payload, version: QrVersions.auto, size: 200),
+            const SizedBox(height: 12),
+            Text('Hết hạn: $expiresAt', textAlign: TextAlign.center),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Đóng')),
         ],
       ),
     );

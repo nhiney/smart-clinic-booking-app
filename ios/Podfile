@@ -46,8 +46,8 @@ post_install do |installer|
       # Fix duplicate libraries '-lc++'
       config.build_settings['OTHER_LDFLAGS'] = ['$(inherited)']
 
-      # Fix arm64 simulator issue
-      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+      # iOS 26+ simulators on Apple Silicon require arm64.
+      # Do not exclude arm64 for iphonesimulator builds.
 
       # Minimum deployment target
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'

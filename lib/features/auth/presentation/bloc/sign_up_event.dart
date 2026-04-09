@@ -4,12 +4,31 @@ abstract class SignUpEvent extends Equatable {
   const SignUpEvent();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class ToggleRoleEvent extends SignUpEvent {}
 
-class ToggleLanguageEvent extends SignUpEvent {} // Event for multi-language toggle
+class ToggleLanguageEvent extends SignUpEvent {}
+
+class VerifyPhoneEvent extends SignUpEvent {
+  final String phoneNumber;
+  final String? fullName;
+
+  const VerifyPhoneEvent(this.phoneNumber, {this.fullName});
+
+  @override
+  List<Object?> get props => [phoneNumber, fullName];
+}
+
+class VerifyOtpEvent extends SignUpEvent {
+  final String smsCode;
+
+  const VerifyOtpEvent(this.smsCode);
+
+  @override
+  List<Object> get props => [smsCode];
+}
 
 class SubmitPatientRegistration extends SignUpEvent {
   final String phoneNumber;
@@ -21,7 +40,7 @@ class SubmitPatientRegistration extends SignUpEvent {
   });
 
   @override
-  List<Object> get props => [phoneNumber, fullName];
+  List<Object?> get props => [phoneNumber, fullName];
 }
 
 class SubmitDoctorRegistration extends SignUpEvent {
@@ -38,5 +57,5 @@ class SubmitDoctorRegistration extends SignUpEvent {
   });
 
   @override
-  List<Object> get props => [email, password, fullName, targetHospitalId];
+  List<Object?> get props => [email, password, fullName, targetHospitalId];
 }

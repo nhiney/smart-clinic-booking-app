@@ -1,52 +1,47 @@
 import 'package:flutter/material.dart';
-import 'app_logo.dart';
+import '../extensions/context_extension.dart';
+import '../../l10n/app_localizations.dart';
+import 'icare_logo.dart';
 
 class AuthHeader extends StatelessWidget {
-  final String title;
-  final String subtitle;
-
-  const AuthHeader({
-    super.key,
-    required this.title,
-    required this.subtitle,
-  });
+  const AuthHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final l10n = AppLocalizations.of(context)!;
+
+    return SizedBox(
       width: double.infinity,
-      padding: const EdgeInsets.only(top: 60, bottom: 30),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Color(0xFF1976D2),
-            Color(0xFF42A5F5),
-          ],
-        ),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(40),
-          bottomRight: Radius.circular(40),
-        ),
-      ),
-      child: Column(
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          const AppLogo(),
-          const SizedBox(height: 20),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+          // Keep the app title perfectly centered.
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                l10n.welcome_to,
+                style: context.textStyles.bodyBold.copyWith(
+                  color: context.colors.textPrimary,
+                  fontSize: 18,
+                ),
+              ),
+              Text(
+                'ICARE',
+                style: context.textStyles.heading2.copyWith(
+                  color: context.colors.primary,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 24,
+                  height: 1.0,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 6),
-          Text(
-            subtitle,
-            style: const TextStyle(
-              color: Colors.white70,
-            ),
-          )
+          // Move logo to the left so it doesn't push title off-center.
+          const Positioned(
+            left: 0,
+            child: ICareLogo(size: 96, showText: false),
+          ),
         ],
       ),
     );

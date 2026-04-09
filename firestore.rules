@@ -2,49 +2,88 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // --- Helper Functions ---
+    
+    // Check if user is signed in
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Get user data from Firestore
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Check if user is the owner of the document
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Check if user has a specific role
+    function hasRole(role) {
+      return isSignedIn() && getUserData().role == role;
+    }
+
+    // Check if user is an Admin
+    function isAdmin() {
+      return hasRole('ADMIN');
+    }
+
+    // --- ICare Collections ---
+
+    // User profiles
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if isOwner(userId) || isAdmin() || (!isSignedIn() && request.query.limit == 1);
+      allow create: if isSignedIn();
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
     }
-    
-    match /doctors/{docId} {
+
+    // Detailed doctor information
+    match /doctors/{doctorId} {
+      allow read: if true; 
+      allow create: if isAdmin();
+      allow update: if isAdmin() || isOwner(doctorId);
+      allow delete: if isAdmin();
+    }
+
+    // Hospital Facility Hierarchy
+    match /hospitals/{hospitalId} {
       allow read: if true;
-      allow write: if request.auth != null && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || request.auth.uid == docId);
-    }
-    
-    function isSuperAdmin() {
-      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow write: if isAdmin();
     }
 
-    function isDoctor() {
-      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'doctor';
+    match /departments/{deptId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
-    match /doctor_applications/{userId} {
-      allow read, create: if request.auth != null && request.auth.uid == userId;
-      allow read: if isSuperAdmin();
-      allow update, delete: if false; 
+    match /rooms/{roomId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
-    // --- HL7 FHIR RESOURCES ---
-    match /patients/{patientId} {
-      allow read: if request.auth != null && (request.auth.uid == patientId || isDoctor() || isSuperAdmin());
-      allow write: if isSuperAdmin();
+    match /equipments/{equipId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
 
-    match /encounters/{encounterId} {
-      allow read: if request.auth != null && (
-        resource.data.subject.reference == 'Patient/' + request.auth.uid || 
-        isDoctor() || isSuperAdmin()
-      );
-      allow create: if isDoctor();
-      allow update: if request.auth != null && (
-        isDoctor() || isSuperAdmin()
-      );
+    // Sessions and Audit Logs (from previous rules, maintaining for compatibility)
+    match /sessions/{sessionId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isSignedIn();
+      allow update: if isOwner(resource.data.userId);
+    }
+
+    match /audit_logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn();
     }
 
     // Default Deny
     match /{document=**} {
-      allow read, write: if request.auth != null && (request.auth.uid == resource.data.userId || isSuperAdmin());
+      allow read: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
+      allow write: if isAdmin();
     }
   }
 }

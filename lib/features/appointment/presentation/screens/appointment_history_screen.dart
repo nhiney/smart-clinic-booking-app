@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/colors/app_colors.dart';
 import '../../../../shared/widgets/appointment_card.dart';
 import '../../../../shared/widgets/empty_state_widget.dart';
 import '../../../../shared/widgets/loading_widget.dart';
@@ -12,7 +12,8 @@ class AppointmentHistoryScreen extends StatefulWidget {
   const AppointmentHistoryScreen({super.key});
 
   @override
-  State<AppointmentHistoryScreen> createState() => _AppointmentHistoryScreenState();
+  State<AppointmentHistoryScreen> createState() =>
+      _AppointmentHistoryScreenState();
 }
 
 class _AppointmentHistoryScreenState extends State<AppointmentHistoryScreen>
@@ -26,7 +27,9 @@ class _AppointmentHistoryScreenState extends State<AppointmentHistoryScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = context.read<AuthController>();
       if (auth.currentUser != null) {
-        context.read<AppointmentController>().loadAppointments(auth.currentUser!.id);
+        context
+            .read<AppointmentController>()
+            .loadAppointments(auth.currentUser!.id);
       }
     });
   }
@@ -48,7 +51,8 @@ class _AppointmentHistoryScreenState extends State<AppointmentHistoryScreen>
           indicatorColor: AppColors.primary,
           labelColor: AppColors.primary,
           unselectedLabelColor: AppColors.textSecondary,
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          labelStyle:
+              const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
           tabs: const [
             Tab(text: "Sắp tới"),
             Tab(text: "Hoàn thành"),
@@ -65,9 +69,12 @@ class _AppointmentHistoryScreenState extends State<AppointmentHistoryScreen>
           return TabBarView(
             controller: _tabController,
             children: [
-              _buildAppointmentList(controller.upcomingAppointments, "Chưa có lịch hẹn sắp tới", controller),
-              _buildAppointmentList(controller.completedAppointments, "Chưa có lịch hẹn đã hoàn thành", null),
-              _buildAppointmentList(controller.cancelledAppointments, "Chưa có lịch hẹn đã hủy", null),
+              _buildAppointmentList(controller.upcomingAppointments,
+                  "Chưa có lịch hẹn sắp tới", controller),
+              _buildAppointmentList(controller.completedAppointments,
+                  "Chưa có lịch hẹn đã hoàn thành", null),
+              _buildAppointmentList(controller.cancelledAppointments,
+                  "Chưa có lịch hẹn đã hủy", null),
             ],
           );
         },

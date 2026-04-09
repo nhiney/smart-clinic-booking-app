@@ -5,8 +5,9 @@ class InvoiceModel extends InvoiceEntity {
   const InvoiceModel({
     required super.id,
     required super.userId,
-    required super.items,
+    required super.services,
     required super.total,
+    required super.paymentId,
     required super.status,
     required super.createdAt,
   });
@@ -16,12 +17,13 @@ class InvoiceModel extends InvoiceEntity {
     return InvoiceModel(
       id: doc.id,
       userId: data['userId'] ?? '',
-      items: (data['items'] as List).map((i) => InvoiceItem(
+      services: (data['services'] as List).map((i) => InvoiceItem(
         name: i['name'],
         price: (i['price'] as num).toDouble(),
         quantity: i['quantity'] ?? 1,
       )).toList(),
       total: (data['total'] as num).toDouble(),
+      paymentId: data['paymentId'] ?? '',
       status: data['status'] ?? '',
       createdAt: (data['createdAt'] as Timestamp).toDate(),
     );
@@ -30,12 +32,13 @@ class InvoiceModel extends InvoiceEntity {
   Map<String, dynamic> toFirestore() {
     return {
       'userId': userId,
-      'items': items.map((i) => {
+      'services': services.map((i) => {
         'name': i.name,
         'price': i.price,
         'quantity': i.quantity,
       }).toList(),
       'total': total,
+      'paymentId': paymentId,
       'status': status,
       'createdAt': Timestamp.fromDate(createdAt),
     };

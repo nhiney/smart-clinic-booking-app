@@ -70,7 +70,7 @@ class _PatientRegistrationFormState extends State<PatientRegistrationForm> {
                 enabled: !state.isLoading,
                 labelText: l10n.full_name_label,
                 hintText: l10n.full_name_hint,
-                prefixIcon: Icon(Icons.person_outline, color: context.colors.textHint),
+                prefixIcon: Icon(Icons.person_outline, color: context.colors.primary),
                 validator: (value) => 
                   (value == null || value.isEmpty) ? l10n.required_field : null,
               ),
@@ -83,7 +83,7 @@ class _PatientRegistrationFormState extends State<PatientRegistrationForm> {
                 labelText: l10n.phone_label,
                 hintText: l10n.phone_hint,
                 keyboardType: TextInputType.phone,
-                prefixIcon: Icon(Icons.phone_outlined, color: context.colors.textHint),
+                prefixIcon: Icon(Icons.phone_outlined, color: context.colors.primary),
                 validator: (value) => 
                   (value == null || value.isEmpty) ? l10n.required_field : null,
               ),

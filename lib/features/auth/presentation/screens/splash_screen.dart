@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/colors/app_colors.dart';
 import 'onboarding_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -75,21 +75,9 @@ class _SplashScreenState extends State<SplashScreen>
                   opacity: _fadeAnimation,
                   child: ScaleTransition(
                     scale: _scaleAnimation,
-                    child: Container(
-                      width: 150,
-                      height: 150,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(35),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.15),
-                            blurRadius: 25,
-                            offset: const Offset(0, 12),
-                          ),
-                        ],
-                      ),
-                      padding: const EdgeInsets.all(20),
+                    child: SizedBox(
+                      width: 640,
+                      height: 640,
                       child: Image.asset(
                         'assets/images/logo.png',
                         fit: BoxFit.contain,

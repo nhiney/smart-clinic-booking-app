@@ -221,3 +221,78 @@ export const onDoctorApprovedEmail = functions.firestore
     }
     return null;
 });
+
+/**
+ * Callable Function: Create short-lived QR login token.
+ * Device 1 (already signed in) requests this token and displays QR.
+ */
+export const createQrLoginToken = functions.https.onCall(async (_data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Bạn cần đăng nhập để tạo QR.');
+  }
+
+  const persistent = Boolean(_data?.persistent);
+  const token = uuidv4();
+  const uid = context.auth.uid;
+  const expiresAt = admin.firestore.Timestamp.fromMillis(
+    Date.now() + (persistent ? 365 * 24 * 60 * 60 * 1000 : 60 * 1000)
+  );
+
+  await db.collection('qr_login_tokens').doc(token).set({
+    token,
+    uid,
+    status: 'active',
+    persistent,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    expiresAt,
+  });
+
+  return {
+    token,
+    expiresAt: expiresAt.toDate().toISOString(),
+  };
+});
+
+/**
+ * Callable Function: Exchange QR token into Firebase custom token.
+ * Device 2 scans QR and calls this function.
+ */
+export const exchangeQrLoginToken = functions.https.onCall(async (data, _context) => {
+  const token = data?.token as string | undefined;
+  if (!token) {
+    throw new functions.https.HttpsError('invalid-argument', 'Thiếu token đăng nhập QR.');
+  }
+
+  const tokenRef = db.collection('qr_login_tokens').doc(token);
+  const tokenDoc = await tokenRef.get();
+  if (!tokenDoc.exists) {
+    throw new functions.https.HttpsError('not-found', 'Mã QR không tồn tại.');
+  }
+
+  const tokenData = tokenDoc.data();
+  const uid = tokenData?.uid as string | undefined;
+  const expiresAt = tokenData?.expiresAt as admin.firestore.Timestamp | undefined;
+  const status = tokenData?.status as string | undefined;
+
+  if (!uid || !expiresAt) {
+    throw new functions.https.HttpsError('failed-precondition', 'Dữ liệu token QR không hợp lệ.');
+  }
+  if (status !== 'active') {
+    throw new functions.https.HttpsError('failed-precondition', 'Mã QR đã được sử dụng hoặc bị vô hiệu.');
+  }
+  if (expiresAt.toMillis() < Date.now()) {
+    await tokenRef.update({ status: 'expired' });
+    throw new functions.https.HttpsError('deadline-exceeded', 'Mã QR đã hết hạn.');
+  }
+
+  const persistent = Boolean(tokenData?.persistent);
+  if (!persistent) {
+    await tokenRef.update({
+      status: 'consumed',
+      consumedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  const customToken = await admin.auth().createCustomToken(uid);
+  return { customToken };
+});

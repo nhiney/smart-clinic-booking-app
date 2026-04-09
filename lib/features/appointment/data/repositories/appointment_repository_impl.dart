@@ -9,12 +9,14 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   AppointmentRepositoryImpl(this.remoteDatasource);
 
   @override
-  Future<List<AppointmentEntity>> getAppointmentsByPatient(String patientId) async {
+  Future<List<AppointmentEntity>> getAppointmentsByPatient(
+      String patientId) async {
     return await remoteDatasource.getAppointmentsByPatient(patientId);
   }
 
   @override
-  Future<AppointmentEntity> createAppointment(AppointmentEntity appointment) async {
+  Future<AppointmentEntity> createAppointment(
+      AppointmentEntity appointment) async {
     final model = AppointmentModel(
       id: '',
       patientId: appointment.patientId,
@@ -23,9 +25,17 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
       doctorName: appointment.doctorName,
       specialty: appointment.specialty,
       dateTime: appointment.dateTime,
-      status: appointment.status,
+      status: appointment.normalizedStatus,
       notes: appointment.notes,
       createdAt: DateTime.now(),
+      queueNumber: appointment.queueNumber,
+      estimatedWaitTimeMinutes: appointment.estimatedWaitTimeMinutes,
+      checkInToken: appointment.checkInToken,
+      paymentStatus: appointment.paymentStatus,
+      priorityLevel: appointment.priorityLevel,
+      statusUpdatedAt: DateTime.now(),
+      checkedInAt: appointment.checkedInAt,
+      completedAt: appointment.completedAt,
     );
     return await remoteDatasource.createAppointment(model);
   }
@@ -41,14 +51,13 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   }
 
   @override
-  Future<void> rescheduleAppointment(String id, DateTime newDate, String newTime) async {
-    // For now, we update the main dateTime field. In a real app, this might be separate.
-    await remoteDatasource.updateAppointmentStatus(id, 'rescheduled');
+  Future<void> rescheduleAppointment(
+      String id, DateTime newDate, String newTime) async {
+    await remoteDatasource.rescheduleAppointment(id, newDate);
   }
 
   @override
   Future<bool> lockSlot(String doctorId, DateTime date, String time) async {
-    // Placeholder implementation
-    return true;
+    return await remoteDatasource.lockSlot(doctorId, date, '');
   }
 }

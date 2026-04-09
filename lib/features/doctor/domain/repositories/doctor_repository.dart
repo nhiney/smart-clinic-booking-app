@@ -2,7 +2,12 @@ import '../../domain/entities/doctor_entity.dart';
 
 abstract class DoctorRepository {
   Future<List<DoctorEntity>> getDoctors();
-  Future<DoctorEntity?> getDoctorById(String id);
-  Future<List<DoctorEntity>> searchDoctors(String query);
-  Future<List<DoctorEntity>> getDoctorsBySpecialty(String specialty);
+  Future<List<DoctorEntity>> getUnassignedDoctors();
+  Future<void> assignDoctorToDepartment({
+    required String doctorId,
+    required String hospitalId,
+    required String departmentId,
+  });
+  Future<void> updateDoctorProfile(DoctorEntity doctor);
+  Future<DoctorEntity?> getDoctorProfile(String doctorId);
 }

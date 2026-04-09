@@ -4,21 +4,26 @@ import 'package:smart_clinic_booking/features/payment/domain/entities/transactio
 class PaymentService {
   final _random = Random();
 
-  Future<PaymentStatus> processPayment(PaymentMethod method, double amount) async {
+  Future<PaymentStatus> simulatePayment() async {
     // Simulate network delay
     await Future.delayed(const Duration(seconds: 2));
 
-    // Simulate 80% success rate
-    final isSuccess = _random.nextDouble() < 0.8;
-    
-    if (isSuccess) {
+    final roll = _random.nextDouble();
+
+    if (roll < 0.7) {
       return PaymentStatus.success;
-    } else {
+    } else if (roll < 0.9) {
       return PaymentStatus.failed;
+    } else {
+      return PaymentStatus.pending;
     }
   }
 
   String generateTransactionId() {
     return 'TXN${DateTime.now().millisecondsSinceEpoch}${_random.nextInt(1000)}';
+  }
+
+  String generatePaymentRequestId() {
+    return 'PAYREQ${DateTime.now().millisecondsSinceEpoch}${_random.nextInt(1000)}';
   }
 }

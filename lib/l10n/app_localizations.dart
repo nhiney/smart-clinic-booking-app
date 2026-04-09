@@ -104,6 +104,96 @@ abstract class AppLocalizations {
     Locale('zh')
   ];
 
+  /// No description provided for @back_button_text.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get back_button_text;
+
+  /// No description provided for @welcome_to.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to'**
+  String get welcome_to;
+
+  /// No description provided for @login_account.
+  ///
+  /// In en, this message translates to:
+  /// **'Login to Account'**
+  String get login_account;
+
+  /// No description provided for @staff_login_prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you a healthcare staff?'**
+  String get staff_login_prompt;
+
+  /// No description provided for @staff_login_link.
+  ///
+  /// In en, this message translates to:
+  /// **'Login here'**
+  String get staff_login_link;
+
+  /// No description provided for @save_login.
+  ///
+  /// In en, this message translates to:
+  /// **'Remember session'**
+  String get save_login;
+
+  /// No description provided for @staff_login_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Staff Login'**
+  String get staff_login_title;
+
+  /// No description provided for @or_label.
+  ///
+  /// In en, this message translates to:
+  /// **'or'**
+  String get or_label;
+
+  /// No description provided for @continue_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get continue_button;
+
+  /// No description provided for @onboarding_title_1.
+  ///
+  /// In en, this message translates to:
+  /// **'Fast Appointment Booking'**
+  String get onboarding_title_1;
+
+  /// No description provided for @onboarding_desc_1.
+  ///
+  /// In en, this message translates to:
+  /// **'Find the right doctor and book in just a few steps.'**
+  String get onboarding_desc_1;
+
+  /// No description provided for @onboarding_title_2.
+  ///
+  /// In en, this message translates to:
+  /// **'Flexible Consultation'**
+  String get onboarding_title_2;
+
+  /// No description provided for @onboarding_desc_2.
+  ///
+  /// In en, this message translates to:
+  /// **'Easily receive reminders and track your medical info.'**
+  String get onboarding_desc_2;
+
+  /// No description provided for @onboarding_title_3.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart Medical Records'**
+  String get onboarding_title_3;
+
+  /// No description provided for @onboarding_desc_3.
+  ///
+  /// In en, this message translates to:
+  /// **'Securely store health history and access it quickly.'**
+  String get onboarding_desc_3;
+
   /// No description provided for @login_title.
   ///
   /// In en, this message translates to:
@@ -251,8 +341,20 @@ abstract class AppLocalizations {
   /// No description provided for @agree_terms.
   ///
   /// In en, this message translates to:
-  /// **'I agree to the Terms and Conditions'**
+  /// **'I have read and fully agree to the Terms of Use'**
   String get agree_terms;
+
+  /// No description provided for @terms_and_conditions.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of Use'**
+  String get terms_and_conditions;
+
+  /// No description provided for @skip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get skip;
 
   /// No description provided for @create_account_button.
   ///
@@ -361,6 +463,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Korean'**
   String get language_korean;
+
+  /// No description provided for @register_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Register your account using your phone number'**
+  String get register_subtitle;
+
+  /// No description provided for @terms_agreement_text.
+  ///
+  /// In en, this message translates to:
+  /// **'By registering, I have read and agree to the Terms of Use'**
+  String get terms_agreement_text;
+
+  /// No description provided for @otp_title.
+  ///
+  /// In en, this message translates to:
+  /// **'OTP Verification'**
+  String get otp_title;
+
+  /// No description provided for @otp_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 6-digit OTP code'**
+  String get otp_hint;
+
+  /// No description provided for @create_password_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Password'**
+  String get create_password_title;
+
+  /// No description provided for @registration_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Account registered successfully!'**
+  String get registration_success;
+
+  /// No description provided for @invalid_otp.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid OTP code, please try again'**
+  String get invalid_otp;
+
+  /// No description provided for @password_validation_error.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must be at least 8 characters, including uppercase, lowercase and numbers'**
+  String get password_validation_error;
 }
 
 class _AppLocalizationsDelegate

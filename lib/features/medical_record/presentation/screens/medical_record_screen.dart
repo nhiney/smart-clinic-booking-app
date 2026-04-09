@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart' as legacy_provider;
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/theme/colors/app_colors.dart';
+import '../../../../core/theme/typography/app_text_styles.dart';
 import '../../../../core/widgets/branded_app_bar.dart';
+import '../../../../core/widgets/app_card.dart';
+import '../../../../core/extensions/context_extension.dart';
 import '../../../../shared/widgets/loading_widget.dart';
 import '../../../../shared/widgets/empty_state_widget.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../controllers/medical_record_controller.dart';
 import '../../domain/entities/medical_record_entity.dart';
+import 'package:intl/intl.dart';
 
 class MedicalRecordScreen extends ConsumerStatefulWidget {
   const MedicalRecordScreen({super.key});
@@ -22,11 +25,15 @@ class _MedicalRecordScreenState extends ConsumerState<MedicalRecordScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final auth = legacy_provider.Provider.of<AuthController>(context, listen: false);
-      if (auth.currentUser != null) {
-        ref.read(medicalRecordControllerProvider.notifier).fetchRecords(auth.currentUser!.id);
-      }
+      _refreshRecords();
     });
+  }
+
+  void _refreshRecords() {
+    final auth = legacy_provider.Provider.of<AuthController>(context, listen: false);
+    if (auth.currentUser != null) {
+      ref.read(medicalRecordControllerProvider.notifier).fetchRecords(auth.currentUser!.id);
+    }
   }
 
   @override
@@ -34,7 +41,7 @@ class _MedicalRecordScreenState extends ConsumerState<MedicalRecordScreen> {
     final state = ref.watch(medicalRecordControllerProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       appBar: const BrandedAppBar(title: "Hồ sơ khám bệnh"),
       body: state.isLoading
           ? const LoadingWidget(itemCount: 3)
@@ -43,21 +50,33 @@ class _MedicalRecordScreenState extends ConsumerState<MedicalRecordScreen> {
                   title: "Bạn chưa có hồ sơ khám bệnh nào.",
                   icon: Icons.medical_services_outlined,
                 )
-              : _buildTimeline(state.records),
+              : RefreshIndicator(
+                  onRefresh: () async {
+                    _refreshRecords();
+                  },
+                  child: _buildTimeline(context, state.records),
+                ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {}, // Add record logic
+        backgroundColor: context.colors.primary,
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
     );
   }
 
-  Widget _buildTimeline(List<MedicalRecordEntity> records) {
+  Widget _buildTimeline(BuildContext context, List<MedicalRecordEntity> records) {
     return ListView.builder(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(context.spacing.l),
       itemCount: records.length,
       itemBuilder: (context, index) {
         final record = records[index];
+        final isLast = index == records.length - 1;
         return IntrinsicHeight(
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildTimelineIndicator(index == records.length - 1),
-              Expanded(child: _buildRecordCard(record)),
+              _buildTimelineIndicator(context, isLast),
+              Expanded(child: _buildRecordCard(context, record)),
             ],
           ),
         );
@@ -65,7 +84,7 @@ class _MedicalRecordScreenState extends ConsumerState<MedicalRecordScreen> {
     );
   }
 
-  Widget _buildTimelineIndicator(bool isLast) {
+  Widget _buildTimelineIndicator(BuildContext context, bool isLast) {
     return SizedBox(
       width: 40,
       child: Column(
@@ -74,16 +93,16 @@ class _MedicalRecordScreenState extends ConsumerState<MedicalRecordScreen> {
             width: 16,
             height: 16,
             decoration: BoxDecoration(
-              color: AppColors.primary,
+              color: context.colors.primary,
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.primarySurface, width: 4),
+              border: Border.all(color: context.colors.primary.withOpacity(0.2), width: 4),
             ),
           ),
           if (!isLast)
             Expanded(
               child: Container(
                 width: 2,
-                color: AppColors.primary.withValues(alpha: 0.2),
+                color: context.colors.divider,
               ),
             ),
         ],
@@ -91,101 +110,120 @@ class _MedicalRecordScreenState extends ConsumerState<MedicalRecordScreen> {
     );
   }
 
-  Widget _buildRecordCard(MedicalRecordEntity record) {
+  Widget _buildRecordCard(BuildContext context, MedicalRecordEntity record) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 24),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
+      margin: EdgeInsets.only(bottom: context.spacing.l),
+      child: AppCard(
+        padding: EdgeInsets.all(context.spacing.m),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  DateFormat('dd/MM/yyyy').format(record.createdAt),
+                  style: context.textStyles.bodySmall.copyWith(color: context.colors.textHint),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: context.colors.primary.withOpacity(0.1),
+                    borderRadius: context.radius.sRadius,
+                  ),
+                  child: Text(
+                    "BS. ${record.doctor}",
+                    style: context.textStyles.caption.copyWith(
+                      color: context.colors.primary, 
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: context.spacing.m),
+            Text(
+              record.diagnosis, 
+              style: context.textStyles.bodyBold.copyWith(color: context.colors.textPrimary),
+            ),
+            SizedBox(height: context.spacing.s),
+            Text(
+              "Đơn thuốc: ${record.prescription}", 
+              style: context.textStyles.body.copyWith(color: context.colors.textSecondary),
+            ),
+            if (record.notes != null && record.notes!.isNotEmpty) ...[
+              Divider(height: context.spacing.l, color: context.colors.divider),
               Text(
-                "${record.date.day}/${record.date.month}/${record.date.year}",
-                style: AppTextStyles.bodySmall,
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.primarySurface,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  "BS. ${record.doctor}",
-                  style: const TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.bold),
-                ),
+                "Ghi chú: ${record.notes}", 
+                style: context.textStyles.bodySmall.copyWith(fontStyle: FontStyle.italic),
               ),
             ],
-          ),
-          const SizedBox(height: 12),
-          Text(record.diagnosis, style: AppTextStyles.bodyBold),
-          const SizedBox(height: 8),
-          Text("Đơn thuốc: ${record.prescription}", style: AppTextStyles.body),
-          const SizedBox(height: 12),
-          _buildAttachments(record),
-          if (record.notes != null) ...[
-            const SizedBox(height: 8),
-            Text("Ghi chú: ${record.notes}", style: AppTextStyles.bodySmall),
+            SizedBox(height: context.spacing.m),
+            _buildAttachments(context, record),
           ],
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildAttachments(MedicalRecordEntity record) {
+  Widget _buildAttachments(BuildContext context, MedicalRecordEntity record) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Tài liệu đính kèm (PDF, X-ray):", style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            _fileIcon(Icons.picture_as_pdf, "KetQua.pdf", Colors.redAccent),
-            const SizedBox(width: 12),
-            _fileIcon(Icons.image, "X-Ray.jpg", Colors.blueAccent),
-            const SizedBox(width: 12),
-            _addFileButton(),
-          ],
+        Text(
+          "Tài liệu đính kèm (PDF, X-ray):", 
+          style: context.textStyles.caption.copyWith(fontWeight: FontWeight.bold),
+        ),
+        SizedBox(height: context.spacing.s),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _fileIcon(context, Icons.picture_as_pdf, "KetQua.pdf", Colors.redAccent),
+              SizedBox(width: context.spacing.m),
+              _fileIcon(context, Icons.image, "X-Ray.jpg", Colors.blueAccent),
+              SizedBox(width: context.spacing.m),
+              _addFileButton(context),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  Widget _fileIcon(IconData icon, String name, Color color) {
+  Widget _fileIcon(BuildContext context, IconData icon, String name, Color color) {
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+          padding: EdgeInsets.all(context.spacing.s),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1), 
+            borderRadius: context.radius.sRadius,
+          ),
           child: Icon(icon, color: color, size: 24),
         ),
         const SizedBox(height: 4),
-        Text(name, style: const TextStyle(fontSize: 10)),
+        Text(name, style: context.textStyles.caption.copyWith(fontSize: 10)),
       ],
     );
   }
 
-  Widget _addFileButton() {
+  Widget _addFileButton(BuildContext context) {
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.all(8),
+          padding: EdgeInsets.all(context.spacing.s),
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[300]!, style: BorderStyle.solid),
-            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: context.colors.divider),
+            borderRadius: context.radius.sRadius,
           ),
-          child: const Icon(Icons.add, color: Colors.grey, size: 24),
+          child: Icon(Icons.add, color: context.colors.textHint, size: 24),
         ),
         const SizedBox(height: 4),
-        const Text("Thêm", style: TextStyle(fontSize: 10, color: Colors.grey)),
+        Text(
+          "Thêm", 
+          style: context.textStyles.caption.copyWith(fontSize: 10, color: context.colors.textHint),
+        ),
       ],
     );
   }

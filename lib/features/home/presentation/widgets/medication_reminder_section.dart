@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/theme/colors/app_colors.dart';
+import '../../../../core/theme/typography/app_text_styles.dart';
 import '../../domain/entities/medication_reminder.dart';
 
 /// Section 4: Medication Reminder — today's medications with mark-as-taken action.

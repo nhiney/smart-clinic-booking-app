@@ -1,28 +1,42 @@
 import '../../domain/entities/user_entity.dart';
 
 abstract class AuthRepository {
-  Future<UserEntity> login(String phone, String password);
-  Future<UserEntity> register({
-    required String name,
-    required String phone,
-    required String password,
-    required String role,
-    String? hospitalId,
-    String? idCardUrl,
-    String? medicalCertUrl,
-  });
-  Future<void> logout();
-  UserEntity? getCurrentUser();
-  Future<UserEntity?> getUserProfile(String uid);
-  Future<void> updateUserProfile(UserEntity user);
-  Future<bool> isPhoneRegistered(String phone);
-  
-  // Phone Auth methods
+  // Doctor / Staff / Patient Login (Email/Phone + Password)
+  Future<UserEntity> loginWithEmail(String email, String password, {String? requiredRole});
+
+  // Patient Login (Phone + OTP)
   Future<void> verifyPhone(String phone, {
     required void Function(String verificationId) onCodeSent,
     required void Function() onAutoVerified,
     required void Function(String error) onError,
   });
   Future<UserEntity> signInWithPhone(String verificationId, String smsCode, {String? displayName});
-  Future<void> createPassword(String phone, String password);
+  Future<UserEntity> signInWithQrToken(String qrToken);
+  Future<Map<String, dynamic>> createQrLoginToken({bool persistent = false});
+
+  // Common
+  Future<void> logout();
+  UserEntity? getCurrentUser();
+  Future<UserEntity?> getUserProfile(String uid);
+  Future<void> updateUserProfile(UserEntity user);
+  Future<bool> isPhoneRegistered(String phone);
+  Future<bool> isBiometricAvailable();
+  Future<bool> isBiometricEnabled();
+  Future<void> saveBiometricCredential({
+    required String identifier,
+    required String password,
+    String? requiredRole,
+  });
+  Future<void> clearBiometricCredential();
+  Future<UserEntity> loginWithBiometrics();
+
+  // Registration (Primarily for initial Patient setup if needed)
+  Future<UserEntity> register({
+    required String name,
+    required String phone,
+    required String role,
+    String? email,
+    String? password,
+    String? tenantId,
+  });
 }

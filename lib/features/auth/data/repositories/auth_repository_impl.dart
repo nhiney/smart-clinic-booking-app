@@ -11,10 +11,11 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl(this.remoteDatasource);
 
   @override
-  Future<UserEntity> login(String phone, String password) async {
-    return await remoteDatasource.login(
-      phone: phone,
+  Future<UserEntity> loginWithEmail(String email, String password, {String? requiredRole}) async {
+    return await remoteDatasource.loginWithEmail(
+      email: email,
       password: password,
+      requiredRole: requiredRole,
     );
   }
 
@@ -22,20 +23,18 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<UserEntity> register({
     required String name,
     required String phone,
-    required String password,
     required String role,
-    String? hospitalId,
-    String? idCardUrl,
-    String? medicalCertUrl,
+    String? email,
+    String? password,
+    String? tenantId,
   }) async {
     return await remoteDatasource.register(
       name: name,
       phone: phone,
-      password: password,
       role: role,
-      hospitalId: hospitalId,
-      idCardUrl: idCardUrl,
-      medicalCertUrl: medicalCertUrl,
+      email: email,
+      password: password,
+      tenantId: tenantId,
     );
   }
 
@@ -49,10 +48,12 @@ class AuthRepositoryImpl implements AuthRepository {
     final user = remoteDatasource.getCurrentUser();
     if (user == null) return null;
 
+    // We return a skeleton entity, but mostly used to trigger profile fetch
     return UserEntity(
       id: user.uid,
-      email: user.email ?? '',
       name: user.displayName ?? '',
+      email: user.email ?? '',
+      phone: user.phoneNumber ?? '',
     );
   }
 
@@ -96,7 +97,45 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<void> createPassword(String phone, String password) async {
-    await remoteDatasource.createPassword(phone, password);
+  Future<UserEntity> signInWithQrToken(String qrToken) async {
+    return await remoteDatasource.signInWithQrToken(qrToken);
+  }
+
+  @override
+  Future<Map<String, dynamic>> createQrLoginToken({bool persistent = false}) async {
+    return await remoteDatasource.createQrLoginToken(persistent: persistent);
+  }
+
+  @override
+  Future<bool> isBiometricAvailable() async {
+    return await remoteDatasource.isBiometricAvailable();
+  }
+
+  @override
+  Future<bool> isBiometricEnabled() async {
+    return await remoteDatasource.isBiometricEnabled();
+  }
+
+  @override
+  Future<void> saveBiometricCredential({
+    required String identifier,
+    required String password,
+    String? requiredRole,
+  }) async {
+    await remoteDatasource.saveBiometricCredential(
+      identifier: identifier,
+      password: password,
+      requiredRole: requiredRole,
+    );
+  }
+
+  @override
+  Future<void> clearBiometricCredential() async {
+    await remoteDatasource.clearBiometricCredential();
+  }
+
+  @override
+  Future<UserEntity> loginWithBiometrics() async {
+    return await remoteDatasource.loginWithBiometrics();
   }
 }

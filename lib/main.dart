@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' hide ChangeNotifierProvider;
@@ -13,9 +15,9 @@ import 'core/localization/language_controller.dart';
 import 'core/localization/app_language.dart';
 
 import 'firebase_options.dart';
-import 'core/theme/theme/app_theme.dart';
-import 'config/dependency_injection/injection.dart';
-import 'core/router/app_router.dart';
+import 'core/theme/themes/app_theme.dart';
+import 'app/di/injection.dart';
+import 'app/router/app_router.dart';
 import 'core/services/app_config_service.dart';
 import 'features/auth/presentation/bloc/sign_up_bloc.dart';
 
@@ -24,13 +26,20 @@ import 'features/auth/domain/usecases/login_usecase.dart';
 import 'features/auth/domain/usecases/register_usecase.dart';
 import 'features/auth/domain/usecases/verify_phone_usecase.dart';
 import 'features/auth/domain/usecases/signin_with_phone_usecase.dart';
-import 'features/auth/domain/usecases/create_password_usecase.dart';
+import 'features/auth/domain/repositories/auth_repository.dart';
 import 'features/auth/presentation/controllers/auth_controller.dart';
+import 'features/auth/data/datasources/auth_remote_datasource.dart';
 
 // Doctor
 import 'features/doctor/domain/repositories/doctor_repository.dart';
 import 'features/doctor/data/datasources/doctor_remote_datasource.dart';
 import 'features/doctor/presentation/controllers/doctor_controller.dart';
+import 'core/services/file_storage_service.dart';
+
+// Admin
+import 'features/admin/domain/repositories/facility_repository.dart';
+import 'features/admin/presentation/controllers/admin_controller.dart';
+import 'features/admin/data/repositories/firestore_facility_repository.dart';
 
 // Appointment
 import 'features/appointment/domain/repositories/appointment_repository.dart';
@@ -97,6 +106,13 @@ Future<void> main() async {
       persistenceEnabled: false,
       cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
     );
+
+    // Enable Firebase Auth phone testing flow in debug builds.
+    if (kDebugMode) {
+      await FirebaseAuth.instance.setSettings(
+        appVerificationDisabledForTesting: true,
+      );
+    }
   } catch (e) {
     debugPrint('Firebase initialization failed: $e');
   }
@@ -110,25 +126,31 @@ Future<void> main() async {
   // Initialize Dynamic Configuration (Firestore)
   await getIt<AppConfigService>().initialize();
 
-  // Seed sample data (non-blocking, don't prevent app from starting)
-  getIt<DoctorRemoteDatasource>().seedDoctors().catchError((e) {
-    debugPrint('Seed doctors error: $e');
-  });
-
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(
           create: (_) => AuthController(
-            loginUseCase: getIt<LoginUseCase>(),
+            loginWithEmailUseCase: getIt<LoginWithEmailUseCase>(),
             registerUseCase: getIt<RegisterUseCase>(),
             verifyPhoneUseCase: getIt<VerifyPhoneUseCase>(),
             signInWithPhoneUseCase: getIt<SignInWithPhoneUseCase>(),
-            createPasswordUseCase: getIt<CreatePasswordUseCase>(),
+            authRepository: getIt<AuthRepository>(),
           ),
         ),
         ChangeNotifierProvider(
-          create: (_) => DoctorController(repository: getIt<DoctorRepository>()),
+          create: (_) => DoctorController(
+            doctorRepository: getIt<DoctorRepository>(),
+            storageService: getIt<FileStorageService>(),
+          ),
+        ),
+
+        ChangeNotifierProvider(
+          create: (_) => AdminController(
+            facilityRepository: getIt<FacilityRepository>(),
+            doctorRepository: getIt<DoctorRepository>(),
+            authRemoteDatasource: getIt<AuthRemoteDatasource>(),
+          ),
         ),
         ChangeNotifierProvider(
           create: (_) => AppointmentController(repository: getIt<AppointmentRepository>()),
@@ -177,7 +199,7 @@ class MyApp extends ConsumerWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.light, // Change to system if you want automatic dark mode
-      routerConfig: appRouter,
+      routerConfig: AppRouter.router,
       locale: language.locale,
       supportedLocales: const [
         Locale('vi'),

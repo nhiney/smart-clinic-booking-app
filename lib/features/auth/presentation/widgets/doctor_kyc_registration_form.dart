@@ -91,7 +91,7 @@ class _DoctorKycRegistrationFormState extends State<DoctorKycRegistrationForm> {
                 enabled: !state.isLoading,
                 labelText: l10n.full_name_label,
                 hintText: l10n.full_name_hint,
-                prefixIcon: Icon(Icons.person_outline, color: context.colors.textHint),
+                prefixIcon: Icon(Icons.person_outline, color: context.colors.primary),
                 validator: (v) => v!.isEmpty ? l10n.required_field : null,
               ),
               SizedBox(height: context.spacing.m),
@@ -102,7 +102,7 @@ class _DoctorKycRegistrationFormState extends State<DoctorKycRegistrationForm> {
                 labelText: l10n.email_label,
                 hintText: l10n.email_hint,
                 keyboardType: TextInputType.emailAddress,
-                prefixIcon: Icon(Icons.email_outlined, color: context.colors.textHint),
+                prefixIcon: Icon(Icons.email_outlined, color: context.colors.primary),
                 validator: (v) => (v!.isEmpty || !v.contains('@')) ? l10n.invalid_email : null,
               ),
               SizedBox(height: context.spacing.m),
@@ -113,7 +113,7 @@ class _DoctorKycRegistrationFormState extends State<DoctorKycRegistrationForm> {
                 labelText: l10n.password_label,
                 hintText: l10n.password_hint,
                 obscureText: true,
-                prefixIcon: Icon(Icons.lock_outline, color: context.colors.textHint),
+                prefixIcon: Icon(Icons.lock_outline, color: context.colors.primary),
                 validator: (v) => v!.length < 6 ? l10n.password_too_short : null,
               ),
               SizedBox(height: context.spacing.l),
@@ -121,9 +121,8 @@ class _DoctorKycRegistrationFormState extends State<DoctorKycRegistrationForm> {
               // B2B KYC Fields
               Text(
                 l10n.hospital_label,
-                style: context.textStyles.subtitle.copyWith(
-                  color: context.colors.textPrimary,
-                  fontWeight: FontWeight.bold,
+                style: context.textStyles.bodyBold.copyWith(
+                  color: context.colors.primaryDark,
                 ),
               ),
               const SizedBox(height: 8),
@@ -131,7 +130,13 @@ class _DoctorKycRegistrationFormState extends State<DoctorKycRegistrationForm> {
                 value: _selectedHospital,
                 decoration: InputDecoration(
                   hintText: l10n.hospital_hint,
-                  prefixIcon: Icon(Icons.local_hospital_outlined, color: context.colors.textHint),
+                  prefixIcon: Icon(Icons.local_hospital_outlined, color: context.colors.primary),
+                  filled: true,
+                  fillColor: Colors.grey.withOpacity(0.05),
+                  border: OutlineInputBorder(
+                    borderRadius: context.radius.mRadius,
+                    borderSide: BorderSide.none,
+                  ),
                 ),
                 items: _hospitals.map((h) => DropdownMenuItem(value: h, child: Text(h))).toList(),
                 onChanged: state.isLoading ? null : (val) => setState(() => _selectedHospital = val),
@@ -166,17 +171,32 @@ class _DoctorKycRegistrationFormState extends State<DoctorKycRegistrationForm> {
   }
 
   Widget _buildKycUploadButton(String label, IconData icon, bool isLoading) {
-    return OutlinedButton.icon(
-      onPressed: isLoading ? null : () {}, // Mock upload logic
-      icon: Icon(icon, size: 20, color: context.colors.primary),
-      label: Text(
-        label,
-        style: context.textStyles.body.copyWith(color: context.colors.primary),
-      ),
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        side: BorderSide(color: context.colors.primary.withOpacity(0.5)),
-        shape: RoundedRectangleBorder(borderRadius: context.radius.mRadius),
+    return InkWell(
+      onTap: isLoading ? null : () {}, 
+      borderRadius: context.radius.mRadius,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        decoration: BoxDecoration(
+          border: Border.all(color: context.colors.primary.withOpacity(0.2)),
+          borderRadius: context.radius.mRadius,
+          color: context.colors.primary.withOpacity(0.02),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 24, color: context.colors.primary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: context.textStyles.bodyBold.copyWith(
+                  color: context.colors.primary,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            Icon(Icons.cloud_upload_outlined, size: 20, color: context.colors.primary.withOpacity(0.5)),
+          ],
+        ),
       ),
     );
   }

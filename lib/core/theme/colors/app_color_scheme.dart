@@ -16,6 +16,7 @@ class AppColorTokens {
   final Color success;
   final Color warning;
   final Color divider;
+  Color get border => divider;
 
   const AppColorTokens({
     required this.primary,

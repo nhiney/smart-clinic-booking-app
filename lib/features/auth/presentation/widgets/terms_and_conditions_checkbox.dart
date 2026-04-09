@@ -47,23 +47,51 @@ class TermsAndConditionsCheckbox extends StatelessWidget {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.only(top: 8.0),
-                child: RichText(
-                  text: TextSpan(
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                      height: 1.4,
-                    ),
-                    children: [
-                      TextSpan(
-                        text: l10n.agree_terms,
-                        style: TextStyle(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.bold,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final fullText = l10n.agree_terms;
+                    final linkText = l10n.terms_and_conditions;
+                    final startIndex = fullText.indexOf(linkText);
+
+                    if (startIndex == -1) {
+                      return RichText(
+                        text: TextSpan(
+                          text: fullText,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            height: 1.4,
+                          ),
+                          recognizer: TapGestureRecognizer()..onTap = _launchUrl,
                         ),
-                        recognizer: TapGestureRecognizer()..onTap = _launchUrl,
+                      );
+                    }
+
+                    final prefix = fullText.substring(0, startIndex);
+                    final suffix = fullText.substring(startIndex + linkText.length);
+
+                    return RichText(
+                      text: TextSpan(
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.4,
+                        ),
+                        children: [
+                          TextSpan(text: prefix),
+                          TextSpan(
+                            text: linkText,
+                            style: TextStyle(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w700,
+                              fontStyle: FontStyle.italic,
+                              decoration: TextDecoration.none,
+                            ),
+                            recognizer: TapGestureRecognizer()..onTap = _launchUrl,
+                          ),
+                          TextSpan(text: suffix),
+                        ],
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ),
             ),

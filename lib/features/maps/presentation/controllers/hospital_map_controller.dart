@@ -4,7 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import '../../domain/entities/hospital_entity.dart';
 import '../../domain/services/location_service.dart';
 import '../../domain/services/distance_util.dart';
-import '../../../../config/dependency_injection/injection.dart';
+import '../../../../app/di/injection.dart';
 import '../../domain/repositories/maps_repository.dart';
 import 'dart:async';
 

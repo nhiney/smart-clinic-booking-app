@@ -4,6 +4,8 @@ import 'package:provider/provider.dart' as legacy_provider;
 import '../../../../core/theme/colors/app_colors.dart';
 import '../../../../core/theme/typography/app_text_styles.dart';
 import '../../../../core/widgets/branded_app_bar.dart';
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/extensions/context_extension.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../controllers/payment_controller.dart';
 import 'package:smart_clinic_booking/features/payment/domain/entities/transaction_entity.dart';
@@ -28,37 +30,40 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authController = legacy_provider.Provider.of<AuthController>(context, listen: false);
+    final authController =
+        legacy_provider.Provider.of<AuthController>(context, listen: false);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       appBar: const BrandedAppBar(title: "Thanh toán"),
       body: Column(
         children: [
           _buildAmountCard(),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(context.spacing.l),
               children: [
-                Text("Chọn phương thức thanh toán", style: AppTextStyles.subtitle),
-                const SizedBox(height: 16),
+                Text("Chọn phương thức thanh toán",
+                    style: context.textStyles.subtitle
+                        .copyWith(fontWeight: FontWeight.bold)),
+                SizedBox(height: context.spacing.m),
                 _buildMethodTile(
                   PaymentMethod.vnpay,
                   "VNPay",
-                  "assets/icons/vnpay.png",
-                  Colors.blue[50]!,
+                  Icons.account_balance_wallet_outlined,
+                  context.colors.primary.withOpacity(0.1),
                 ),
                 _buildMethodTile(
                   PaymentMethod.momo,
                   "MoMo",
-                  "assets/icons/momo.png",
-                  Colors.pink[50]!,
+                  Icons.phone_android_outlined,
+                  Colors.pink.withOpacity(0.1),
                 ),
                 _buildMethodTile(
                   PaymentMethod.stripe,
                   "Stripe (Visa/Mastercard)",
-                  "assets/icons/stripe.png",
-                  Colors.deepPurple[50]!,
+                  Icons.credit_card_outlined,
+                  Colors.deepPurple.withOpacity(0.1),
                 ),
               ],
             ),
@@ -72,49 +77,73 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   Widget _buildAmountCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(32),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
+      padding: EdgeInsets.all(context.spacing.xxl),
+      decoration: BoxDecoration(
+        color: context.colors.surface,
+        borderRadius:
+            BorderRadius.vertical(bottom: context.radius.xlRadius.bottomLeft),
+        boxShadow: [
+          BoxShadow(
+            color: context.colors.primary.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          Text("Tổng thanh toán", style: AppTextStyles.body),
-          const SizedBox(height: 8),
+          Text("Tổng thanh toán",
+              style: context.textStyles.body
+                  .copyWith(color: context.colors.textSecondary)),
+          SizedBox(height: context.spacing.s),
           Text(
             "${widget.amount.toStringAsFixed(0)}đ",
-            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.primary),
+            style: context.textStyles.heading1
+                .copyWith(color: context.colors.primary, fontSize: 36),
           ),
-          const SizedBox(height: 8),
-          Text(widget.description, style: AppTextStyles.bodySmall),
+          SizedBox(height: context.spacing.s),
+          Text(widget.description, style: context.textStyles.bodySmall),
         ],
       ),
     );
   }
 
-  Widget _buildMethodTile(PaymentMethod method, String title, String iconPath, Color bgColor) {
+  Widget _buildMethodTile(
+      PaymentMethod method, String title, IconData icon, Color bgColor) {
     final isSelected = _selectedMethod == method;
     return GestureDetector(
       onTap: () => setState(() => _selectedMethod = method),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
+        margin: EdgeInsets.only(bottom: context.spacing.m),
+        padding: EdgeInsets.all(context.spacing.m),
         decoration: BoxDecoration(
-          color: isSelected ? bgColor : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: isSelected ? AppColors.primary : Colors.grey[200]!, width: 2),
+          color: isSelected ? bgColor : context.colors.surface,
+          borderRadius: context.radius.mRadius,
+          border: Border.all(
+            color: isSelected ? context.colors.primary : context.colors.divider,
+            width: isSelected ? 2 : 1,
+          ),
         ),
         child: Row(
           children: [
             Container(
               width: 48,
               height: 48,
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-              child: const Icon(Icons.payment, color: AppColors.primary), // Placeholder for real icon
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? context.colors.surface
+                    : context.colors.background,
+                borderRadius: context.radius.sRadius,
+              ),
+              child: Icon(icon,
+                  color: isSelected
+                      ? context.colors.primary
+                      : context.colors.textHint),
             ),
-            const SizedBox(width: 16),
-            Expanded(child: Text(title, style: AppTextStyles.bodyBold)),
-            if (isSelected) const Icon(Icons.check_circle, color: AppColors.primary),
+            SizedBox(width: context.spacing.m),
+            Expanded(child: Text(title, style: context.textStyles.bodyBold)),
+            if (isSelected)
+              Icon(Icons.check_circle, color: context.colors.primary),
           ],
         ),
       ),
@@ -123,10 +152,20 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
   Widget _buildPayButton(AuthController auth) {
     return Container(
-      padding: const EdgeInsets.all(20),
-      color: Colors.white,
+      padding: EdgeInsets.all(context.spacing.l),
+      decoration: BoxDecoration(
+        color: context.colors.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
       child: SafeArea(
-        child: ElevatedButton(
+        child: AppButton(
+          text: "Thanh toán ngay",
           onPressed: () {
             Navigator.push(
               context,
@@ -140,12 +179,6 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
               ),
             );
           },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            minimumSize: const Size(double.infinity, 56),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          ),
-          child: const Text("Thanh toán ngay", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
         ),
       ),
     );

@@ -7,6 +7,8 @@ class DoctorEntity {
   final double rating;
   final int experience;
   final String about;
+  final String resumePdfUrl;
+  final String departmentId;
   final double latitude;
   final double longitude;
   final String phone;
@@ -22,6 +24,8 @@ class DoctorEntity {
     this.rating = 0.0,
     this.experience = 0,
     this.about = '',
+    this.resumePdfUrl = '',
+    this.departmentId = '',
     this.latitude = 0.0,
     this.longitude = 0.0,
     this.phone = '',

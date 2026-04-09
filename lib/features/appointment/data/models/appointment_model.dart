@@ -13,6 +13,14 @@ class AppointmentModel extends AppointmentEntity {
     super.status,
     super.notes,
     super.createdAt,
+    super.queueNumber,
+    super.estimatedWaitTimeMinutes,
+    super.checkInToken,
+    super.paymentStatus,
+    super.priorityLevel,
+    super.statusUpdatedAt,
+    super.checkedInAt,
+    super.completedAt,
   });
 
   factory AppointmentModel.fromJson(Map<String, dynamic> json, String docId) {
@@ -24,10 +32,24 @@ class AppointmentModel extends AppointmentEntity {
       doctorName: json['doctorName'] ?? '',
       specialty: json['specialty'] ?? '',
       dateTime: (json['dateTime'] as Timestamp).toDate(),
-      status: json['status'] ?? 'pending',
+      status: json['status'] ?? AppointmentStatuses.pendingBooking,
       notes: json['notes'] ?? '',
       createdAt: json['createdAt'] != null
           ? (json['createdAt'] as Timestamp).toDate()
+          : null,
+      queueNumber: json['queueNumber'] as String?,
+      estimatedWaitTimeMinutes: json['estimatedWaitTimeMinutes'] as int?,
+      checkInToken: json['checkInToken'] as String?,
+      paymentStatus: json['paymentStatus'] ?? AppointmentPaymentStatuses.unpaid,
+      priorityLevel: json['priorityLevel'] ?? AppointmentPriorityLevels.normal,
+      statusUpdatedAt: json['statusUpdatedAt'] != null
+          ? (json['statusUpdatedAt'] as Timestamp).toDate()
+          : null,
+      checkedInAt: json['checkedInAt'] != null
+          ? (json['checkedInAt'] as Timestamp).toDate()
+          : null,
+      completedAt: json['completedAt'] != null
+          ? (json['completedAt'] as Timestamp).toDate()
           : null,
     );
   }
@@ -40,11 +62,23 @@ class AppointmentModel extends AppointmentEntity {
       'doctorName': doctorName,
       'specialty': specialty,
       'dateTime': Timestamp.fromDate(dateTime),
-      'status': status,
+      'status': normalizedStatus,
       'notes': notes,
       'createdAt': createdAt != null
           ? Timestamp.fromDate(createdAt!)
           : FieldValue.serverTimestamp(),
+      'queueNumber': queueNumber,
+      'estimatedWaitTimeMinutes': estimatedWaitTimeMinutes,
+      'checkInToken': checkInToken,
+      'paymentStatus': paymentStatus,
+      'priorityLevel': priorityLevel,
+      'statusUpdatedAt': statusUpdatedAt != null
+          ? Timestamp.fromDate(statusUpdatedAt!)
+          : FieldValue.serverTimestamp(),
+      'checkedInAt':
+          checkedInAt != null ? Timestamp.fromDate(checkedInAt!) : null,
+      'completedAt':
+          completedAt != null ? Timestamp.fromDate(completedAt!) : null,
     };
   }
 }

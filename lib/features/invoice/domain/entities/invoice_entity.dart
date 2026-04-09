@@ -20,20 +20,22 @@ class InvoiceItem extends Equatable {
 class InvoiceEntity extends Equatable {
   final String id;
   final String userId;
-  final List<InvoiceItem> items;
+  final List<InvoiceItem> services;
   final double total;
+  final String paymentId;
   final String status;
   final DateTime createdAt;
 
   const InvoiceEntity({
     required this.id,
     required this.userId,
-    required this.items,
+    required this.services,
     required this.total,
+    required this.paymentId,
     required this.status,
     required this.createdAt,
   });
 
   @override
-  List<Object?> get props => [id, userId, items, total, status, createdAt];
+  List<Object?> get props => [id, userId, services, total, paymentId, status, createdAt];
 }

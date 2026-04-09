@@ -40,6 +40,7 @@ class AppTextStylesProxy {
   TextStyle get heading3 => AppTextStyles.heading3;
   TextStyle get subtitle => AppTextStyles.subtitle;
   TextStyle get body => AppTextStyles.body;
+  TextStyle get bodyLarge => body;
   TextStyle get bodyBold => AppTextStyles.bodyBold;
   TextStyle get bodySmall => AppTextStyles.bodySmall;
   TextStyle get caption => AppTextStyles.caption;
@@ -59,6 +60,7 @@ class AppSpacingProxy {
 
 class AppRadiusProxy {
   const AppRadiusProxy();
+  BorderRadius get xsRadius => AppRadius.xsRadius;
   BorderRadius get sRadius => AppRadius.sRadius;
   BorderRadius get mRadius => AppRadius.mRadius;
   BorderRadius get lRadius => AppRadius.lRadius;

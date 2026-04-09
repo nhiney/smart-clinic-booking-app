@@ -22,7 +22,6 @@ class ICareLogo extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Using the user-provided PNG for perfect brand consistency
         Image.asset(
           'assets/images/logo.png',
           width: size,

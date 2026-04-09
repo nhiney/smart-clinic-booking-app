@@ -32,10 +32,12 @@ class PaymentState {
   }
 }
 
-final paymentRepositoryProvider = Provider<PaymentRepository>((ref) => PaymentRepositoryImpl());
+final paymentRepositoryProvider =
+    Provider<PaymentRepository>((ref) => PaymentRepositoryImpl());
 final paymentServiceProvider = Provider((ref) => PaymentService());
 
-final paymentControllerProvider = StateNotifierProvider<PaymentController, PaymentState>((ref) {
+final paymentControllerProvider =
+    StateNotifierProvider<PaymentController, PaymentState>((ref) {
   return PaymentController(
     repository: ref.watch(paymentRepositoryProvider),
     service: ref.watch(paymentServiceProvider),
@@ -46,7 +48,8 @@ class PaymentController extends StateNotifier<PaymentState> {
   final PaymentRepository repository;
   final PaymentService service;
 
-  PaymentController({required this.repository, required this.service}) : super(PaymentState());
+  PaymentController({required this.repository, required this.service})
+      : super(PaymentState());
 
   Future<void> fetchTransactions(String userId) async {
     state = state.copyWith(isLoading: true, error: null);
@@ -62,37 +65,53 @@ class PaymentController extends StateNotifier<PaymentState> {
     required String userId,
     required double amount,
     required PaymentMethod method,
+    String? appointmentId,
     String? description,
+    String? paymentRequestId,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
     final transactionId = service.generateTransactionId();
-    
+    final requestId = paymentRequestId ?? service.generatePaymentRequestId();
+
     final transaction = TransactionEntity(
       id: transactionId,
       userId: userId,
+      appointmentId: appointmentId,
       amount: amount,
       method: method,
       status: PaymentStatus.pending,
       createdAt: DateTime.now(),
       description: description,
+      paymentRequestId: requestId,
     );
 
     try {
+      // 1. Create pending transaction on Firestore
       await repository.createTransaction(transaction);
-      final status = await service.processPayment(method, amount);
+
+      // 2. Simulate payment gateway process
+      final status = await service.simulatePayment();
+
+      // 3. Update Firestore status
       await repository.updateTransactionStatus(transactionId, status);
-      
+
+      // 4. Refresh transaction list
+      await fetchTransactions(userId);
+
       final updatedTransaction = TransactionEntity(
         id: transactionId,
         userId: userId,
+        appointmentId: appointmentId,
         amount: amount,
         method: method,
         status: status,
         createdAt: transaction.createdAt,
         description: description,
+        paymentRequestId: requestId,
       );
-      
-      state = state.copyWith(isLoading: false, currentTransaction: updatedTransaction);
+
+      state = state.copyWith(
+          isLoading: false, currentTransaction: updatedTransaction);
       return status;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -100,12 +119,14 @@ class PaymentController extends StateNotifier<PaymentState> {
     }
   }
 
-  Future<void> refund(String transactionId) async {
+  Future<void> refund(String userId, String transactionId) async {
+    state = state.copyWith(isLoading: true);
     try {
       await repository.requestRefund(transactionId);
-      // Refresh list
+      await fetchTransactions(userId);
+      state = state.copyWith(isLoading: false);
     } catch (e) {
-      state = state.copyWith(error: e.toString());
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 }

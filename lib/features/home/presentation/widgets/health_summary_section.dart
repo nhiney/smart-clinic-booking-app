@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/theme/colors/app_colors.dart';
+import '../../../../core/theme/typography/app_text_styles.dart';
 import '../../domain/entities/health_summary.dart';
 
 /// Section 5: Health Summary — 4 metric cards in a 2x2 grid.

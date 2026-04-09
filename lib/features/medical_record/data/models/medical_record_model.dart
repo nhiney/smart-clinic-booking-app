@@ -8,7 +8,7 @@ class MedicalRecordModel extends MedicalRecordEntity {
     required super.doctor,
     required super.diagnosis,
     required super.prescription,
-    required super.date,
+    required super.createdAt,
     super.symptoms,
     super.notes,
   });
@@ -21,7 +21,7 @@ class MedicalRecordModel extends MedicalRecordEntity {
       doctor: data['doctor'] ?? '',
       diagnosis: data['diagnosis'] ?? '',
       prescription: data['prescription'] ?? '',
-      date: (data['date'] as Timestamp).toDate(),
+      createdAt: (data['createdAt'] as Timestamp).toDate(),
       symptoms: (data['symptoms'] as List?)?.map((e) => e.toString()).toList(),
       notes: data['notes'],
     );
@@ -33,7 +33,7 @@ class MedicalRecordModel extends MedicalRecordEntity {
       'doctor': doctor,
       'diagnosis': diagnosis,
       'prescription': prescription,
-      'date': Timestamp.fromDate(date),
+      'createdAt': Timestamp.fromDate(createdAt),
       'symptoms': symptoms,
       'notes': notes,
     };

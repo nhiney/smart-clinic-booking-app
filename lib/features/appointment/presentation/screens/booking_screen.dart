@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/theme/colors/app_colors.dart';
+import '../../../../core/theme/typography/app_text_styles.dart';
 import '../../../doctor/domain/entities/doctor_entity.dart';
 import '../../domain/entities/appointment_entity.dart';
 import '../controllers/appointment_controller.dart';
@@ -80,7 +80,8 @@ class _BookingScreenState extends State<BookingScreen> {
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -117,7 +118,8 @@ class _BookingScreenState extends State<BookingScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(appointmentController.errorMessage ?? 'Đặt lịch thất bại'),
+          content:
+              Text(appointmentController.errorMessage ?? 'Đặt lịch thất bại'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -149,15 +151,18 @@ class _BookingScreenState extends State<BookingScreen> {
                   CircleAvatar(
                     radius: 28,
                     backgroundColor: AppColors.primarySurface,
-                    child: const Icon(Icons.person, color: AppColors.primary, size: 30),
+                    child: const Icon(Icons.person,
+                        color: AppColors.primary, size: 30),
                   ),
                   const SizedBox(width: 14),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(widget.doctor.name, style: AppTextStyles.subtitle),
-                      Text(widget.doctor.specialty, style: AppTextStyles.bodySmall),
-                      Text(widget.doctor.hospital, style: AppTextStyles.caption),
+                      Text(widget.doctor.specialty,
+                          style: AppTextStyles.bodySmall),
+                      Text(widget.doctor.hospital,
+                          style: AppTextStyles.caption),
                     ],
                   ),
                 ],
@@ -187,7 +192,8 @@ class _BookingScreenState extends State<BookingScreen> {
                       style: AppTextStyles.subtitle,
                     ),
                     const Spacer(),
-                    const Icon(Icons.arrow_drop_down, color: AppColors.textHint),
+                    const Icon(Icons.arrow_drop_down,
+                        color: AppColors.textHint),
                   ],
                 ),
               ),
@@ -206,15 +212,23 @@ class _BookingScreenState extends State<BookingScreen> {
                   onTap: () => setState(() => selectedTime = time),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppColors.primary : AppColors.cardBackground,
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.cardBackground,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isSelected ? AppColors.primary : AppColors.divider,
+                        color:
+                            isSelected ? AppColors.primary : AppColors.divider,
                       ),
                       boxShadow: isSelected
-                          ? [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 8)]
+                          ? [
+                              BoxShadow(
+                                  color: AppColors.primary.withOpacity(0.3),
+                                  blurRadius: 8)
+                            ]
                           : null,
                     ),
                     child: Text(
@@ -222,7 +236,8 @@ class _BookingScreenState extends State<BookingScreen> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: isSelected ? Colors.white : AppColors.textPrimary,
+                        color:
+                            isSelected ? Colors.white : AppColors.textPrimary,
                       ),
                     ),
                   ),
@@ -264,7 +279,9 @@ class _BookingScreenState extends State<BookingScreen> {
                             ),
                           )
                         : const Icon(Icons.check_circle),
-                    label: Text(controller.isLoading ? "Đang xử lý..." : "Xác nhận đặt lịch"),
+                    label: Text(controller.isLoading
+                        ? "Đang xử lý..."
+                        : "Xác nhận đặt lịch"),
                   ),
                 );
               },

@@ -11,20 +11,18 @@ class RegisterUseCase {
   Future<UserEntity> call({
     required String name,
     required String phone,
-    required String password,
     required String role,
-    String? hospitalId,
-    String? idCardUrl,
-    String? medicalCertUrl,
+    String? email,
+    String? password,
+    String? tenantId,
   }) async {
     return await repository.register(
       name: name,
       phone: phone,
-      password: password,
       role: role,
-      hospitalId: hospitalId,
-      idCardUrl: idCardUrl,
-      medicalCertUrl: medicalCertUrl,
+      email: email,
+      password: password,
+      tenantId: tenantId,
     );
   }
 }

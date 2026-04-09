@@ -4,7 +4,7 @@ import '../../domain/entities/health_summary.dart';
 import '../../domain/entities/medication_reminder.dart';
 import '../../domain/entities/health_article.dart';
 import '../../../../core/services/app_config_service.dart';
-import '../../../../config/dependency_injection/injection.dart';
+import '../../../../app/di/injection.dart';
 import '../../../../core/error/exceptions.dart';
 import '../models/home_models.dart';
 

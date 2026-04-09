@@ -3,18 +3,20 @@ import '../entities/user_entity.dart';
 import '../repositories/auth_repository.dart';
 
 @lazySingleton
-class LoginUseCase {
+class LoginWithEmailUseCase {
   final AuthRepository repository;
 
-  LoginUseCase(this.repository);
+  LoginWithEmailUseCase(this.repository);
 
   Future<UserEntity> call(
-    String phone,
-    String password,
-  ) async {
-    return await repository.login(
-      phone,
+    String email,
+    String password, {
+    String? requiredRole,
+  }) async {
+    return await repository.loginWithEmail(
+      email,
       password,
+      requiredRole: requiredRole,
     );
   }
 }

@@ -9,6 +9,51 @@ class AppLocalizationsKo extends AppLocalizations {
   AppLocalizationsKo([String locale = 'ko']) : super(locale);
 
   @override
+  String get back_button_text => '뒤로';
+
+  @override
+  String get welcome_to => '에 오신 것을 환영합니다';
+
+  @override
+  String get login_account => '계정 로그인';
+
+  @override
+  String get staff_login_prompt => '의료 종사자이신가요?';
+
+  @override
+  String get staff_login_link => '여기에서 로그인';
+
+  @override
+  String get save_login => '로그인 정보 저장';
+
+  @override
+  String get staff_login_title => '직원 로그인';
+
+  @override
+  String get or_label => '또는';
+
+  @override
+  String get continue_button => '계속';
+
+  @override
+  String get onboarding_title_1 => '빠른 진료 예약';
+
+  @override
+  String get onboarding_desc_1 => '몇 단계 만에 적합한 의사를 찾고 예약하세요.';
+
+  @override
+  String get onboarding_title_2 => '유연한 상담';
+
+  @override
+  String get onboarding_desc_2 => '일정 알림을 받고 진료 정보를 쉽게 추적하세요.';
+
+  @override
+  String get onboarding_title_3 => '스마트 의료 기록';
+
+  @override
+  String get onboarding_desc_3 => '건강 기록을 안전하게 저장하고 신속하게 액세스하세요.';
+
+  @override
   String get login_title => '로그인';
 
   @override
@@ -81,7 +126,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get upload_medical_cert => '의사 면허증 업로드';
 
   @override
-  String get agree_terms => '이용 약관에 동의합니다';
+  String get agree_terms => '이용 약관을 읽었으며 이에 동의합니다';
+
+  @override
+  String get terms_and_conditions => '이용 약관';
+
+  @override
+  String get skip => '건너뛰기';
 
   @override
   String get create_account_button => '계정 생성';
@@ -136,4 +187,31 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get language_korean => '한국어';
+
+  @override
+  String get register_subtitle =>
+      'Register your account using your phone number';
+
+  @override
+  String get terms_agreement_text =>
+      'By registering, I have read and agree to the Terms of Use';
+
+  @override
+  String get otp_title => 'OTP Verification';
+
+  @override
+  String get otp_hint => 'Enter the 6-digit OTP code';
+
+  @override
+  String get create_password_title => 'Create Password';
+
+  @override
+  String get registration_success => 'Account registered successfully!';
+
+  @override
+  String get invalid_otp => 'Invalid OTP code, please try again';
+
+  @override
+  String get password_validation_error =>
+      'Password must be at least 8 characters, including uppercase, lowercase and numbers';
 }

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/branded_app_bar.dart';
+import 'package:smart_clinic_booking/l10n/app_localizations.dart';
+import '../../../../core/extensions/context_extension.dart';
+import '../../../../core/theme/colors/app_colors.dart';
+import '../../../../core/widgets/icare_logo.dart';
+import '../../../../core/widgets/language_selector.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -14,69 +17,100 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController controller = PageController();
   int currentIndex = 0;
 
-  final slides = [
-    {
-      "title": "Chăm sóc sức khỏe thông minh",
-      "desc": "Đặt lịch khám nhanh chóng và dễ dàng",
-      "image": "assets/images/doctor1.png"
-    },
-    {
-      "title": "Tư vấn cùng chuyên gia",
-      "desc": "Kết nối bác sĩ mọi lúc mọi nơi",
-      "image": "assets/images/doctor2.png"
-    },
-    {
-      "title": "Quản lý hồ sơ y tế",
-      "desc": "Theo dõi lịch sử khám bệnh",
-      "image": "assets/images/doctor3.png"
-    }
-  ];
-
   void _goToLogin() {
     context.go('/login');
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: BrandedAppBar(
-        backgroundColor: Colors.white,
-        showLogo: true,
-        actions: [
-          TextButton(
-            onPressed: _goToLogin,
-            child: const Text(
-              "Skip",
-              style: TextStyle(fontSize: 16, color: Colors.grey),
-            ),
-          ),
-          const SizedBox(width: 8),
-        ],
+    final l10n = AppLocalizations.of(context)!;
+    final slides = [
+      (
+        title: l10n.onboarding_title_1,
+        desc: l10n.onboarding_desc_1,
+        image: 'assets/images/doctor1.png',
       ),
+      (
+        title: l10n.onboarding_title_2,
+        desc: l10n.onboarding_desc_2,
+        image: 'assets/images/doctor2.png',
+      ),
+      (
+        title: l10n.onboarding_title_3,
+        desc: l10n.onboarding_desc_3,
+        image: 'assets/images/doctor3.png',
+      ),
+    ];
+
+    return Scaffold(
+      backgroundColor: context.colors.background,
       body: SafeArea(
         child: Column(
           children: [
-
-            /// PAGE VIEW
+            Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: context.spacing.m,
+                vertical: context.spacing.s,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: context.radius.xlRadius,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.shadow,
+                          blurRadius: 14,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      onPressed: () => LanguageSelector.show(context),
+                      icon: Icon(Icons.language, color: context.colors.primary),
+                    ),
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: _goToLogin,
+                    child: Text(
+                      l10n.skip,
+                      style: context.textStyles.bodyBold.copyWith(
+                        color: context.colors.primary,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'ICare',
+              style: context.textStyles.heading1.copyWith(
+                color: context.colors.primary,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -1,
+                fontSize: 40,
+              ),
+            ),
+            SizedBox(height: context.spacing.l),
             Expanded(
               child: PageView.builder(
                 controller: controller,
                 itemCount: slides.length,
-                onPageChanged: (index) {
-                  setState(() {
-                    currentIndex = index;
-                  });
-                },
+                onPageChanged: (index) => setState(() => currentIndex = index),
                 itemBuilder: (context, index) {
+                  final slide = slides[index];
                   return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 40),
+                    padding: EdgeInsets.symmetric(horizontal: context.spacing.xl),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Expanded(
                           child: Image.asset(
-                            slides[index]["image"]!,
+                            slide.image,
                             fit: BoxFit.contain,
                             errorBuilder: (_, __, ___) => const Icon(
                               Icons.local_hospital,
@@ -87,22 +121,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                         const SizedBox(height: 40),
                         Text(
-                          slides[index]["title"]!,
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1F2937),
+                          slide.title,
+                          style: context.textStyles.heading2.copyWith(
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.4,
                           ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          slides[index]["desc"]!,
+                          slide.desc,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.grey,
-                            fontSize: 16,
-                            height: 1.5,
+                          style: context.textStyles.body.copyWith(
+                            color: context.colors.textSecondary,
+                            height: 1.45,
                           ),
                         ),
                         const SizedBox(height: 40),
@@ -112,8 +144,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 },
               ),
             ),
-
-            /// INDICATOR
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
@@ -130,44 +160,52 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
               ),
             ),
-
-            const SizedBox(height: 40),
-
-            /// ACTION BUTTON (Bắt đầu)
+            SizedBox(height: context.spacing.l),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: currentIndex == slides.length - 1 
-                      ? _goToLogin 
-                      : () {
-                          controller.nextPage(
-                            duration: const Duration(milliseconds: 400),
-                            curve: Curves.ease,
-                          );
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+              padding: EdgeInsets.symmetric(horizontal: context.spacing.l),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: AppColors.primaryGradient,
+                  borderRadius: context.radius.mRadius,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.shadow,
+                      blurRadius: 18,
+                      offset: const Offset(0, 10),
                     ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    currentIndex == slides.length - 1 ? "Bắt đầu" : "Tiếp tục",
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                  ],
+                ),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: currentIndex == slides.length - 1
+                        ? _goToLogin
+                        : () {
+                            controller.nextPage(
+                              duration: const Duration(milliseconds: 400),
+                              curve: Curves.easeOutCubic,
+                            );
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: context.radius.mRadius,
+                      ),
+                    ),
+                    child: Text(
+                      currentIndex == slides.length - 1 ? l10n.login_button : l10n.continue_button,
+                      style: context.textStyles.button.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-
-            const SizedBox(height: 40),
+            SizedBox(height: context.spacing.xl),
           ],
         ),
       ),

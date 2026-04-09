@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 
@@ -19,6 +20,14 @@ class AppConfigService {
   /// Initialize the configuration (Fetch from Firestore)
   /// This should be called early in the app lifecycle (e.g., in main.dart)
   Future<void> initialize() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      // Avoid permission-denied logs during unauthenticated app startup.
+      _config = AppConfig({});
+      _privacyPolicy = PrivacyPolicy.fallback();
+      return;
+    }
+
     try {
       debugPrint('[CONFIG] Fetching global settings from Firestore...');
       

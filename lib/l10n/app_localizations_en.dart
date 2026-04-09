@@ -9,6 +9,54 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get back_button_text => 'Back';
+
+  @override
+  String get welcome_to => 'Welcome to';
+
+  @override
+  String get login_account => 'Login to Account';
+
+  @override
+  String get staff_login_prompt => 'Are you a healthcare staff?';
+
+  @override
+  String get staff_login_link => 'Login here';
+
+  @override
+  String get save_login => 'Remember session';
+
+  @override
+  String get staff_login_title => 'Staff Login';
+
+  @override
+  String get or_label => 'or';
+
+  @override
+  String get continue_button => 'Continue';
+
+  @override
+  String get onboarding_title_1 => 'Fast Appointment Booking';
+
+  @override
+  String get onboarding_desc_1 =>
+      'Find the right doctor and book in just a few steps.';
+
+  @override
+  String get onboarding_title_2 => 'Flexible Consultation';
+
+  @override
+  String get onboarding_desc_2 =>
+      'Easily receive reminders and track your medical info.';
+
+  @override
+  String get onboarding_title_3 => 'Smart Medical Records';
+
+  @override
+  String get onboarding_desc_3 =>
+      'Securely store health history and access it quickly.';
+
+  @override
   String get login_title => 'Login';
 
   @override
@@ -81,7 +129,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get upload_medical_cert => 'Upload Medical Certificate';
 
   @override
-  String get agree_terms => 'I agree to the Terms and Conditions';
+  String get agree_terms => 'I have read and fully agree to the Terms of Use';
+
+  @override
+  String get terms_and_conditions => 'Terms of Use';
+
+  @override
+  String get skip => 'Skip';
 
   @override
   String get create_account_button => 'Create Account';
@@ -136,4 +190,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get language_korean => 'Korean';
+
+  @override
+  String get register_subtitle =>
+      'Register your account using your phone number';
+
+  @override
+  String get terms_agreement_text =>
+      'By registering, I have read and agree to the Terms of Use';
+
+  @override
+  String get otp_title => 'OTP Verification';
+
+  @override
+  String get otp_hint => 'Enter the 6-digit OTP code';
+
+  @override
+  String get create_password_title => 'Create Password';
+
+  @override
+  String get registration_success => 'Account registered successfully!';
+
+  @override
+  String get invalid_otp => 'Invalid OTP code, please try again';
+
+  @override
+  String get password_validation_error =>
+      'Password must be at least 8 characters, including uppercase, lowercase and numbers';
 }

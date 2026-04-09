@@ -9,6 +9,51 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get back_button_text => '返回';
+
+  @override
+  String get welcome_to => '欢迎来到';
+
+  @override
+  String get login_account => '登录账号';
+
+  @override
+  String get staff_login_prompt => '您是医疗人员吗？';
+
+  @override
+  String get staff_login_link => '在此登录';
+
+  @override
+  String get save_login => '记住会话';
+
+  @override
+  String get staff_login_title => '员工登录';
+
+  @override
+  String get or_label => '或';
+
+  @override
+  String get continue_button => '继续';
+
+  @override
+  String get onboarding_title_1 => '快速预约挂号';
+
+  @override
+  String get onboarding_desc_1 => '只需几步即可找到合适的医生并完成预约。';
+
+  @override
+  String get onboarding_title_2 => '随时灵活咨询';
+
+  @override
+  String get onboarding_desc_2 => '轻松接收提醒并跟踪您的医疗信息。';
+
+  @override
+  String get onboarding_title_3 => '智能医疗档案';
+
+  @override
+  String get onboarding_desc_3 => '安全存储健康历史，随时随地快速查看。';
+
+  @override
   String get login_title => '登录';
 
   @override
@@ -81,7 +126,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get upload_medical_cert => '上传执业证书';
 
   @override
-  String get agree_terms => '我同意条款和条件';
+  String get agree_terms => '我已阅读并完全同意使用条款';
+
+  @override
+  String get terms_and_conditions => '使用条款';
+
+  @override
+  String get skip => '跳过';
 
   @override
   String get create_account_button => '创建账号';
@@ -136,4 +187,31 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get language_korean => '韩语';
+
+  @override
+  String get register_subtitle =>
+      'Register your account using your phone number';
+
+  @override
+  String get terms_agreement_text =>
+      'By registering, I have read and agree to the Terms of Use';
+
+  @override
+  String get otp_title => 'OTP Verification';
+
+  @override
+  String get otp_hint => 'Enter the 6-digit OTP code';
+
+  @override
+  String get create_password_title => 'Create Password';
+
+  @override
+  String get registration_success => 'Account registered successfully!';
+
+  @override
+  String get invalid_otp => 'Invalid OTP code, please try again';
+
+  @override
+  String get password_validation_error =>
+      'Password must be at least 8 characters, including uppercase, lowercase and numbers';
 }

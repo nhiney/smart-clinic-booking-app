@@ -12,6 +12,10 @@
 	<string>Ứng dụng cần quyền truy cập vị trí để tìm bệnh viện gần bạn nhất.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>Ứng dụng cần quyền truy cập vị trí để tìm bệnh viện gần bạn nhất.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Ứng dụng cần quyền camera để quét mã QR đăng nhập.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Ứng dụng dùng Face ID để đăng nhập nhanh và an toàn.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -89,5 +93,7 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>io.flutter.embedded_views_preview</key>
+	<true/>
 </dict>
 </plist>

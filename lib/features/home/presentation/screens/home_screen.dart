@@ -113,12 +113,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             size: 26,
           ),
           const SizedBox(height: 4),
-          Text(
-            label,
-            style: context.textStyles.bodySmall.copyWith(
-              color: isSelected ? context.colors.primary : context.colors.textHint,
-              fontSize: 10,
-              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                style: context.textStyles.bodySmall.copyWith(
+                  color: isSelected ? context.colors.primary : context.colors.textHint,
+                  fontSize: 10,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                ),
+              ),
             ),
           ),
         ],
@@ -221,16 +226,16 @@ class _HomeDashboardState extends State<_HomeDashboard> {
                   delegate: SliverChildListDelegate([
                     QuickActionsGrid(
                       userRole: currentRole,
-                      onBookAppointment: () {},
-                      onViewAppointments: () {},
-                      onMedicalRecords: () {},
-                      onPrescriptions: () {},
-                      onContactSupport: () {},
-                      onVoiceAssistant: () {},
-                      onInpatientAdmission: () {},
-                      onNotificationSettings: () {},
-                      onPricing: () {},
-                      onSurveys: () {},
+                      onBookAppointment: () => context.push('/maps'),
+                      onViewAppointments: () => context.push('/transactions'),
+                      onMedicalRecords: () => context.push('/medical-records'),
+                      onPrescriptions: () => context.push('/invoices'),
+                      onContactSupport: () => context.push('/support'),
+                      onVoiceAssistant: () => context.push('/ai/voice-assistant'),
+                      onInpatientAdmission: () => context.push('/admission/registration/${user?.id ?? ""}'),
+                      onNotificationSettings: () => context.push('/notifications/settings'),
+                      onPricing: () => context.push('/payment', extra: {'amount': 500000, 'description': 'Thanh toán tạm ứng viện phí'}),
+                      onSurveys: () => context.push('/surveys'),
                     ),
                     const SizedBox(height: 24),
                     UpcomingAppointmentCard(

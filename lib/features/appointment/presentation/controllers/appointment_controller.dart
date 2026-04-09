@@ -11,16 +11,15 @@ class AppointmentController extends ChangeNotifier {
   bool isLoading = false;
   String? errorMessage;
 
-  List<AppointmentEntity> get upcomingAppointments => appointments
-      .where((a) => a.status == 'pending' || a.status == 'confirmed')
-      .toList();
+  List<AppointmentEntity> get upcomingAppointments =>
+      appointments.where((a) => a.isUpcoming).toList();
 
   List<AppointmentEntity> get completedAppointments => appointments
-      .where((a) => a.status == 'completed')
+      .where((a) => a.normalizedStatus == AppointmentStatuses.completed)
       .toList();
 
   List<AppointmentEntity> get cancelledAppointments => appointments
-      .where((a) => a.status == 'cancelled')
+      .where((a) => a.normalizedStatus == AppointmentStatuses.cancelled)
       .toList();
 
   Future<void> loadAppointments(String patientId) async {
@@ -46,7 +45,7 @@ class AppointmentController extends ChangeNotifier {
 
       final created = await repository.createAppointment(appointment);
       appointments.insert(0, created);
-      
+
       return true;
     } catch (e) {
       errorMessage = 'Không thể tạo lịch hẹn';
@@ -62,7 +61,10 @@ class AppointmentController extends ChangeNotifier {
       await repository.cancelAppointment(id);
       final index = appointments.indexWhere((a) => a.id == id);
       if (index != -1) {
-        appointments[index] = appointments[index].copyWith(status: 'cancelled');
+        appointments[index] = appointments[index].copyWith(
+          status: AppointmentStatuses.cancelled,
+          statusUpdatedAt: DateTime.now(),
+        );
       }
       notifyListeners();
       return true;
@@ -75,17 +77,22 @@ class AppointmentController extends ChangeNotifier {
 
   // --- Advanced Booking Logic ---
 
-  Future<bool> rescheduleAppointment(String id, DateTime newDate, String newTime) async {
+  Future<bool> rescheduleAppointment(
+      String id, DateTime newDate, String newTime) async {
     try {
       isLoading = true;
       notifyListeners();
-      
+
       // Update appointment via repository
       await repository.rescheduleAppointment(id, newDate, newTime);
-      
+
       final index = appointments.indexWhere((a) => a.id == id);
       if (index != -1) {
-        appointments[index] = appointments[index].copyWith(dateTime: newDate);
+        appointments[index] = appointments[index].copyWith(
+          dateTime: newDate,
+          status: AppointmentStatuses.rescheduled,
+          statusUpdatedAt: DateTime.now(),
+        );
       }
       return true;
     } catch (e) {
@@ -98,10 +105,10 @@ class AppointmentController extends ChangeNotifier {
   }
 
   Future<void> autoCancelIfUnpaid(String id) async {
-    // Logic: If not paid within 15 mins, cancel
     await Future.delayed(const Duration(minutes: 15));
     final appointment = appointments.firstWhere((a) => a.id == id);
-    if (appointment.status == 'pending_payment') {
+    if (appointment.paymentStatus == AppointmentPaymentStatuses.pending ||
+        appointment.paymentStatus == AppointmentPaymentStatuses.unpaid) {
       await cancelAppointment(id);
     }
   }

@@ -23,7 +23,12 @@ class AppButton extends StatelessWidget {
     this.width,
     this.height = 56,
     this.isSecondary = false,
+    this.prefixIcon,
+    this.suffixIcon,
   });
+
+  final Widget? prefixIcon;
+  final Widget? suffixIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -52,9 +57,23 @@ class AppButton extends StatelessWidget {
                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
               )
-            : Text(
-                text,
-                style: AppTextStyles.button.copyWith(color: fgColor),
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (prefixIcon != null) ...[
+                    prefixIcon!,
+                    const SizedBox(width: 8),
+                  ],
+                  Text(
+                    text,
+                    style: context.textStyles.button.copyWith(color: fgColor),
+                  ),
+                  if (suffixIcon != null) ...[
+                    const SizedBox(width: 8),
+                    suffixIcon!,
+                  ],
+                ],
               ),
       ),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/colors/app_colors.dart';
+import '../../../../core/extensions/context_extension.dart';
 import '../controllers/payment_controller.dart';
 import 'package:smart_clinic_booking/features/payment/domain/entities/transaction_entity.dart';
 import 'payment_result_screen.dart';
@@ -20,16 +21,21 @@ class PaymentProcessingScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<PaymentProcessingScreen> createState() => _PaymentProcessingScreenState();
+  ConsumerState<PaymentProcessingScreen> createState() =>
+      _PaymentProcessingScreenState();
 }
 
-class _PaymentProcessingScreenState extends ConsumerState<PaymentProcessingScreen> with SingleTickerProviderStateMixin {
+class _PaymentProcessingScreenState
+    extends ConsumerState<PaymentProcessingScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat();
+    _controller =
+        AnimationController(vsync: this, duration: const Duration(seconds: 2))
+          ..repeat();
     _startPayment();
   }
 
@@ -40,12 +46,13 @@ class _PaymentProcessingScreenState extends ConsumerState<PaymentProcessingScree
   }
 
   Future<void> _startPayment() async {
+    // 2s simulation delay (already in PaymentService.simulatePayment)
     final result = await ref.read(paymentControllerProvider.notifier).pay(
-      userId: widget.userId,
-      amount: widget.amount,
-      method: widget.method,
-      description: widget.description,
-    );
+          userId: widget.userId,
+          amount: widget.amount,
+          method: widget.method,
+          description: widget.description,
+        );
 
     if (mounted) {
       Navigator.pushReplacement(
@@ -63,7 +70,7 @@ class _PaymentProcessingScreenState extends ConsumerState<PaymentProcessingScree
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.colors.surface,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -71,24 +78,37 @@ class _PaymentProcessingScreenState extends ConsumerState<PaymentProcessingScree
             RotationTransition(
               turns: _controller,
               child: Container(
-                width: 80,
-                height: 80,
+                width: 100,
+                height: 100,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.primary, width: 4, style: BorderStyle.solid),
+                  border: Border.all(color: context.colors.primary, width: 2),
                 ),
-                child: const Icon(Icons.sync, color: AppColors.primary, size: 40),
+                child: Center(
+                  child: Container(
+                    width: 70,
+                    height: 70,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: context.colors.primary.withOpacity(0.1),
+                    ),
+                    child: Icon(Icons.sync,
+                        color: context.colors.primary, size: 40),
+                  ),
+                ),
               ),
             ),
-            const SizedBox(height: 32),
-            const Text(
+            SizedBox(height: context.spacing.xxl),
+            Text(
               "Đang xử lý thanh toán...",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: context.textStyles.heading3
+                  .copyWith(fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: context.spacing.m),
             Text(
               "Vui lòng không thoát ứng dụng",
-              style: TextStyle(color: Colors.grey[600]),
+              style: context.textStyles.bodySmall
+                  .copyWith(color: context.colors.textSecondary),
             ),
           ],
         ),

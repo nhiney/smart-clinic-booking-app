@@ -41,6 +41,34 @@ class DoctorRemoteDatasource {
         .toList();
   }
 
+  Future<List<DoctorModel>> getUnassignedDoctors() async {
+    final snapshot = await _firestore
+        .collection('doctors')
+        .where('departmentId', isEqualTo: '')
+        .get();
+    return snapshot.docs
+        .map((doc) => DoctorModel.fromJson(doc.data(), doc.id))
+        .toList();
+  }
+
+  Future<void> assignDoctorToDepartment({
+    required String doctorId,
+    required String hospitalId,
+    required String departmentId,
+  }) async {
+    await _firestore.collection('doctors').doc(doctorId).update({
+      'hospital': hospitalId,
+      'departmentId': departmentId,
+    });
+  }
+
+  Future<void> updateDoctorProfile(DoctorModel doctor) async {
+    await _firestore
+        .collection('doctors')
+        .doc(doctor.id)
+        .update(doctor.toJson());
+  }
+
   /// Seed sample doctors for development
   Future<void> seedDoctors() async {
     final collection = _firestore.collection('doctors');

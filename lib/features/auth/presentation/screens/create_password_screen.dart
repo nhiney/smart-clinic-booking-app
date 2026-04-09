@@ -1,340 +1,281 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:smart_clinic_booking/core/extensions/context_extension.dart';
+import 'package:smart_clinic_booking/l10n/app_localizations.dart';
+import 'package:smart_clinic_booking/core/widgets/branded_app_bar.dart';
+import 'package:smart_clinic_booking/core/widgets/app_button.dart';
+import 'package:smart_clinic_booking/core/widgets/app_text_field.dart';
+import 'package:smart_clinic_booking/core/widgets/auth_header.dart';
 import 'package:provider/provider.dart';
 import '../controllers/auth_controller.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/branded_app_bar.dart';
+import '../utils/auth_error_localizer.dart';
 
 class CreatePasswordScreen extends StatefulWidget {
-  final String phone;
-
-  const CreatePasswordScreen({super.key, required this.phone});
+  final String phoneNumber;
+  final String? name;
+  const CreatePasswordScreen({super.key, required this.phoneNumber, this.name});
 
   @override
   State<CreatePasswordScreen> createState() => _CreatePasswordScreenState();
 }
 
 class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
-  final _passwordController = TextEditingController();
-  final _confirmController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  bool _isLoading = false;
 
-  bool _obscurePassword = true;
-  bool _obscureConfirm = true;
+  String _tr(String vi, String en, String ja, String ko, String zh) {
+    final lang = Localizations.localeOf(context).languageCode;
+    switch (lang) {
+      case 'en':
+        return en;
+      case 'ja':
+        return ja;
+      case 'ko':
+        return ko;
+      case 'zh':
+        return zh;
+      default:
+        return vi;
+    }
+  }
 
-  // Validation rules
-  bool _hasMinLength = false;
-  bool _hasUppercase = false;
-  bool _hasLowercase = false;
-  bool _hasDigit = false;
-  bool _hasSpecialChar = false;
+  bool get _hasMinLength => _passwordController.text.length >= 8;
+  bool get _hasUppercase => _passwordController.text.contains(RegExp(r'[A-Z]'));
+  bool get _hasLowercase => _passwordController.text.contains(RegExp(r'[a-z]'));
+  bool get _hasDigit => _passwordController.text.contains(RegExp(r'[0-9]'));
+  bool get _isConfirmMatched =>
+      _confirmPasswordController.text.isNotEmpty &&
+      _confirmPasswordController.text == _passwordController.text;
+
+  bool get _isPasswordValid =>
+      _hasMinLength && _hasUppercase && _hasLowercase && _hasDigit;
 
   @override
   void initState() {
     super.initState();
-    _passwordController.addListener(_validatePasswordRules);
+    _passwordController.addListener(_onPasswordInputChanged);
+    _confirmPasswordController.addListener(_onPasswordInputChanged);
+  }
+
+  void _onPasswordInputChanged() {
+    if (!mounted) return;
+    setState(() {});
   }
 
   @override
   void dispose() {
-    _passwordController.removeListener(_validatePasswordRules);
+    _passwordController.removeListener(_onPasswordInputChanged);
+    _confirmPasswordController.removeListener(_onPasswordInputChanged);
     _passwordController.dispose();
-    _confirmController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  void _validatePasswordRules() {
-    final text = _passwordController.text;
-    setState(() {
-      _hasMinLength = text.length >= 8;
-      _hasUppercase = text.contains(RegExp(r'[A-Z]'));
-      _hasLowercase = text.contains(RegExp(r'[a-z]'));
-      _hasDigit = text.contains(RegExp(r'[0-9]'));
-      _hasSpecialChar = text.contains(RegExp(r'[!@#\$&*~_+\-\=]'));
-    });
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) return AppLocalizations.of(context)!.required_field;
+    if (!_isPasswordValid) {
+      return AppLocalizations.of(context)!.password_validation_error;
+    }
+    return null;
   }
 
-  bool get _isPasswordValid =>
-      _hasMinLength &&
-      _hasUppercase &&
-      _hasLowercase &&
-      _hasDigit &&
-      _hasSpecialChar;
-
-  void _submit() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    if (!_isPasswordValid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Vui lòng đảm bảo mật khẩu đạt đủ các tiêu chí an toàn!'),
-          backgroundColor: Colors.red,
-        ),
+  Widget _buildPasswordRules(BuildContext context) {
+    Widget ruleItem(String text, bool isValid) {
+      return Row(
+        children: [
+          Icon(
+            isValid ? Icons.check_circle : Icons.radio_button_unchecked,
+            size: 16,
+            color: isValid ? Colors.green : context.colors.textHint,
+          ),
+          const SizedBox(width: 8),
+          Expanded(child: Text(text, style: context.textStyles.bodySmall)),
+        ],
       );
-      return;
     }
 
-    final authController = context.read<AuthController>();
-    final success = await authController.createPassword(
-      widget.phone,
-      _passwordController.text,
-    );
-
-    if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Đăng ký thành công! Vui lòng đăng nhập.'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      authController.logout(); // Đăng xuất phiên OTP để bắt buộc đăng nhập lại
-      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-    } else if (mounted) {
-      // If error is related to already having a password, just redirect
-      if (authController.errorMessage?.contains('có mật khẩu') == true) {
-         authController.logout();
-         Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(authController.errorMessage ?? 'Có lỗi xảy ra'),
-            backgroundColor: Colors.red,
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(context.spacing.m),
+      decoration: BoxDecoration(
+        color: context.colors.primary.withOpacity(0.06),
+        borderRadius: context.radius.mRadius,
+        border: Border.all(color: context.colors.primary.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Nguyên tắc tạo mật khẩu',
+            style: context.textStyles.bodyBold.copyWith(
+              color: context.colors.primaryDark,
+            ),
           ),
-        );
+          const SizedBox(height: 8),
+          ruleItem('Mật khẩu có tối thiểu 8 ký tự', _hasMinLength),
+          const SizedBox(height: 6),
+          ruleItem('Mật khẩu có chữ in hoa', _hasUppercase),
+          const SizedBox(height: 6),
+          ruleItem('Mật khẩu có chữ thường', _hasLowercase),
+          const SizedBox(height: 6),
+          ruleItem('Mật khẩu có chữ số', _hasDigit),
+          const SizedBox(height: 6),
+          ruleItem('Mật khẩu xác nhận phải trùng khớp', _isConfirmMatched),
+        ],
+      ),
+    );
+  }
+
+  void _submit() async {
+    if (_isLoading) return;
+    if (_formKey.currentState!.validate()) {
+      setState(() => _isLoading = true);
+      
+      final authController = context.read<AuthController>();
+      final success = await authController.register(
+        name: widget.name ?? 'Người dùng Patient',
+        phone: widget.phoneNumber,
+        password: _passwordController.text,
+        role: 'patient',
+      );
+      
+      if (mounted) {
+        setState(() => _isLoading = false);
+        if (success) {
+          final qrData = await authController.createQrLoginToken(persistent: true);
+          if (!mounted) return;
+          if (qrData != null && (qrData['token'] as String?)?.isNotEmpty == true) {
+            // Sign out so the user is forced to see QR then login manually as requested
+            authController.logout();
+            if (!mounted) return;
+            context.go('/account-qr', extra: qrData);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  localizeAuthError(
+                    context,
+                    authController.errorMessage,
+                    fallback: AppLocalizations.of(context)!.registration_success,
+                  ),
+                ),
+                backgroundColor: context.colors.primary,
+              ),
+            );
+            context.go('/login');
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                localizeAuthError(
+                  context,
+                  authController.errorMessage,
+                  fallback: _tr(
+                    'Đăng ký thất bại',
+                    'Registration failed',
+                    '登録に失敗しました',
+                    '회원가입에 실패했습니다',
+                    '注册失败',
+                  ),
+                ),
+              ),
+              backgroundColor: context.colors.error,
+            ),
+          );
+        }
       }
     }
   }
 
-  Widget _buildRuleItem(String text, bool isValid) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Row(
-        children: [
-          Icon(
-            isValid ? Icons.check_circle : Icons.radio_button_unchecked,
-            color: isValid ? Colors.green : Colors.grey,
-            size: 20,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            text,
-            style: TextStyle(
-              color: isValid ? Colors.black87 : Colors.grey,
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
+  @override
   Widget build(BuildContext context) {
-    const primaryBlue = AppColors.primary;
-    const textColor = AppColors.textPrimary;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFC),
+      extendBodyBehindAppBar: true,
       appBar: BrandedAppBar(
-        title: "Thiết lập mật khẩu",
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false),
-            child: const Text(
-              "Bỏ qua",
-              style: TextStyle(color: primaryBlue, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
+        backgroundColor: Colors.transparent,
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 10.0),
-          child: Form(
-            key: _formKey,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              const Color(0xFFE3F2FD),
+              const Color(0xFFF8FAFC),
+              Colors.white,
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(context.spacing.l),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "Thiết lập mật khẩu",
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "Cài đặt mật khẩu cho số điện thoại ${widget.phone} để dễ dàng đăng nhập lần sau.",
-                  style: const TextStyle(
-                    fontSize: 15,
-                    color: Colors.grey,
-                  ),
-                ),
+                const SizedBox(height: 10),
+                AuthHeader(),
                 const SizedBox(height: 32),
-
-                // Password
-                const Text(
-                  "Mật khẩu",
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
+                Text(
+                  l10n.create_password_title,
+                  style: context.textStyles.heading2.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: context.colors.primaryDark,
                   ),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  style: const TextStyle(fontSize: 16),
-                  decoration: InputDecoration(
-                    hintText: "Nhập mật khẩu...",
-                    hintStyle: const TextStyle(color: Colors.grey),
-                    prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                        color: Colors.grey,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: primaryBlue),
-                    ),
-                  ),
-                  validator: (val) {
-                    if (val == null || val.isEmpty) return 'Vui lòng nhập mật khẩu';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Confirm Password
-                const Text(
-                  "Xác nhận mật khẩu",
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _confirmController,
-                  obscureText: _obscureConfirm,
-                  style: const TextStyle(fontSize: 16),
-                  decoration: InputDecoration(
-                    hintText: "Nhập lại mật khẩu...",
-                    hintStyle: const TextStyle(color: Colors.grey),
-                    prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureConfirm ? Icons.visibility_off : Icons.visibility,
-                        color: Colors.grey,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscureConfirm = !_obscureConfirm;
-                        });
-                      },
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: primaryBlue),
-                    ),
-                  ),
-                  validator: (val) {
-                    if (val == null || val.isEmpty) return 'Vui lòng xác nhận mật khẩu';
-                    if (val != _passwordController.text) return 'Mật khẩu không khớp';
-                    return null;
-                  },
                 ),
                 const SizedBox(height: 24),
-
-                // Rules
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.all(context.spacing.l),
                   decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.blue.shade100),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Yêu cầu mật khẩu:",
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    color: Colors.white,
+                    borderRadius: context.radius.xlRadius,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 24,
+                        offset: const Offset(0, 12),
                       ),
-                      const SizedBox(height: 12),
-                      _buildRuleItem("Ít nhất 8 ký tự", _hasMinLength),
-                      _buildRuleItem("Chứa chữ hoa", _hasUppercase),
-                      _buildRuleItem("Chứa chữ thường", _hasLowercase),
-                      _buildRuleItem("Chứa chữ số", _hasDigit),
-                      _buildRuleItem("Ký tự đặc biệt (VD: @, #, \$, %...)", _hasSpecialChar),
                     ],
                   ),
-                ),
-                const SizedBox(height: 40),
-
-                // Submit Button
-                Consumer<AuthController>(
-                  builder: (context, auth, _) {
-                    return SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton(
-                        onPressed: auth.isLoading ? null : _submit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryBlue,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        _buildPasswordRules(context),
+                        const SizedBox(height: 16),
+                        AppTextField(
+                          controller: _passwordController,
+                          labelText: l10n.password_label,
+                          hintText: l10n.password_hint,
+                          obscureText: true,
+                          prefixIcon: Icon(Icons.lock_outline, color: context.colors.primary),
+                          validator: _validatePassword,
                         ),
-                        child: auth.isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                              )
-                            : const Text(
-                                "Hoàn tất đăng ký",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                      ),
-                    );
-                  },
+                        const SizedBox(height: 16),
+                        AppTextField(
+                          controller: _confirmPasswordController,
+                          labelText: 'Xác nhận mật khẩu',
+                          hintText: 'Nhập lại mật khẩu',
+                          obscureText: true,
+                          prefixIcon: Icon(Icons.lock_reset_outlined, color: context.colors.primary),
+                          validator: (v) {
+                            if (v == null || v.isEmpty) return l10n.required_field;
+                            return v != _passwordController.text ? 'Mật khẩu không khớp' : null;
+                          },
+                        ),
+                        const SizedBox(height: 32),
+                        AppButton(
+                          text: l10n.continue_button,
+                          onPressed: _submit,
+                          isLoading: _isLoading,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 20),
               ],
             ),
           ),

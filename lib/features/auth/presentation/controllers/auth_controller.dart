@@ -1,39 +1,115 @@
 import 'package:flutter/material.dart';
+import '../../domain/repositories/auth_repository.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/register_usecase.dart';
 import '../../domain/usecases/verify_phone_usecase.dart';
 import '../../domain/usecases/signin_with_phone_usecase.dart';
-import '../../domain/usecases/create_password_usecase.dart';
 
 class AuthController extends ChangeNotifier {
-  final LoginUseCase loginUseCase;
+  final LoginWithEmailUseCase loginWithEmailUseCase;
   final RegisterUseCase registerUseCase;
   final VerifyPhoneUseCase verifyPhoneUseCase;
   final SignInWithPhoneUseCase signInWithPhoneUseCase;
-  final CreatePasswordUseCase createPasswordUseCase;
+  final AuthRepository authRepository;
 
   AuthController({
-    required this.loginUseCase,
+    required this.loginWithEmailUseCase,
     required this.registerUseCase,
     required this.verifyPhoneUseCase,
     required this.signInWithPhoneUseCase,
-    required this.createPasswordUseCase,
+    required this.authRepository,
   });
 
   bool isLoading = false;
   String? errorMessage;
   UserEntity? currentUser;
   String? verificationId;
+  
+  // New States
+  bool isDoctorMode = false;
+  int otpTimer = 0;
 
-  Future<bool> login(String phone, String password) async {
+  Future<bool> login(String credential, String password, {String? requiredRole}) async {
     try {
       isLoading = true;
       errorMessage = null;
       notifyListeners();
 
-      currentUser = await loginUseCase(phone, password);
+      currentUser = await loginWithEmailUseCase(
+        credential, 
+        password,
+        requiredRole: requiredRole,
+      );
 
+      return true;
+    } catch (e) {
+      errorMessage = e.toString().replaceAll('Exception: ', '');
+      return false;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> loginWithBiometrics() async {
+    try {
+      isLoading = true;
+      errorMessage = null;
+      notifyListeners();
+      currentUser = await authRepository.loginWithBiometrics();
+      return true;
+    } catch (e) {
+      errorMessage = e.toString().replaceAll('Exception: ', '');
+      return false;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> saveBiometricCredential({
+    required String identifier,
+    required String password,
+    String? requiredRole,
+  }) async {
+    await authRepository.saveBiometricCredential(
+      identifier: identifier,
+      password: password,
+      requiredRole: requiredRole,
+    );
+  }
+
+  Future<bool> isBiometricAvailable() async {
+    return authRepository.isBiometricAvailable();
+  }
+
+  Future<bool> isBiometricEnabled() async {
+    return authRepository.isBiometricEnabled();
+  }
+
+  Future<void> clearBiometricCredential() async {
+    await authRepository.clearBiometricCredential();
+  }
+
+  Future<Map<String, dynamic>?> createQrLoginToken({bool persistent = false}) async {
+    try {
+      errorMessage = null;
+      notifyListeners();
+      return await authRepository.createQrLoginToken(persistent: persistent);
+    } catch (e) {
+      errorMessage = e.toString().replaceAll('Exception: ', '');
+      notifyListeners();
+      return null;
+    }
+  }
+
+  Future<bool> signInWithQrToken(String qrToken) async {
+    try {
+      isLoading = true;
+      errorMessage = null;
+      notifyListeners();
+      currentUser = await authRepository.signInWithQrToken(qrToken);
       return true;
     } catch (e) {
       errorMessage = e.toString().replaceAll('Exception: ', '');
@@ -47,11 +123,10 @@ class AuthController extends ChangeNotifier {
   Future<bool> register({
     required String name,
     required String phone,
-    required String password,
+    String? email,
+    String? password,
     String? role,
-    String? hospitalId,
-    String? idCardUrl,
-    String? medicalCertUrl,
+    String? tenantId,
   }) async {
     try {
       isLoading = true;
@@ -61,30 +136,12 @@ class AuthController extends ChangeNotifier {
       currentUser = await registerUseCase(
         name: name,
         phone: phone,
-        password: password,
         role: role ?? 'patient',
-        hospitalId: hospitalId,
-        idCardUrl: idCardUrl,
-        medicalCertUrl: medicalCertUrl,
+        email: email,
+        password: password,
+        tenantId: tenantId,
       );
 
-      return true;
-    } catch (e) {
-      errorMessage = e.toString().replaceAll('Exception: ', '');
-      return false;
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  Future<bool> createPassword(String phone, String password) async {
-    try {
-      isLoading = true;
-      errorMessage = null;
-      notifyListeners();
-
-      await createPasswordUseCase(phone, password);
       return true;
     } catch (e) {
       errorMessage = e.toString().replaceAll('Exception: ', '');
@@ -120,6 +177,7 @@ class AuthController extends ChangeNotifier {
         onCodeSent: (id) {
           verificationId = id;
           isLoading = false;
+          startOtpTimer();
           notifyListeners();
           onCodeSent();
         },
@@ -141,6 +199,20 @@ class AuthController extends ChangeNotifier {
       notifyListeners();
       onError(errorMessage!);
     }
+  }
+
+  void startOtpTimer() {
+    otpTimer = 60;
+    notifyListeners();
+    Future.doWhile(() async {
+      await Future.delayed(const Duration(seconds: 1));
+      if (otpTimer > 0) {
+        otpTimer--;
+        notifyListeners();
+        return true;
+      }
+      return false;
+    });
   }
 
   Future<bool> verifyOtp(String smsCode, {String? name}) async {
@@ -175,9 +247,6 @@ class AuthController extends ChangeNotifier {
       isLoading = true;
       notifyListeners();
       final isRegistered = await verifyPhoneUseCase.repository.isPhoneRegistered(phone);
-      if (isRegistered) {
-        errorMessage = "Số điện thoại này đã được đăng ký. Vui lòng đăng nhập.";
-      }
       return isRegistered;
     } catch (e) {
       return false;

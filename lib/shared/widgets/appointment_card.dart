@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_text_styles.dart';
+import '../../core/theme/colors/app_colors.dart';
+import '../../core/theme/typography/app_text_styles.dart';
+import '../../features/appointment/domain/entities/appointment_entity.dart';
 
 class AppointmentCard extends StatelessWidget {
   final String doctorName;
@@ -22,14 +23,21 @@ class AppointmentCard extends StatelessWidget {
   });
 
   Color _statusColor() {
-    switch (status.toLowerCase()) {
-      case 'pending':
+    switch (AppointmentStatuses.normalize(status)) {
+      case AppointmentStatuses.pendingBooking:
+      case AppointmentStatuses.booked:
+      case AppointmentStatuses.rescheduled:
         return AppColors.statusPending;
-      case 'confirmed':
+      case AppointmentStatuses.confirmed:
+      case AppointmentStatuses.checkedIn:
+      case AppointmentStatuses.inQueue:
+      case AppointmentStatuses.inConsultation:
+      case AppointmentStatuses.postConsultation:
         return AppColors.statusConfirmed;
-      case 'completed':
+      case AppointmentStatuses.completed:
         return AppColors.statusCompleted;
-      case 'cancelled':
+      case AppointmentStatuses.cancelled:
+      case AppointmentStatuses.noShow:
         return AppColors.statusCancelled;
       default:
         return AppColors.textHint;
@@ -37,15 +45,30 @@ class AppointmentCard extends StatelessWidget {
   }
 
   String _statusText() {
-    switch (status.toLowerCase()) {
-      case 'pending':
-        return 'Chờ xác nhận';
-      case 'confirmed':
+    switch (AppointmentStatuses.normalize(status)) {
+      case AppointmentStatuses.pendingBooking:
+        return 'Cho dat lich';
+      case AppointmentStatuses.booked:
+        return 'Da dat';
+      case AppointmentStatuses.confirmed:
         return 'Đã xác nhận';
-      case 'completed':
+      case AppointmentStatuses.checkedIn:
+        return 'Da check-in';
+      case AppointmentStatuses.inQueue:
+        return 'Dang cho kham';
+      case AppointmentStatuses.inConsultation:
+        return 'Dang kham';
+      case AppointmentStatuses.postConsultation:
+        return 'Sau kham';
+      case AppointmentStatuses.rescheduled:
+        return 'Da doi lich';
+      case AppointmentStatuses.completed:
         return 'Hoàn thành';
-      case 'cancelled':
+      case AppointmentStatuses.cancelled:
         return 'Đã hủy';
+      case AppointmentStatuses.noShow:
+      case AppointmentStatuses.noShowPending:
+        return 'Vang mat';
       default:
         return status;
     }
@@ -141,7 +164,10 @@ class AppointmentCard extends StatelessWidget {
                   style: AppTextStyles.bodySmall,
                 ),
                 const Spacer(),
-                if (status.toLowerCase() == 'pending' && onCancel != null)
+                if (AppointmentStatuses.cancellable.contains(
+                      AppointmentStatuses.normalize(status),
+                    ) &&
+                    onCancel != null)
                   TextButton(
                     onPressed: onCancel,
                     style: TextButton.styleFrom(
