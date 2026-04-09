@@ -877,6 +877,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Break'**
   String get doctor_workload_break;
+
+  /// No description provided for @logout_confirm_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Logout Confirmation'**
+  String get logout_confirm_title;
+
+  /// No description provided for @logout_confirm_message.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to logout?'**
+  String get logout_confirm_message;
+
+  /// No description provided for @cancel_button_text.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel_button_text;
+
+  /// No description provided for @logout_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Logout'**
+  String get logout_button;
 }
 
 class _AppLocalizationsDelegate

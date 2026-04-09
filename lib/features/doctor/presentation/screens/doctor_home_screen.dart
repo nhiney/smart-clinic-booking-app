@@ -110,38 +110,71 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
                 Text(
                   '${doctor?.specialty ?? "Nội tổng quát"} • ${doctor?.hospital ?? "Bệnh viện Chợ Rẫy"}',
                   style: context.textStyles.body.copyWith(color: context.colors.textSecondary),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
               ],
             ),
           ),
-          Stack(
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: context.colors.primary.withOpacity(0.2), width: 3),
-                  image: const DecorationImage(
-                    image: NetworkImage('https://i.pravatar.cc/150?u=doctor'),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              Positioned(
-                right: 0,
-                bottom: 0,
-                child: Container(
-                  width: 18,
-                  height: 18,
+          InkWell(
+            onTap: () => _showLogoutDialog(context),
+            borderRadius: BorderRadius.circular(30),
+            child: Stack(
+              children: [
+                Container(
+                  width: 60,
+                  height: 60,
                   decoration: BoxDecoration(
-                    color: Colors.green,
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
+                    border: Border.all(color: context.colors.primary.withOpacity(0.2), width: 3),
+                    image: const DecorationImage(
+                      image: NetworkImage('https://i.pravatar.cc/150?u=doctor'),
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
-              ),
-            ],
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    width: 18,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      color: Colors.green,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.logout_confirm_title),
+        content: Text(l10n.logout_confirm_message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.cancel_button_text),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              context.read<AuthController>().logout();
+            },
+            child: Text(
+              l10n.logout_button,
+              style: TextStyle(color: context.colors.error),
+            ),
           ),
         ],
       ),
@@ -548,11 +581,11 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
             ),
             const SizedBox(height: 12),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildWorkloadItem(context, '${l10n.doctor_workload_limit}: 40'),
-                _buildWorkloadItem(context, '${l10n.doctor_workload_done}: 30'),
-                _buildWorkloadItem(context, '${l10n.doctor_workload_break}: 12:00'),
+                Expanded(child: _buildWorkloadItem(context, '${l10n.doctor_workload_limit}: 40')),
+                Expanded(child: _buildWorkloadItem(context, '${l10n.doctor_workload_done}: 30')),
+                Expanded(child: _buildWorkloadItem(context, '${l10n.doctor_workload_break}: 12:00')),
               ],
             ),
           ],

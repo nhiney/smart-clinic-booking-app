@@ -79,3 +79,13 @@ build/
 /windows/flutter/generated/
 /linux/flutter/generated/
 /macos/Flutter/GeneratedPluginRegistrant.swift
+
+# Codegen (injectable / build_runner)
+**/injection.config.dart
+**/*.g.dart
+**/*.freezed.dart
+
+# Local docs / scratch notes
+docs/archive/
+login_task.md
+yc.md

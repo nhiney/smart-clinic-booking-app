@@ -93,9 +93,13 @@ class AppRouter {
       final claims = idTokenResult.claims ?? {};
       String role = claims['role'] as String? ?? 'unverified';
       
-      // Special case for seed admin if claims are missing
-      if (role == 'unverified' && user.email == 'admin@icare.com') {
-        role = 'super_admin';
+      // Special case for seed admin/doctor if claims are missing (Demo/Seed mode)
+      if (role == 'unverified') {
+        if (user.email == 'admin@icare.com') {
+          role = 'super_admin';
+        } else if (user.email == 'annv.choray@icare.com') {
+          role = 'doctor';
+        }
       }
 
       // 2. Pending KYC Approval Flow (for patients/new docs)

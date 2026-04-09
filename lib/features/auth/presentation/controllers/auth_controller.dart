@@ -6,7 +6,7 @@ import '../../domain/usecases/register_usecase.dart';
 import '../../domain/usecases/verify_phone_usecase.dart';
 import '../../domain/usecases/signin_with_phone_usecase.dart';
 
-import '../../../app/router/app_router.dart';
+import 'package:smart_clinic_booking/app/router/app_router.dart';
 
 class AuthController extends ChangeNotifier {
   final LoginWithEmailUseCase loginWithEmailUseCase;
@@ -121,6 +121,7 @@ class AuthController extends ChangeNotifier {
       currentUser = await authRepository.signInWithQrToken(qrToken);
       if (currentUser != null) {
         await authRepository.saveSession(currentUser!);
+        AppRouter.hasLocalSession = true;
       }
       return true;
     } catch (e) {
@@ -252,6 +253,7 @@ class AuthController extends ChangeNotifier {
       );
       if (currentUser != null) {
         await authRepository.saveSession(currentUser!);
+        AppRouter.hasLocalSession = true;
       }
       return true;
     } catch (e) {

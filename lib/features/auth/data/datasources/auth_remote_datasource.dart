@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter/services.dart';
 import 'package:injectable/injectable.dart';
 import 'package:local_auth/local_auth.dart';
 import '../../domain/entities/user_entity.dart';
@@ -103,27 +104,24 @@ class AuthRemoteDatasource {
           if (cred.user != null) {
             final realUid = cred.user!.uid;
             
-            // 2. NOW we have permission to check/create Firestore metadata
-            final query = await _firestore.collection('users').where('email', isEqualTo: email).limit(1).get();
-            
-            Map<String, dynamic> data;
-            if (query.docs.isEmpty) {
-              // Create Bootstrap Metadata
-              data = {
-                'email': email,
-                'role': email == 'admin@icare.com' ? 'admin' : 'doctor',
-                'name': email == 'admin@icare.com' ? 'Hệ thống Quản trị' : 'Bác sĩ mẫu',
-                'status': 'active',
-                'created_at': FieldValue.serverTimestamp(),
-              };
-              await _firestore.collection('users').doc(realUid).set(data);
+            // 2. Avoid querying /users (blocked by rules for non-admin).
+            //    Only read/write the signed-in user's own doc (owner access).
+            final userDocRef = _firestore.collection('users').doc(realUid);
+            final userDoc = await userDocRef.get();
+
+            final data = <String, dynamic>{
+              'email': email,
+              'role': email == 'admin@icare.com' ? 'admin' : 'doctor',
+              'name': email == 'admin@icare.com' ? 'Hệ thống Quản trị' : 'Bác sĩ mẫu',
+              'status': 'active',
+              'created_at': FieldValue.serverTimestamp(),
+            };
+
+            if (!userDoc.exists) {
+              await userDocRef.set(data, SetOptions(merge: true));
             } else {
-              // Use existing metadata but ensure realUid doc exists
-              final doc = query.docs.first;
-              data = doc.data();
-              if (doc.id != realUid) {
-                await _firestore.collection('users').doc(realUid).set(data, SetOptions(merge: true));
-              }
+              // Ensure required fields exist but don't overwrite customizations
+              await userDocRef.set(data, SetOptions(merge: true));
             }
             
             return UserModel.fromJson(data, realUid);
@@ -367,9 +365,10 @@ class AuthRemoteDatasource {
       final token = await _firebaseAuth.currentUser?.getIdToken() ?? 'local_session';
       await _secureStorage.write(key: _sessionUidKey, value: user.id);
       await _secureStorage.write(key: _sessionTokenKey, value: token);
+    } on MissingPluginException {
+      // e.g. running on an unsupported platform (web/test) - ignore gracefully.
     } catch (e) {
       debugPrint('Save session error: $e');
-      rethrow;
     }
   }
 
@@ -378,14 +377,26 @@ class AuthRemoteDatasource {
       final uid = await _secureStorage.read(key: _sessionUidKey);
       final token = await _secureStorage.read(key: _sessionTokenKey);
       return (uid != null && uid.isNotEmpty) && (token != null && token.isNotEmpty);
+    } on MissingPluginException {
+      return false;
     } catch (_) {
       return false;
     }
   }
 
+  Future<void> _clearSession() async {
+    try {
+      await _secureStorage.delete(key: _sessionUidKey);
+      await _secureStorage.delete(key: _sessionTokenKey);
+    } on MissingPluginException {
+      // e.g. running on an unsupported platform (web/test) - ignore gracefully.
+    } catch (e) {
+      debugPrint('Clear session error: $e');
+    }
+  }
+
   Future<void> clearSession() async {
-    await _secureStorage.delete(key: _sessionUidKey);
-    await _secureStorage.delete(key: _sessionTokenKey);
+    await _clearSession();
   }
 
   /// LOGOUT
@@ -395,7 +406,7 @@ class AuthRemoteDatasource {
       await _logAudit(user.uid, 'LOGOUT', 'User logged out');
     }
     await _firebaseAuth.signOut();
-    await clearSession();
+    await _clearSession();
   }
 
   /// CURRENT USER
@@ -479,8 +490,12 @@ class AuthRemoteDatasource {
           
       return snapshot.docs.isNotEmpty;
     } catch (e) {
+      if (e.toString().contains('permission-denied')) {
+        debugPrint('[AUTH] Permission denied for phone check, assuming not registered for now.');
+        return false;
+      }
       debugPrint('[AUTH] Lỗi kiểm tra số điện thoại: $e');
-      return false;
+      rethrow;
     }
   }
 
@@ -731,16 +746,29 @@ class AuthRemoteDatasource {
       'password': password,
       'requiredRole': requiredRole,
     });
-    await _secureStorage.write(key: _biometricCredentialKey, value: payload);
+    try {
+      await _secureStorage.write(key: _biometricCredentialKey, value: payload);
+    } catch (e) {
+      debugPrint('Save biometric error: $e');
+    }
   }
 
   Future<void> clearBiometricCredential() async {
-    await _secureStorage.delete(key: _biometricCredentialKey);
+    try {
+      await _secureStorage.delete(key: _biometricCredentialKey);
+    } catch (e) {
+      debugPrint('Clear biometric error: $e');
+    }
   }
 
   Future<bool> isBiometricEnabled() async {
-    final raw = await _secureStorage.read(key: _biometricCredentialKey);
-    return raw != null && raw.isNotEmpty;
+    try {
+      final raw = await _secureStorage.read(key: _biometricCredentialKey);
+      return raw != null && raw.isNotEmpty;
+    } catch (e) {
+      debugPrint('Check biometric error: $e');
+      return false;
+    }
   }
 
   Future<UserModel> loginWithBiometrics() async {

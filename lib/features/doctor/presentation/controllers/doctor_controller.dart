@@ -31,10 +31,14 @@ class DoctorController extends ChangeNotifier {
   Future<void> fetchDoctorProfile(String doctorId) async {
     try {
       isLoading = true;
+      errorMessage = null;
       notifyListeners();
+      debugPrint('[DIAGNOSTIC] Fetching doctor profile for ID: $doctorId');
       currentDoctor = await doctorRepository.getDoctorProfile(doctorId);
+      debugPrint('[DIAGNOSTIC] Profile fetched successfully: ${currentDoctor?.name}');
       await fetchDashboardData(doctorId);
     } catch (e) {
+      debugPrint('[DIAGNOSTIC] Error fetching doctor profile: $e');
       errorMessage = e.toString();
     } finally {
       isLoading = false;

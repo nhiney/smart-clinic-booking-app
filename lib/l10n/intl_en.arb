@@ -134,5 +134,9 @@
   "doctor_morning": "AM",
   "doctor_workload_limit": "Limit",
   "doctor_workload_done": "Done",
-  "doctor_workload_break": "Break"
+  "doctor_workload_break": "Break",
+  "logout_confirm_title": "Logout Confirmation",
+  "logout_confirm_message": "Are you sure you want to logout?",
+  "cancel_button_text": "Cancel",
+  "logout_button": "Logout"
 }

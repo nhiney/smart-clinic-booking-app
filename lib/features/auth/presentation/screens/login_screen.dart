@@ -67,7 +67,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final success = await authController.login(
       virtualEmail,
       passwordController.text,
-      requiredRole: 'patient',
     );
 
     if (!mounted) return;

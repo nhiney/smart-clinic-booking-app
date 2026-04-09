@@ -75,7 +75,9 @@ class PatientHomeScreen extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  '${l10n.patient_header_greeting}',
+                  l10n.patient_header_greeting,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 30,
                     fontWeight: FontWeight.w700,

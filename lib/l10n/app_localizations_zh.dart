@@ -397,4 +397,16 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get doctor_workload_break => '休息';
+
+  @override
+  String get logout_confirm_title => 'Logout Confirmation';
+
+  @override
+  String get logout_confirm_message => 'Are you sure you want to logout?';
+
+  @override
+  String get cancel_button_text => 'Cancel';
+
+  @override
+  String get logout_button => 'Logout';
 }

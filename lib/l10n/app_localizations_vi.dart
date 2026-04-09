@@ -401,4 +401,16 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get doctor_workload_break => 'Nghỉ';
+
+  @override
+  String get logout_confirm_title => 'Xác nhận đăng xuất';
+
+  @override
+  String get logout_confirm_message => 'Bạn có chắc chắn muốn đăng xuất không?';
+
+  @override
+  String get cancel_button_text => 'Hủy';
+
+  @override
+  String get logout_button => 'Đăng xuất';
 }

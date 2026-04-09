@@ -1,27 +1,19 @@
 import 'package:flutter/material.dart';
-import '../screens/admin_dashboard_screen.dart';
-import 'package:smart_clinic_booking/features/doctor/presentation/screens/doctor_home_screen.dart';
-import '../screens/patient_home_screen.dart';
+import 'package:go_router/go_router.dart';
 
 void navigateByRole(BuildContext context, String role) {
-  Widget destination;
   switch (role) {
     case 'admin':
     case 'super_admin':
     case 'hospital_manager':
-      destination = const AdminDashboardScreen();
+      context.go('/admin/dashboard');
       break;
     case 'doctor':
-      destination = const DoctorHomeScreen();
+      context.go('/doctor/dashboard');
       break;
     case 'patient':
     default:
-      destination = const PatientHomeScreen();
+      context.go('/home');
       break;
   }
-
-  Navigator.of(context).pushAndRemoveUntil(
-    MaterialPageRoute(builder: (_) => destination),
-    (route) => false,
-  );
 }

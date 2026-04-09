@@ -1,566 +1,237 @@
-# ICare — System Tasks & Architecture (Production)
-
----
-
-# 1. Kiến trúc hệ thống
-
-## Áp dụng:
-
-- Clean Architecture
-- RBAC (Role-Based Access Control)
-- Realtime + Offline-first
-- AI Voice Assistant
-
-## Bổ sung:
-
-- Microservices-ready architecture
-- Event-driven architecture (Cloud Functions)
-- CQRS (Command Query Responsibility Segregation)
-- Multi-tenant (nhiều bệnh viện)
-
----
-
-# 3. 3 Layer chính
-
-### 1. Presentation Layer
-
-- UI (Screen, Widget)
-- State (BLoC / Provider)
-
-Bổ sung:
-
-- Responsive (mobile, tablet)
-- Accessibility (font lớn, voice navigation)
-- Dark mode
-- Skeleton loading
-- Error state / Empty state
-
----
-
-### 2. Domain Layer
-
-- Business logic
-- UseCase
-- Entity
-
-Bổ sung:
-
-- Domain validation rules
-- RBAC guard trong UseCase
-- Scheduling engine (xử lý logic đặt lịch)
-
----
-
-### 3. Data Layer
-
-- Firebase / API
-- Repository
-- Model + Mapper
-
-Bổ sung:
-
-- API abstraction (ready backend riêng)
-- Cache strategy (memory + Hive)
-- Retry / timeout (Dio interceptor)
-
----
-
-# 2. Các vai trò trong hệ thống
-
-1. Bệnh nhân (Patient)
-2. Bác sĩ (Doctor)
-3. Quản trị viên (Admin)
-4. Thiết bị người dùng (User Device)
-5. Thiết bị quét QR (Scanner Device)
-
-Bổ sung: 6. Super Admin  
-7. Hospital Manager
-
----
-
-# 3. Bệnh nhân (Patient)
-
-## Xác thực & tài khoản
-
-- Đăng ký / đăng nhập bằng OTP
-- Quên mật khẩu:
-  - Gửi OTP qua phone/email
-  - Xác nhận → đặt lại mật khẩu
-
-Bổ sung:
-
-- Refresh token
-- Device binding
-- Session management
-
----
-
-## Quản lý cá nhân
-
-- Cập nhật thông tin cá nhân
-- Lưu thông tin phục vụ khám bệnh
-- Nhập email để:
-  - Nhận hồ sơ khám bệnh
-  - Lưu trữ online
-
----
-
-## Tìm kiếm & khám bệnh
-
-- Tìm bác sĩ theo:
-  - Chuyên khoa
-  - Đánh giá
-  - Vị trí
-- Xem chi tiết:
-  - Kinh nghiệm
-  - Lịch làm việc
-
----
-
-## Chọn bệnh viện
-
-- Xem:
-  - Tên
-  - Đánh giá
-  - Địa chỉ
-- Gợi ý:
-  - Gần nhất
-  - Theo nhu cầu
-
----
-
-## Đặt lịch khám
-
-### Bao gồm:
-
-- Khám tại cơ sở
-- Khám chuyên khoa
-- Xét nghiệm
-- Mua thuốc
-- Khám doanh nghiệp
-
-### Quy trình:
-
-- Chọn ngày giờ
-- Nhập triệu chứng
-- Chọn khoa khám
-
-Bổ sung:
-
-- Lock slot (giữ lịch tạm)
-- Reschedule (đổi lịch)
-- Waitlist (danh sách chờ)
-- Auto cancel nếu chưa thanh toán
-- Chống double booking
-
----
-
-## Hủy lịch
-
-- Hủy lịch đã đặt
-- Cập nhật trạng thái
-
----
-
-## Quản lý khám bệnh
-
-- Lịch sử khám
-- Hồ sơ bệnh án
-- Kết quả cận lâm sàng
-- Đơn thuốc
-- Theo dõi thuốc
-
-Bổ sung:
-
-- Upload file (PDF, X-ray, MRI)
-- Versioning hồ sơ
-- Chia sẻ hồ sơ
-- Chuẩn HL7 / FHIR
-
----
-
-## Thanh toán & hồ sơ
-
-- Thanh toán viện phí
-- Xem hóa đơn
-- Lưu hồ sơ khám
-
-Bổ sung:
-
-- VNPay / MoMo / Stripe
-- Payment status
-- Refund
-- Transaction history
-
----
-
-## Nhập viện
-
-- Đăng ký nhập viện
-
----
-
-## QR Check-in
-
-- Nhận mã QR
-- Check-in tại bệnh viện
-
-Bổ sung:
-
-- QR dynamic (có expiry)
-- QR signed token chống giả mạo
-
----
-
-## Thông báo
-
-- Xác nhận lịch
-- Nhắc lịch khám
-- Hủy lịch
-
-Bổ sung:
-
-- Push + Email + SMS
-- Notification theo hành vi
-- Reminder thông minh
-
----
-
-## AI & Voice
-
-### Voice Assistant:
-
-- Đặt lịch bằng giọng nói
-- Hủy lịch bằng giọng nói
-- Gợi ý thông minh
-- Phản hồi TTS
-
-### Voice Chat:
-
-- Voice → Text
-- Gợi ý:
-  - lịch
-  - thời gian
-  - bác sĩ
-
-Bổ sung:
-
-- AI triage (phân tích triệu chứng)
-- AI recommendation (bác sĩ, lịch)
-- Chatbot context-aware
-- Nhắc uống thuốc bằng AI
-
----
-
-## Hỗ trợ bệnh nhân
-
-- Chatbot
-- Hotline
-- FAQ
-- Hướng dẫn
-
-Bổ sung:
-
-- Ticket support system
-
----
-
-## Tính năng bổ sung
-
-- Tin tức
-- Dịch vụ nổi bật
-- Bảng giá
-- Thư viện sức khỏe
-- Khảo sát
-- Liên hệ
-
----
-
-## Bản đồ
-
-- Google Maps API
-- Tìm bệnh viện gần
-
----
-
-## Navigation
-
-- Trang chủ
-- Hồ sơ
-- Phiếu khám
-- Thông báo
-- Tài khoản
-
----
-
-# 4. Bác sĩ (Doctor)
-
-## Đăng nhập
-
-- Theo role bác sĩ
-
----
-
-## Quản lý lịch
-
-- Xem lịch khám
-- Xác nhận / từ chối
-
----
-
-## Khám bệnh
-
-- Cập nhật trạng thái
-- Xem hồ sơ bệnh nhân
-
----
-
-## Bệnh án
-
-- Chẩn đoán
-- Đơn thuốc
-- Ghi chú
-
-Bổ sung:
-
-- Ký số đơn thuốc
-- Gửi đơn thuốc qua email/app
-
----
-
-## Nâng cao
-
-- Dashboard
-- Quản lý thời gian rảnh
-
-Bổ sung:
-
-- Video call (telemedicine)
-- Chat với bệnh nhân
-- AI hỗ trợ chẩn đoán
-- Rating bác sĩ
-
----
-
-# 5. Admin
-
-## Quản lý user
-
-- Xem danh sách
-- Khóa tài khoản
-- Phân quyền
-
----
-
-## Quản lý bác sĩ
-
-- Duyệt hồ sơ
-- Chỉnh sửa thông tin
-
----
-
-## Thống kê
-
-- Tổng user
-- Tổng lịch khám
-- Hoạt động hệ thống
-
-Bổ sung:
-
-- Doanh thu
-- Tỷ lệ hủy lịch
-- No-show rate
-
----
-
-Bổ sung:
-
-- CMS (quản lý nội dung)
-- Voucher / khuyến mãi
-- Quản lý khiếu nại
-
----
-
-# 6. Hospital Management
-
-- Quản lý khoa
-- Quản lý phòng khám
-- Quản lý giường bệnh
-- Quản lý thiết bị y tế
-
----
-
-# 7. Thiết bị người dùng
-
-- Nhận notification (FCM)
-- Cache (Hive)
-- Đồng bộ dữ liệu
-- Offline
-
-Bổ sung:
-
-- Background sync
-- Offline queue retry
-- Smart cache invalidation
-
----
-
-# 8. Thiết bị QR
-
-## Chức năng
-
-- Quét QR
-- Gửi server
-
-## Backend
-
-- Xác thực QR
-- Kiểm tra lịch
-
-## Kết quả
-
-- Thành công
-- Thất bại
-
----
-
-# 9. Công nghệ
-
-- Flutter
-- Firebase:
-  - Firestore
-  - Auth
-  - FCM
-- Provider + BLoC
-- GetIt + Injectable
-- Hive
-- Dio
-
-Bổ sung:
-
-- Cloud Functions
-- REST / GraphQL API
-- CI/CD (GitHub Actions / Codemagic)
-- Crashlytics
-- Logging system
-
----
-
-# 10. Quy trình
-
-## Đặt lịch
-
-Tìm bác sĩ → chọn giờ → xác nhận → lưu DB
-
-Bổ sung:
-Lock slot → Payment → Confirm → Release nếu timeout
-
----
-
-## QR
-
-Scan → xác thực → cập nhật
-
----
-
-## Voice
-
-Voice → Text → Intent → Confirm
-
----
-
-# 11. Database
-
-## Collections:
-
-- users
-- doctors
-- appointments
-- medical_records
-- medications
-- notifications
-
-Bổ sung:
-
-- payments
-- reviews
-- hospitals
-- departments
-- audit_logs
-- support_tickets
-
----
-
-# 12. Bảo mật
-
-- Firestore Rules
-- RBAC
-- OTP
-- QR mã hóa
-
-Bổ sung:
-
-- JWT + Refresh token
-- Device binding
-- Audit log
-- Encryption dữ liệu nhạy cảm
-- Rate limiting
-- GDPR / HIPAA-like
-
----
-
-# 13. Notification
-
-- Xác nhận
-- Nhắc lịch
-- Hủy lịch
-
-Bổ sung:
-
-- Multi-channel
-- Smart scheduling
-
----
-
-# 13. Testing
-
-- Unit Test
-- Widget Test
-- Integration Test
-
-Bổ sung:
-
-- E2E Test
-- Load testing
-- Security testing
-
----
-
-# 14. Xử lý lỗi
-
-- Trùng lịch
-- Mất mạng
-- OTP sai
-- QR hết hạn
-
-Bổ sung:
-
-- Retry mechanism
-- Global error handler
-- Crash reporting
-
----
-
-# 15. Mở rộng
-
-- Thanh toán online
-- Video call
-- AI nâng cao
-- Admin web
-
-Bổ sung:
-
-- Multi-language
-- Multi-hospital
-- Plugin system
-- AI analytics
+# ICare - Roadmap Update Theo Specs
+
+Tai lieu nay duoc cap nhat dua tren:
+- `specs/001-clinic-booking-system/spec.md`
+- `specs/001-clinic-booking-system/plan.md`
+- `specs/001-clinic-booking-system/tasks.md`
+
+Muc tieu:
+- Dong bo roadmap chuc nang theo spec moi
+- Ap dung vao cau truc repo Flutter hien tai trong `lib/`
+- Tao danh sach viec uu tien de tiep tuc code tung phan, khong ghi de cac thay doi dang co ngoai pham vi can thiet
+
+## 1. Nguyen tac trien khai
+
+- Clean Architecture: `presentation -> domain -> data`
+- Uu tien P1 truoc: dat lich, thanh toan, QR check-in, queue workflow
+- Ho tro nguoi gia va nguoi it ranh cong nghe: chu lon, contrast cao, luong thao tac ngan
+- Booking va payment phai idempotent, tranh double-booking va double-charge
+- Medical record, thong bao va offline sync duoc bo sung theo phase, khong chen vao core flow khi chua on dinh
+
+## 2. Mapping spec vao repo hien tai
+
+### Core app
+- App shell va route: `lib/app/`, `lib/app/router/`
+- Dependency injection: `lib/app/di/`
+- Theme, localization, widgets dung chung: `lib/core/`, `lib/shared/`
+
+### Feature modules da co
+- Dat lich: `lib/features/appointment/`
+- Check-in: `lib/features/checkin/`
+- Thanh toan: `lib/features/payment/`
+- Thong bao: `lib/features/notification/`
+- Ho so benh an: `lib/features/medical_record/`
+- Bac si: `lib/features/doctor/`
+- Xac thuc: `lib/features/auth/`
+- Man hinh vai tro quan tri / nghiep vu: `lib/features/admin/`, `lib/features/admission/`, `lib/features/invoice/`
+
+## 3. Uu tien thuc hien
+
+### P1 - Booking, payment, queue, QR workflow
+1. Chuan hoa lifecycle lich hen:
+   `pending_booking -> booked -> confirmed -> checked_in -> in_queue -> in_consultation -> post_consultation -> completed/cancelled/no_show`
+2. Dong bo entity/model/repository cho appointment va payment
+3. Hoan thien QR check-in co expiry, one-time use
+4. Bo sung queue number va trang thai waiting/co goi vao phong
+5. Ket noi thong bao xac nhan dat lich, nhac lich, goi benh nhan
+
+### P2 - Medical records, notifications, accessibility
+1. Ho so kham benh, file dinh kem, lich su toa thuoc
+2. Notification settings theo kenh SMS/push/email
+3. UI accessibility: chu lon, tuong phan cao, icon ro rang, copy de hieu
+4. Offline-first cho du lieu quan trong
+
+### P3 - Reliability, audit, AI support
+1. Audit log va RBAC
+2. Retry/backoff, connectivity sync, local cache
+3. Voice assistant, AI symptom suggestion
+4. FHIR/HL7 compatibility va chia se ho so
+
+## 4. Danh sach update chuc nang theo module
+
+### A. Appointment
+Files hien co:
+- `lib/features/appointment/domain/entities/appointment_entity.dart`
+- `lib/features/appointment/data/models/appointment_model.dart`
+- `lib/features/appointment/data/repositories/appointment_repository_impl.dart`
+- `lib/features/appointment/domain/usecases/create_appointment_usecase.dart`
+- `lib/features/appointment/domain/usecases/get_appointments_usecase.dart`
+- `lib/features/appointment/domain/usecases/cancel_appointment_usecase.dart`
+- `lib/features/appointment/presentation/controllers/appointment_controller.dart`
+- `lib/features/appointment/presentation/screens/booking_screen.dart`
+- `lib/features/appointment/presentation/screens/appointment_history_screen.dart`
+
+Can update:
+- Them day du appointment status theo spec
+- Them `queueNumber`, `estimatedWaitTime`, `checkInToken`, `paymentStatus`, `priorityLevel`
+- Validate tranh trung lich cung benh nhan, cung bac si, cung timeslot
+- Ho tro doi lich, huy lich, auto-cancel no-show
+- Luu audit metadata cho moi transition
+
+### B. Payment
+Files hien co:
+- `lib/features/payment/data/repositories/payment_repository_impl.dart`
+- `lib/features/payment/data/repositories/payment_service.dart`
+- `lib/features/payment/domain/entities/transaction_entity.dart`
+- `lib/features/payment/presentation/controllers/payment_controller.dart`
+- `lib/features/payment/presentation/screens/payment_screen.dart`
+- `lib/features/payment/presentation/screens/payment_processing_screen.dart`
+- `lib/features/payment/presentation/screens/payment_result_screen.dart`
+- `lib/features/payment/presentation/screens/transaction_screen.dart`
+
+Can update:
+- Ho tro workflow idempotent cho VNPay, MoMo, Stripe
+- Tach ro `pending/success/failed/refunded`
+- Gan transaction voi appointment lifecycle
+- Neu payment fail thi rollback booking hoac dua ve trang thai cho xu ly lai
+
+### C. Check-in va Queue
+Files hien co:
+- `lib/features/checkin/presentation/controllers/checkin_controller.dart`
+- `lib/features/checkin/presentation/screens/checkin_screen.dart`
+
+Can update:
+- Tao QR validation flow co han su dung
+- Dan queue number theo format nghiep vu, vi du `K-045`
+- Cap nhat check-in sang `checked_in` va dua vao queue
+- Hien estimated wait time, room, next action
+- Chuan bi duong dan de doctor/admin goi benh nhan tiep theo
+
+### D. Notifications
+Files hien co:
+- `lib/features/notification/data/datasources/notification_remote_datasource.dart`
+- `lib/features/notification/data/repositories/notification_repository_impl.dart`
+- `lib/features/notification/domain/entities/notification_entity.dart`
+- `lib/features/notification/presentation/controllers/notification_controller.dart`
+- `lib/features/notification/presentation/screens/notification_screen.dart`
+- `lib/features/notification/presentation/screens/reminder_settings_screen.dart`
+
+Can update:
+- Xac nhan dat lich sau payment thanh cong
+- Nhac lich truoc 24h
+- Thong bao check-in, thay doi queue, ket qua kham, toa thuoc
+- Ton trong cau hinh kenh thong bao cua benh nhan
+
+### E. Medical Record
+Files hien co:
+- `lib/features/medical_record/data/datasources/medical_record_local_datasource.dart`
+- `lib/features/medical_record/data/datasources/medical_record_remote_datasource.dart`
+- `lib/features/medical_record/data/repositories/medical_record_repository_impl.dart`
+- `lib/features/medical_record/domain/entities/medical_record.dart`
+- `lib/features/medical_record/domain/entities/attachment.dart`
+- `lib/features/medical_record/domain/usecases/get_medical_records_usecase.dart`
+- `lib/features/medical_record/domain/usecases/upload_medical_attachment_usecase.dart`
+- `lib/features/medical_record/presentation/bloc/medical_record_bloc.dart`
+- `lib/features/medical_record/presentation/screens/medical_record_screen.dart`
+- `lib/features/medical_record/presentation/screens/medical_record_list_screen.dart`
+- `lib/features/medical_record/presentation/screens/medical_record_detail_screen.dart`
+
+Can update:
+- Gom lich su kham, ket qua can lam sang, toa thuoc, di ung, ghi chu bac si
+- Upload PDF, hinh X-ray, MRI, toa thuoc
+- Co local cache va dong bo lai khi online
+- Chuan bi metadata de audit va chia se co kiem soat
+
+### F. Doctor/Admin workflow
+Files hien co:
+- `lib/features/doctor/`
+- `lib/features/admin/`
+- `lib/features/admission/`
+- `lib/features/invoice/`
+
+Can update:
+- Queue dashboard cho doctor/admin
+- Mark `consultation_started`, `consultation_completed`, `post_consultation`
+- Dieu phoi room/stage sau kham: xet nghiem, thanh toan, lay thuoc
+- Xu ly benh nhan uu tien: cap cuu, nguoi gia
+
+## 5. Backlog theo thu tu nen lam ngay
+
+### Phase 1 - Chuan hoa model va state
+- [ ] Update `appointment_entity.dart` theo lifecycle 8 trang thai
+- [ ] Update `appointment_model.dart` va mapping data
+- [ ] Update `transaction_entity.dart` de gan idempotency key
+- [ ] Ra soat `booking_screen.dart`, `payment_screen.dart`, `checkin_screen.dart` theo state moi
+
+### Phase 2 - Core booking flow
+- [ ] Hoan thien `create_appointment_usecase.dart`
+- [ ] Bo sung validate slot conflict trong `appointment_repository_impl.dart`
+- [ ] Cap nhat `payment_repository_impl.dart` va `payment_service.dart`
+- [ ] Neu payment thanh cong thi set appointment `confirmed`
+- [ ] Neu payment loi thi thong bao ro rang va cho retry an toan
+
+### Phase 3 - QR + Queue
+- [ ] Tao/check lai token QR trong flow check-in
+- [ ] Them queue number vao appointment
+- [ ] Tinh estimated wait time
+- [ ] Hien thong tin phong kham va thu tu cho tren UI
+
+### Phase 4 - Notifications
+- [ ] Gui thong bao booking success
+- [ ] Gui reminder truoc lich
+- [ ] Gui thong bao khi den luot kham
+- [ ] Dong bo setting thong bao cua nguoi dung
+
+### Phase 5 - Medical records
+- [ ] Chuan hoa entity `medical_record.dart`
+- [ ] Hoan thien list/detail/upload attachment
+- [ ] Local cache voi `medical_record_local_datasource.dart`
+- [ ] Them cac truong phuc vu audit va chia se
+
+### Phase 6 - Reliability va security
+- [ ] Bo sung retry/backoff trong datasource network
+- [ ] Them offline sync cho du lieu quan trong
+- [ ] Bo sung RBAC theo role patient/doctor/admin
+- [ ] Chuan bi audit log cho thao tac nhay cam
+
+## 6. Lenh nen dung khi update
+
+### Dong bo dependency va codegen
+```bash
+flutter pub get
+dart run build_runner build --delete-conflicting-outputs
+```
+
+### Kiem tra format va loi co ban
+```bash
+dart format lib test
+flutter analyze
+```
+
+### Chay test theo dot
+```bash
+flutter test
+flutter test test/features/appointment
+flutter test test/features/medical_record
+```
+
+### Truoc khi sua module lon
+```bash
+git status --short
+rg "AppointmentStatus|paymentStatus|queueNumber" lib
+```
+
+## 7. Cach lam an toan trong repo dang co thay doi
+
+- Khong revert cac file khong nam trong pham vi task dang lam
+- Moi dot update nen bam theo module nho: `appointment`, `payment`, `checkin`, `notification`, `medical_record`
+- Truoc khi refactor file lon nen tao backup logic hoac tach commit nho
+- Neu co file moi tu spec ma chua ton tai trong repo, uu tien them vao module da co thay vi tao them cau truc `mobile/`
+
+## 8. Dau ra mong muon sau moi dot cap nhat
+
+- Booking flow chay thong: search -> book -> pay -> confirmed
+- Check-in tao queue number, cap nhat wait time
+- Doctor/admin nhin thay queue va xu ly duoc benh nhan tiep theo
+- Benh nhan xem duoc notification va medical record co ban
+- Code khong pha vo cac thay doi dang co san trong worktree
