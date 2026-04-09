@@ -132,7 +132,6 @@ class AccountQrScreen extends StatelessWidget {
           ),
         ),
       );
-      context.go('/login');
     } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -279,14 +278,7 @@ class AccountQrScreen extends StatelessWidget {
                 const SizedBox(height: 32),
                 
                 AppButton(
-                  text: _tr(
-                    context,
-                    'Lưu mã QR về máy',
-                    'Save QR to device',
-                    'QRコードを保存',
-                    'QR 코드 저장',
-                    '保存二维码到设备',
-                  ),
+                  text: _tr(context, 'Lưu', 'Save', '保存', '저장', '保存'),
                   onPressed: () => _saveQrToGallery(context, qrBoundaryKey),
                   backgroundColor: const Color(0xFF0D47A1), // Navy Blue
                   prefixIcon: const Icon(Icons.download_rounded, color: Colors.white),
@@ -295,11 +287,11 @@ class AccountQrScreen extends StatelessWidget {
                 AppButton(
                   text: _tr(
                     context,
-                    'Đăng nhập ngay',
-                    'Login now',
-                    '今すぐログイン',
-                    '지금 로그인',
-                    '立即登录',
+                    'Tiếp tục',
+                    'Continue',
+                    '続行',
+                    '계속',
+                    '继续',
                   ),
                   onPressed: () => context.go('/login'),
                   backgroundColor: context.colors.primary,

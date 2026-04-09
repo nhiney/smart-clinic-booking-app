@@ -6,7 +6,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:flutter/services.dart';
 import 'package:injectable/injectable.dart';
 import 'package:local_auth/local_auth.dart';
 import '../../domain/entities/user_entity.dart';
@@ -53,12 +52,28 @@ class AuthRemoteDatasource {
       final user = result.user!;
       
       // Get user profile to check role
-      final doc = await _firestore.collection('users').doc(user.uid).get();
-      if (!doc.exists) {
-        throw Exception('Hồ sơ người dùng không tồn tại.');
+      Map<String, dynamic>? userData;
+      try {
+        final doc = await _firestore.collection('users').doc(user.uid).get();
+        if (doc.exists) {
+          userData = doc.data();
+        }
+      } catch (firestoreError) {
+        debugPrint('[AUTH] Firestore profile fetch failed: $firestoreError');
+        // If it's a seed account, we will handle it in the bootstrap/fallback logic
+        if (!['admin@icare.com', 'annv.choray@icare.com'].contains(email)) {
+          rethrow;
+        }
+      }
+
+      if (userData == null) {
+        // If profile doesn't exist/can't be read, but it's a seed account, 
+        // trigger the bootstrap logic in the catch block by throwing a dummy exception
+        // or just proceed to bootstrap if we're certain.
+        throw FirebaseAuthException(code: 'user-not-found', message: 'Triggering bootstrap for seed account');
       }
       
-      final userModel = UserModel.fromJson(doc.data()!, user.uid);
+      final userModel = UserModel.fromJson(userData, user.uid);
       
       // RBAC Check
       if (requiredRole != null) {
@@ -104,24 +119,35 @@ class AuthRemoteDatasource {
           if (cred.user != null) {
             final realUid = cred.user!.uid;
             
-            // 2. Avoid querying /users (blocked by rules for non-admin).
-            //    Only read/write the signed-in user's own doc (owner access).
-            final userDocRef = _firestore.collection('users').doc(realUid);
-            final userDoc = await userDocRef.get();
-
-            final data = <String, dynamic>{
-              'email': email,
-              'role': email == 'admin@icare.com' ? 'admin' : 'doctor',
-              'name': email == 'admin@icare.com' ? 'Hệ thống Quản trị' : 'Bác sĩ mẫu',
-              'status': 'active',
-              'created_at': FieldValue.serverTimestamp(),
-            };
-
-            if (!userDoc.exists) {
-              await userDocRef.set(data, SetOptions(merge: true));
+            // 2. NOW we have permission to check/create Firestore metadata
+            // OPTIMIZATION: Use .doc(uid).get() instead of .where() for better permission clearance
+            final docSnapshot = await _firestore.collection('users').doc(realUid).get();
+            
+            Map<String, dynamic> data;
+            if (!docSnapshot.exists) {
+              // Try searching by email as fallback if doc ID doesn't match for some reason
+              final emailQuery = await _firestore.collection('users')
+                  .where('email', isEqualTo: email)
+                  .limit(1)
+                  .get();
+              
+              if (emailQuery.docs.isEmpty) {
+                // Create Bootstrap Metadata
+                data = {
+                  'email': email,
+                  'role': email == 'admin@icare.com' ? 'admin' : 'doctor',
+                  'name': email == 'admin@icare.com' ? 'Hệ thống Quản trị' : 'Bác sĩ mẫu',
+                  'status': 'active',
+                  'created_at': FieldValue.serverTimestamp(),
+                };
+                await _firestore.collection('users').doc(realUid).set(data);
+              } else {
+                data = emailQuery.docs.first.data();
+                // Link existing metadata to new UID
+                await _firestore.collection('users').doc(realUid).set(data, SetOptions(merge: true));
+              }
             } else {
-              // Ensure required fields exist but don't overwrite customizations
-              await userDocRef.set(data, SetOptions(merge: true));
+              data = docSnapshot.data()!;
             }
             
             return UserModel.fromJson(data, realUid);
@@ -365,8 +391,6 @@ class AuthRemoteDatasource {
       final token = await _firebaseAuth.currentUser?.getIdToken() ?? 'local_session';
       await _secureStorage.write(key: _sessionUidKey, value: user.id);
       await _secureStorage.write(key: _sessionTokenKey, value: token);
-    } on MissingPluginException {
-      // e.g. running on an unsupported platform (web/test) - ignore gracefully.
     } catch (e) {
       debugPrint('Save session error: $e');
     }
@@ -377,26 +401,25 @@ class AuthRemoteDatasource {
       final uid = await _secureStorage.read(key: _sessionUidKey);
       final token = await _secureStorage.read(key: _sessionTokenKey);
       return (uid != null && uid.isNotEmpty) && (token != null && token.isNotEmpty);
-    } on MissingPluginException {
-      return false;
     } catch (_) {
       return false;
     }
   }
 
-  Future<void> _clearSession() async {
+  /// CLEAR SESSION (Public for Clean Architecture)
+  Future<void> clearSession() async {
     try {
+      // 1. Sign out from Firebase Auth
+      await _firebaseAuth.signOut();
+      
+      // 2. Clear local secure storage
       await _secureStorage.delete(key: _sessionUidKey);
       await _secureStorage.delete(key: _sessionTokenKey);
-    } on MissingPluginException {
-      // e.g. running on an unsupported platform (web/test) - ignore gracefully.
+      
+      debugPrint('[AUTH] Session cleared successfully');
     } catch (e) {
       debugPrint('Clear session error: $e');
     }
-  }
-
-  Future<void> clearSession() async {
-    await _clearSession();
   }
 
   /// LOGOUT
@@ -405,8 +428,7 @@ class AuthRemoteDatasource {
     if (user != null) {
       await _logAudit(user.uid, 'LOGOUT', 'User logged out');
     }
-    await _firebaseAuth.signOut();
-    await _clearSession();
+    await clearSession();
   }
 
   /// CURRENT USER

@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import '../../../../core/theme/colors/app_colors.dart';
 import '../../../../core/theme/typography/app_text_styles.dart';
 import '../controllers/auth_controller.dart';
-import 'create_password_screen.dart';
 import '../../../../core/widgets/branded_app_bar.dart';
+import 'account_qr_screen.dart';
 
 import 'dart:async';
 
@@ -73,14 +73,7 @@ class _OtpScreenState extends State<OtpScreen> {
         }
       },
       onAutoVerified: () {
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => CreatePasswordScreen(phoneNumber: widget.phone),
-            ),
-          );
-        }
+        _handleOtpSuccess();
       },
       onError: (error) {
         if (mounted) {
@@ -92,6 +85,44 @@ class _OtpScreenState extends State<OtpScreen> {
     );
   }
 
+  Future<void> _handleOtpSuccess() async {
+    final authController = context.read<AuthController>();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Xác minh thành công!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+
+    try {
+      final qr = await authController.createQrLoginToken(persistent: true);
+      final token = (qr['token'] ?? '').toString();
+      final expiresAt = (qr['expiresAt'] ?? '').toString();
+
+      // Force user to login again later (via QR scan / normal login)
+      await authController.logout();
+      if (!mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => AccountQrScreen(token: token, expiresAt: expiresAt),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
   void _verifyOtp() async {
     final authController = context.read<AuthController>();
     final success = await authController.verifyOtp(
@@ -99,24 +130,8 @@ class _OtpScreenState extends State<OtpScreen> {
       name: null,
     );
     
-    if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Xác minh thành công! Đang chuyển hướng...'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      // Navigate home
-      Future.delayed(const Duration(milliseconds: 600), () {
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => CreatePasswordScreen(phoneNumber: widget.phone),
-            ),
-          );
-        }
-      });
+    if (success) {
+      await _handleOtpSuccess();
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
