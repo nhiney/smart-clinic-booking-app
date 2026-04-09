@@ -20,6 +20,9 @@ abstract class AuthRepository {
   Future<UserEntity?> getUserProfile(String uid);
   Future<void> updateUserProfile(UserEntity user);
   Future<bool> isPhoneRegistered(String phone);
+  Future<void> saveSession(UserEntity user);
+  Future<bool> hasSavedSession();
+  Future<void> clearSession();
   Future<bool> isBiometricAvailable();
   Future<bool> isBiometricEnabled();
   Future<void> saveBiometricCredential({

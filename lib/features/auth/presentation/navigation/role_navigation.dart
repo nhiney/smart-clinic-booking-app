@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../screens/admin_dashboard_screen.dart';
-import '../screens/doctor_home_screen.dart';
+import 'package:smart_clinic_booking/features/doctor/presentation/screens/doctor_home_screen.dart';
 import '../screens/patient_home_screen.dart';
 
 void navigateByRole(BuildContext context, String role) {

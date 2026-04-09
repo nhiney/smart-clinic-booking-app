@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:injectable/injectable.dart';
 import '../../domain/entities/doctor_entity.dart';
 import '../../domain/repositories/doctor_repository.dart';
 
+@LazySingleton(as: DoctorRepository)
 class FirestoreDoctorRepository implements DoctorRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -38,22 +40,19 @@ class FirestoreDoctorRepository implements DoctorRepository {
     required String hospitalId,
     required String departmentId,
   }) async {
-    await _firestore.collection('doctors').doc(doctorId).set({
-      'doctorId': doctorId,
-      'hospitalId': hospitalId,
-      'departmentId': departmentId,
-      // Keep existing fields if necessary (could use update with merge)
-    }, SetOptions(merge: true));
+    await _firestore.collection('users').doc(doctorId).update({
+      'hospital_id': hospitalId,
+      'department_id': departmentId,
+    });
   }
 
   @override
   Future<void> updateDoctorProfile(DoctorEntity doctor) async {
-    // For now, only updating 'doctors' collection metadata
-    await _firestore.collection('doctors').doc(doctor.id).set({
+    await _firestore.collection('users').doc(doctor.id).update({
       'specialty': doctor.specialty,
-      'experienceYears': doctor.experience,
+      'experience_years': doctor.experience,
       'bio': doctor.about,
-    }, SetOptions(merge: true));
+    });
   }
 
   @override
@@ -70,6 +69,8 @@ class FirestoreDoctorRepository implements DoctorRepository {
       phone: data['phone'] ?? '',
       experience: data['experience_years'] ?? 0,
       about: data['bio'] ?? data['description'] ?? '',
+      resumePdfUrl: data['resume_pdf_url'] ?? '',
+      departmentId: data['department_id'] ?? '',
     );
   }
 }

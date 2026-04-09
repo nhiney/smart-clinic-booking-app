@@ -21,19 +21,19 @@ service cloud.firestore {
 
     // Check if user has a specific role
     function hasRole(role) {
-      return isSignedIn() && getUserData().role == role;
+      return isSignedIn() && request.auth.token.role == role;
     }
 
     // Check if user is an Admin
     function isAdmin() {
-      return hasRole('ADMIN');
+      return hasRole('admin') || hasRole('super_admin') || hasRole('hospital_manager');
     }
 
     // --- ICare Collections ---
 
     // User profiles
     match /users/{userId} {
-      allow read: if isOwner(userId) || isAdmin() || (!isSignedIn() && request.query.limit == 1);
+      allow read: if isOwner(userId) || isAdmin();
       allow create: if isSignedIn();
       allow update: if isOwner(userId) || isAdmin();
       allow delete: if isAdmin();

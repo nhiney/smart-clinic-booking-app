@@ -33,7 +33,6 @@ import 'package:smart_clinic_booking/features/payment/presentation/screens/payme
 import 'package:smart_clinic_booking/features/payment/presentation/screens/transaction_screen.dart';
 import 'package:smart_clinic_booking/features/medical_record/presentation/screens/medical_record_screen.dart';
 import 'package:smart_clinic_booking/features/invoice/presentation/screens/invoice_screen.dart';
-import 'package:smart_clinic_booking/core/security/auth_user.dart';
 
 // No longer need placeholders as we implemented the real screens
 class KycUploadScreen extends StatelessWidget {
@@ -59,6 +58,7 @@ class GoRouterRefreshStream extends ChangeNotifier {
 
 /// Centralized Router using GoRouter to enforce RBAC, ABAC, and Onboarding validation.
 class AppRouter {
+  static bool hasLocalSession = false;
   
   static Stream<User?> get authStateChanges => FirebaseAuth.instance.idTokenChanges();
 
@@ -81,8 +81,10 @@ class AppRouter {
 
       // 1. Unauthenticated Block
       if (user == null) {
+        if (hasLocalSession && path != '/home') return '/home';
+        if (hasLocalSession && path == '/home') return null;
         if (isPublicRoute || (kDebugMode && path == '/home')) return null;
-        return '/'; // Default to onboarding
+        return '/login';
       }
 
       // REQUIREMENT: Role-based navigation

@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:local_auth/local_auth.dart';
+import '../../domain/entities/user_entity.dart';
 import '../models/user_model.dart';
 
 @lazySingleton
@@ -24,6 +25,8 @@ class AuthRemoteDatasource {
   UserModel? _lastMockUser;
   final Map<String, String> _mockCredentialStore = {};
   static const String _biometricCredentialKey = 'auth_biometric_credential_v1';
+  static const String _sessionUidKey = 'session_uid';
+  static const String _sessionTokenKey = 'session_token';
 
   /// Normalizes phone number to digits-only format, replacing leading 0 with 84 for VN
   String _normalizePhone(String phone) {
@@ -80,11 +83,54 @@ class AuthRemoteDatasource {
       
       return userModel;
     } on FirebaseAuthException catch (e) {
-      // REQUIREMENT: Admin Account (Seed Data) Fallback for testing
-      if (email == 'admin@icare.com' && password == '123456') {
-        final doc = await _firestore.collection('users').doc('admin_default').get();
-        if (doc.exists) {
-          return UserModel.fromJson(doc.data()!, 'admin_default');
+      // REQUIREMENT: Auto-Hydration for Seeded Accounts (Admin/Doctor)
+      final seededEmails = ['admin@icare.com', 'annv.choray@icare.com'];
+      if (seededEmails.contains(email) && password == 'Icare@123') {
+        try {
+          // 1. Try to sign in or create account on Auth FIRST
+          // This gives us the auth context (request.auth) needed for Firestore rules
+          UserCredential? cred;
+          try {
+            cred = await _firebaseAuth.signInWithEmailAndPassword(email: email, password: password);
+          } on FirebaseAuthException catch (ce) {
+            if (ce.code == 'user-not-found' || ce.code == 'invalid-credential') {
+              cred = await _firebaseAuth.createUserWithEmailAndPassword(email: email, password: password);
+            } else {
+              rethrow;
+            }
+          }
+
+          if (cred.user != null) {
+            final realUid = cred.user!.uid;
+            
+            // 2. NOW we have permission to check/create Firestore metadata
+            final query = await _firestore.collection('users').where('email', isEqualTo: email).limit(1).get();
+            
+            Map<String, dynamic> data;
+            if (query.docs.isEmpty) {
+              // Create Bootstrap Metadata
+              data = {
+                'email': email,
+                'role': email == 'admin@icare.com' ? 'admin' : 'doctor',
+                'name': email == 'admin@icare.com' ? 'Hệ thống Quản trị' : 'Bác sĩ mẫu',
+                'status': 'active',
+                'created_at': FieldValue.serverTimestamp(),
+              };
+              await _firestore.collection('users').doc(realUid).set(data);
+            } else {
+              // Use existing metadata but ensure realUid doc exists
+              final doc = query.docs.first;
+              data = doc.data();
+              if (doc.id != realUid) {
+                await _firestore.collection('users').doc(realUid).set(data, SetOptions(merge: true));
+              }
+            }
+            
+            return UserModel.fromJson(data, realUid);
+          }
+        } catch (hydrationError) {
+          debugPrint('Bootstrap/Hydration failed: $hydrationError');
+          // Fall through to standard error handling if bootstrap fails
         }
       }
 
@@ -116,7 +162,7 @@ class AuthRemoteDatasource {
     String address = '',
   }) async {
     final email = _generateDoctorEmail(fullName, hospitalName);
-    const defaultPassword = '123456';
+    const defaultPassword = 'Icare@123';
 
     try {
       // 1. Create Auth User using Secondary App
@@ -265,10 +311,16 @@ class AuthRemoteDatasource {
     );
 
     try {
+      final data = userModel.toJson();
+      data['uid'] = user.uid;
+      data['email'] = userModel.email.isNotEmpty ? userModel.email : (user.email ?? '');
+      data['name'] = userModel.name;
+      data['role'] = userModel.role;
+
       await _firestore
           .collection('users')
           .doc(user.uid)
-          .set(userModel.toJson());
+          .set(data, SetOptions(merge: true));
       
       await _logAudit(user.uid, 'REGISTER', 'User registered with role: $role');
       
@@ -310,6 +362,32 @@ class AuthRemoteDatasource {
     }
   }
 
+  Future<void> saveSession(UserEntity user) async {
+    try {
+      final token = await _firebaseAuth.currentUser?.getIdToken() ?? 'local_session';
+      await _secureStorage.write(key: _sessionUidKey, value: user.id);
+      await _secureStorage.write(key: _sessionTokenKey, value: token);
+    } catch (e) {
+      debugPrint('Save session error: $e');
+      rethrow;
+    }
+  }
+
+  Future<bool> hasSavedSession() async {
+    try {
+      final uid = await _secureStorage.read(key: _sessionUidKey);
+      final token = await _secureStorage.read(key: _sessionTokenKey);
+      return (uid != null && uid.isNotEmpty) && (token != null && token.isNotEmpty);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> clearSession() async {
+    await _secureStorage.delete(key: _sessionUidKey);
+    await _secureStorage.delete(key: _sessionTokenKey);
+  }
+
   /// LOGOUT
   Future<void> logout() async {
     final user = _firebaseAuth.currentUser;
@@ -317,6 +395,7 @@ class AuthRemoteDatasource {
       await _logAudit(user.uid, 'LOGOUT', 'User logged out');
     }
     await _firebaseAuth.signOut();
+    await clearSession();
   }
 
   /// CURRENT USER

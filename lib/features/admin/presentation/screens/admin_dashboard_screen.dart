@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/extensions/context_extension.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../controllers/admin_controller.dart';
 import 'department_management_screen.dart';
 import 'add_doctor_screen.dart';
@@ -40,7 +41,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             tooltip: 'Seed Initial Data',
-            onPressed: () => controller.seedData(),
+            onPressed: () async {
+              await controller.seedData();
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Dữ liệu hệ thống đã được cập nhật thành công!')),
+                );
+              }
+            },
           ),
           IconButton(
             icon: Icon(_currentIndex == 0 ? Icons.add_business_rounded : Icons.person_add_rounded),
@@ -203,7 +211,29 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   void _handleLogout(BuildContext context) {
-    // Logic for logout
-    context.go('/login');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Đăng xuất'),
+        content: const Text('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống quản trị?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              context.read<AuthController>().logout();
+              context.go('/login');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Đăng xuất'),
+          ),
+        ],
+      ),
+    );
   }
 }

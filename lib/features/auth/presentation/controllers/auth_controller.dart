@@ -41,6 +41,9 @@ class AuthController extends ChangeNotifier {
         password,
         requiredRole: requiredRole,
       );
+      if (currentUser != null) {
+        await authRepository.saveSession(currentUser!);
+      }
 
       return true;
     } catch (e) {
@@ -58,6 +61,9 @@ class AuthController extends ChangeNotifier {
       errorMessage = null;
       notifyListeners();
       currentUser = await authRepository.loginWithBiometrics();
+      if (currentUser != null) {
+        await authRepository.saveSession(currentUser!);
+      }
       return true;
     } catch (e) {
       errorMessage = e.toString().replaceAll('Exception: ', '');
@@ -110,6 +116,9 @@ class AuthController extends ChangeNotifier {
       errorMessage = null;
       notifyListeners();
       currentUser = await authRepository.signInWithQrToken(qrToken);
+      if (currentUser != null) {
+        await authRepository.saveSession(currentUser!);
+      }
       return true;
     } catch (e) {
       errorMessage = e.toString().replaceAll('Exception: ', '');
@@ -141,6 +150,9 @@ class AuthController extends ChangeNotifier {
         password: password,
         tenantId: tenantId,
       );
+      if (currentUser != null) {
+        await authRepository.saveSession(currentUser!);
+      }
 
       return true;
     } catch (e) {
@@ -152,7 +164,8 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  void logout() {
+  Future<void> logout() async {
+    await authRepository.logout();
     currentUser = null;
     notifyListeners();
   }
@@ -232,6 +245,9 @@ class AuthController extends ChangeNotifier {
         smsCode,
         displayName: name,
       );
+      if (currentUser != null) {
+        await authRepository.saveSession(currentUser!);
+      }
       return true;
     } catch (e) {
       errorMessage = e.toString().replaceAll('Exception: ', '');

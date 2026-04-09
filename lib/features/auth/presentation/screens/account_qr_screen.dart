@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'dart:ui';
 import 'dart:typed_data';
+import 'dart:io';
 import 'package:go_router/go_router.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -38,9 +39,14 @@ class AccountQrScreen extends StatelessWidget {
 
   Future<void> _saveQrToGallery(BuildContext context, GlobalKey boundaryKey) async {
     try {
-      final permission = await Permission.photos.request();
-      final storagePermission = await Permission.storage.request();
-      if (!permission.isGranted && !storagePermission.isGranted) {
+      PermissionStatus permissionStatus;
+      if (Platform.isIOS) {
+        permissionStatus = await Permission.photosAddOnly.request();
+      } else {
+        permissionStatus = await Permission.storage.request();
+      }
+
+      if (!permissionStatus.isGranted) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -91,7 +97,8 @@ class AccountQrScreen extends StatelessWidget {
         quality: 100,
         name: 'icare_qr_${DateTime.now().millisecondsSinceEpoch}',
       );
-      final isSuccess = (result['isSuccess'] == true) || (result['filePath'] != null);
+      final resultMap = Map<String, dynamic>.from(result as Map);
+      final isSuccess = (resultMap['isSuccess'] == true) || (resultMap['filePath'] != null);
       if (!context.mounted) return;
       if (!isSuccess) {
         ScaffoldMessenger.of(context).showSnackBar(

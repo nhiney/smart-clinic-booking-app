@@ -4,7 +4,7 @@ import '../datasources/doctor_remote_datasource.dart';
 import '../models/doctor_model.dart';
 import 'package:injectable/injectable.dart';
 
-@LazySingleton(as: DoctorRepository)
+// Removed to use FirestoreDoctorRepository instead
 class DoctorRepositoryImpl implements DoctorRepository {
   final DoctorRemoteDatasource remoteDatasource;
 

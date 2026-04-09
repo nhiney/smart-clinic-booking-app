@@ -95,7 +95,17 @@ Future<void> configureDependencies() async {
   getIt.registerLazySingleton(() => AdmissionRemoteDataSource());
   getIt.registerLazySingleton<AdmissionRepository>(() => AdmissionRepositoryImpl(getIt<AdmissionRemoteDataSource>()));
 
-  // Facility & Admin (Now automated via annotations)
-  getIt.registerLazySingleton(() => FileStorageService());
-  getIt.registerLazySingleton(() => SeedDataService());
+  // Facility & Admin (Manual fallback to ensure stability)
+  if (!getIt.isRegistered<FacilityRepository>()) {
+    getIt.registerLazySingleton<FacilityRepository>(() => FirestoreFacilityRepository());
+  }
+  if (!getIt.isRegistered<DoctorRepository>()) {
+    getIt.registerLazySingleton<DoctorRepository>(() => FirestoreDoctorRepository());
+  }
+  if (!getIt.isRegistered<FileStorageService>()) {
+    getIt.registerLazySingleton(() => FileStorageService());
+  }
+  if (!getIt.isRegistered<SeedDataService>()) {
+    getIt.registerLazySingleton(() => SeedDataService());
+  }
 }

@@ -119,6 +119,7 @@ Future<void> main() async {
 
   // Initialize Dependency Injection
   await configureDependencies();
+  AppRouter.hasLocalSession = await getIt<AuthRepository>().hasSavedSession();
 
   // Initialize Localization
   await LanguageService.init();

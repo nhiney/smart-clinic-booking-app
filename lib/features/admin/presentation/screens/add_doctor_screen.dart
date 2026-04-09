@@ -153,7 +153,7 @@ class _AddDoctorScreenState extends State<AddDoctorScreen> {
               const SizedBox(height: 16),
               const Center(
                 child: Text(
-                  'Mật khẩu mặc định sẽ là: 123456\nEmail sẽ được tự động tạo theo tên.',
+                  'Mật khẩu mặc định sẽ là: Icare@123\nEmail sẽ được tự động tạo theo tên.',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),

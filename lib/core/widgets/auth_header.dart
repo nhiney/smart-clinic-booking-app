@@ -10,40 +10,35 @@ class AuthHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return SizedBox(
-      width: double.infinity,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Keep the app title perfectly centered.
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                l10n.welcome_to,
-                style: context.textStyles.bodyBold.copyWith(
-                  color: context.colors.textPrimary,
-                  fontSize: 18,
-                ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const ICareLogo(size: 104, showText: false),
+        const SizedBox(width: 16),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.welcome_to,
+              style: context.textStyles.bodyBold.copyWith(
+                color: context.colors.textPrimary,
+                fontSize: 18,
               ),
-              Text(
-                'ICARE',
-                style: context.textStyles.heading2.copyWith(
-                  color: context.colors.primary,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 24,
-                  height: 1.0,
-                ),
+            ),
+            Text(
+              'ICARE',
+              style: context.textStyles.heading2.copyWith(
+                color: context.colors.primary,
+                fontWeight: FontWeight.w900,
+                fontSize: 28,
+                height: 1.0,
               ),
-            ],
-          ),
-          // Move logo to the left so it doesn't push title off-center.
-          const Positioned(
-            left: 0,
-            child: ICareLogo(size: 96, showText: false),
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

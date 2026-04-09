@@ -73,6 +73,21 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<void> saveSession(UserEntity user) async {
+    await remoteDatasource.saveSession(user);
+  }
+
+  @override
+  Future<bool> hasSavedSession() async {
+    return await remoteDatasource.hasSavedSession();
+  }
+
+  @override
+  Future<void> clearSession() async {
+    await remoteDatasource.clearSession();
+  }
+
+  @override
   Future<void> verifyPhone(
     String phone, {
     required void Function(String verificationId) onCodeSent,
