@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:smart_clinic_booking/l10n/app_localizations.dart';
 
 class PatientHomeScreen extends StatelessWidget {
   const PatientHomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: const Color(0xFFEAF5FF),
       body: SafeArea(
@@ -13,15 +15,15 @@ class PatientHomeScreen extends StatelessWidget {
             Expanded(
               child: CustomScrollView(
                 slivers: [
-                  SliverToBoxAdapter(child: _buildHeader()),
-                  SliverToBoxAdapter(child: _buildBannerCarousel()),
-                  SliverToBoxAdapter(child: _buildQuickActions()),
-                  SliverToBoxAdapter(child: _buildSectionTitle('CƠ SỞ Y TẾ', 'nổi bật trong tháng')),
+                  SliverToBoxAdapter(child: _buildHeader(context, l10n)),
+                  SliverToBoxAdapter(child: _buildBannerCarousel(l10n)),
+                  SliverToBoxAdapter(child: _buildQuickActions(l10n)),
+                  SliverToBoxAdapter(child: _buildSectionTitle(l10n.patient_section_facilities, l10n.patient_section_facilities_sub, l10n)),
                   SliverToBoxAdapter(child: _buildHospitalCards()),
-                  SliverToBoxAdapter(child: _buildSectionTitle('BÁC SĨ TƯ VẤN', 'khám bệnh qua video')),
+                  SliverToBoxAdapter(child: _buildSectionTitle(l10n.patient_section_doctors, l10n.patient_section_doctors_sub, l10n)),
                   SliverToBoxAdapter(child: _buildDoctorCards()),
-                  SliverToBoxAdapter(child: _buildSectionTitle('CHĂM SÓC', 'sức khỏe toàn diện')),
-                  SliverToBoxAdapter(child: _buildCareTabs()),
+                  SliverToBoxAdapter(child: _buildSectionTitle(l10n.patient_section_care, l10n.patient_section_care_sub, l10n)),
+                  SliverToBoxAdapter(child: _buildCareTabs(l10n)),
                   SliverToBoxAdapter(child: _buildCareCards()),
                   const SliverToBoxAdapter(child: SizedBox(height: 100)),
                 ],
@@ -40,18 +42,18 @@ class PatientHomeScreen extends StatelessWidget {
         currentIndex: 0,
         selectedItemColor: const Color(0xFF1BAFE9),
         unselectedItemColor: Colors.black54,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Trang chủ'),
-          BottomNavigationBarItem(icon: Icon(Icons.folder_shared_outlined), label: 'Hồ sơ'),
-          BottomNavigationBarItem(icon: Icon(Icons.receipt_long_outlined), label: 'Phiếu khám'),
-          BottomNavigationBarItem(icon: Icon(Icons.notifications_none_rounded), label: 'Thông báo'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline_rounded), label: 'Tài khoản'),
+        items: [
+          BottomNavigationBarItem(icon: const Icon(Icons.home_rounded), label: l10n.nav_home),
+          BottomNavigationBarItem(icon: const Icon(Icons.folder_shared_outlined), label: l10n.nav_medical_record),
+          BottomNavigationBarItem(icon: const Icon(Icons.receipt_long_outlined), label: l10n.nav_schedule),
+          BottomNavigationBarItem(icon: const Icon(Icons.notifications_none_rounded), label: l10n.notification_title),
+          BottomNavigationBarItem(icon: const Icon(Icons.person_outline_rounded), label: l10n.nav_profile),
         ],
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context, AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
       decoration: const BoxDecoration(
@@ -71,10 +73,10 @@ class PatientHomeScreen extends StatelessWidget {
                 child: const Icon(Icons.health_and_safety_rounded, color: Color(0xFF1BAFE9)),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Medpro xin chào,',
-                  style: TextStyle(
+                  '${l10n.patient_header_greeting}',
+                  style: const TextStyle(
                     fontSize: 30,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF123B5D),
@@ -98,7 +100,7 @@ class PatientHomeScreen extends StatelessWidget {
           const SizedBox(height: 12),
           TextField(
             decoration: InputDecoration(
-              hintText: 'Tìm CSYT/bác sĩ/chuyên khoa/dịch vụ',
+              hintText: l10n.patient_search_hint,
               hintStyle: const TextStyle(fontSize: 14),
               filled: true,
               fillColor: Colors.white,
@@ -115,31 +117,31 @@ class PatientHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBannerCarousel() {
+  Widget _buildBannerCarousel(AppLocalizations l10n) {
     return SizedBox(
       height: 160,
       child: ListView(
         padding: const EdgeInsets.only(top: 12, left: 12, right: 12),
         scrollDirection: Axis.horizontal,
-        children: const [
-          _BannerCard(title: 'Tư vấn khám bệnh\ntrực tuyến'),
-          SizedBox(width: 10),
-          _BannerCard(title: 'Giúp việc cá nhân'),
+        children: [
+          _BannerCard(title: l10n.patient_banner_online_consult),
+          const SizedBox(width: 10),
+          _BannerCard(title: l10n.patient_banner_personal_assistant),
         ],
       ),
     );
   }
 
-  Widget _buildQuickActions() {
-    const items = [
-      ('Đặt khám tại\ncơ sở', Icons.calendar_month_rounded),
-      ('Đặt khám\nchuyên khoa', Icons.medical_services_rounded),
-      ('Đặt lịch xét\nnghiệm', Icons.vaccines_rounded),
-      ('Gói sức khỏe\ntoàn diện', Icons.health_and_safety_rounded),
-      ('Giúp việc cá\nnhân', Icons.elderly_rounded),
-      ('Gọi video với\nbác sĩ', Icons.video_call_rounded),
-      ('Mua thuốc tại\nAn Khang', Icons.medication_liquid_rounded),
-      ('Khám doanh\nnghiệp', Icons.shield_rounded),
+  Widget _buildQuickActions(AppLocalizations l10n) {
+    final items = [
+      (l10n.patient_action_book_facility, Icons.calendar_month_rounded),
+      (l10n.patient_action_book_specialty, Icons.medical_services_rounded),
+      (l10n.patient_action_book_test, Icons.vaccines_rounded),
+      (l10n.patient_action_health_package, Icons.health_and_safety_rounded),
+      (l10n.patient_action_personal_assistant, Icons.elderly_rounded),
+      (l10n.patient_action_video_call, Icons.video_call_rounded),
+      (l10n.patient_action_buy_medicine, Icons.medication_liquid_rounded),
+      (l10n.patient_action_corporate_checkup, Icons.shield_rounded),
     ];
 
     return Container(
@@ -180,7 +182,7 @@ class PatientHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionTitle(String title, String subtitle) {
+  Widget _buildSectionTitle(String title, String subtitle, AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
       child: Row(
@@ -197,9 +199,9 @@ class PatientHomeScreen extends StatelessWidget {
               ],
             ),
           ),
-          const Text(
-            'Xem tất cả  >>',
-            style: TextStyle(color: Color(0xFF1BAFE9), fontWeight: FontWeight.w600, fontSize: 20),
+          Text(
+            l10n.patient_view_all,
+            style: const TextStyle(color: Color(0xFF1BAFE9), fontWeight: FontWeight.w600, fontSize: 20),
           ),
         ],
       ),
@@ -236,16 +238,16 @@ class PatientHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCareTabs() {
-    return const Padding(
+  Widget _buildCareTabs(AppLocalizations l10n) {
+    return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          _ChipTab(text: 'Sức khỏe', active: true),
-          SizedBox(width: 8),
-          _ChipTab(text: 'Xét nghiệm'),
-          SizedBox(width: 8),
-          _ChipTab(text: 'Tiêm chủng'),
+          _ChipTab(text: l10n.patient_tab_health, active: true),
+          const SizedBox(width: 8),
+          _ChipTab(text: l10n.patient_tab_test),
+          const SizedBox(width: 8),
+          _ChipTab(text: l10n.patient_tab_vaccine),
         ],
       ),
     );
@@ -352,7 +354,10 @@ class _InfoCard extends StatelessWidget {
                   backgroundColor: const Color(0xFF1BAFE9),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                child: const Text('Đặt khám ngay', style: TextStyle(color: Colors.white, fontSize: 15)),
+                child: Text(
+                  AppLocalizations.of(context)!.patient_book_now,
+                  style: const TextStyle(color: Colors.white, fontSize: 15),
+                ),
               ),
             ),
           ),

@@ -20,6 +20,20 @@ class AppointmentRemoteDatasource {
     return appointments;
   }
 
+  Future<List<AppointmentModel>> getAppointmentsByDoctor(String doctorId) async {
+    final snapshot = await _firestore
+        .collection('appointments')
+        .where('doctorId', isEqualTo: doctorId)
+        .get();
+
+    final appointments = snapshot.docs
+        .map((doc) => AppointmentModel.fromJson(doc.data(), doc.id))
+        .toList();
+
+    appointments.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+    return appointments;
+  }
+
   Future<AppointmentModel> createAppointment(
       AppointmentModel appointment) async {
     final isLocked = await lockSlot(

@@ -217,4 +217,188 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get password_validation_error =>
       'Password must be at least 8 characters, including uppercase, lowercase and numbers';
+
+  @override
+  String get nav_home => 'Home';
+
+  @override
+  String get nav_schedule => 'Schedule';
+
+  @override
+  String get nav_medical_record => 'Medical records';
+
+  @override
+  String get nav_profile => 'Profile';
+
+  @override
+  String get admin_dashboard_title => 'Admin Dashboard';
+
+  @override
+  String get admin_manage_hospital => 'Manage hospitals';
+
+  @override
+  String get admin_manage_department => 'Manage departments';
+
+  @override
+  String get admin_manage_doctor => 'Manage doctors';
+
+  @override
+  String get doctor_dashboard_title => 'Doctor Dashboard';
+
+  @override
+  String get doctor_greeting => 'Hello doctor';
+
+  @override
+  String get doctor_today_stats => 'Today\'s summary';
+
+  @override
+  String get doctor_patients_today => 'Patients today';
+
+  @override
+  String get doctor_appointments_today => 'Appointments today';
+
+  @override
+  String get doctor_waiting => 'Waiting';
+
+  @override
+  String get doctor_quick_actions => 'Quick actions';
+
+  @override
+  String get doctor_today_schedule => 'Today\'s schedule';
+
+  @override
+  String get doctor_view_all => 'View all';
+
+  @override
+  String get doctor_no_appointments_today => 'No appointments today';
+
+  @override
+  String get doctor_medical_record => 'Medical record';
+
+  @override
+  String get doctor_diagnosis => 'Diagnosis';
+
+  @override
+  String get doctor_prescription => 'Prescription';
+
+  @override
+  String get doctor_sign => 'Sign';
+
+  @override
+  String get doctor_send_prescription => 'Send prescription';
+
+  @override
+  String get doctor_upload_results => 'Upload results';
+
+  @override
+  String get doctor_advanced_features => 'Advanced features';
+
+  @override
+  String get doctor_ai_support => 'AI diagnosis assistant';
+
+  @override
+  String get doctor_patient_rating => 'Patient rating';
+
+  @override
+  String get doctor_dashboard_analytics => 'Dashboard analytics';
+
+  @override
+  String get doctor_time_management => 'Time management';
+
+  @override
+  String get doctor_workload_management => 'Workload management';
+
+  @override
+  String get doctor_daily_limit => 'Patients/day limit';
+
+  @override
+  String get doctor_break_time => 'Break time';
+
+  @override
+  String get doctor_schedule_allocation => 'Schedule allocation';
+
+  @override
+  String get doctor_button_examine => 'Examine';
+
+  @override
+  String get patient_header_greeting => 'Hi,';
+
+  @override
+  String get patient_search_hint =>
+      'Search facilities/doctors/departments/services';
+
+  @override
+  String get patient_section_facilities => 'FACILITIES';
+
+  @override
+  String get patient_section_facilities_sub => 'featured this month';
+
+  @override
+  String get patient_section_doctors => 'CONSULTING DOCTORS';
+
+  @override
+  String get patient_section_doctors_sub => 'video consultation';
+
+  @override
+  String get patient_section_care => 'CARE';
+
+  @override
+  String get patient_section_care_sub => 'wellness programs';
+
+  @override
+  String get patient_view_all => 'View all  >>';
+
+  @override
+  String get patient_book_now => 'Book now';
+
+  @override
+  String get patient_tab_health => 'Health';
+
+  @override
+  String get patient_tab_test => 'Tests';
+
+  @override
+  String get patient_tab_vaccine => 'Vaccines';
+
+  @override
+  String get patient_banner_online_consult => 'Online\nconsultation';
+
+  @override
+  String get patient_banner_personal_assistant => 'Personal\nassistant';
+
+  @override
+  String get patient_action_book_facility => 'Book at\nfacility';
+
+  @override
+  String get patient_action_book_specialty => 'Book by\nspecialty';
+
+  @override
+  String get patient_action_book_test => 'Book a\ntest';
+
+  @override
+  String get patient_action_health_package => 'Health\npackage';
+
+  @override
+  String get patient_action_personal_assistant => 'Personal\nassistant';
+
+  @override
+  String get patient_action_video_call => 'Video call\nwith doctor';
+
+  @override
+  String get patient_action_buy_medicine => 'Buy\nmedicine';
+
+  @override
+  String get patient_action_corporate_checkup => 'Corporate\ncheckup';
+
+  @override
+  String get doctor_morning => 'AM';
+
+  @override
+  String get doctor_workload_limit => 'Limit';
+
+  @override
+  String get doctor_workload_done => 'Done';
+
+  @override
+  String get doctor_workload_break => 'Break';
 }

@@ -55,7 +55,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       body: IndexedStack(
         index: _currentIndex,
         children: [
-          const _HomeDashboard(),
+          _HomeDashboard(
+            onNotificationTap: () => setState(() => _currentIndex = 1),
+          ),
           const NotificationScreen(),
           Center(child: Text(AppLocalizations.of(context)!.map_title, style: context.textStyles.heading3)),
           Center(child: Text(AppLocalizations.of(context)!.settings_language, style: context.textStyles.heading3)),
@@ -167,7 +169,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 }
 
 class _HomeDashboard extends StatefulWidget {
-  const _HomeDashboard();
+  final VoidCallback onNotificationTap;
+  const _HomeDashboard({required this.onNotificationTap});
 
   @override
   State<_HomeDashboard> createState() => _HomeDashboardState();
@@ -214,9 +217,9 @@ class _HomeDashboardState extends State<_HomeDashboard> {
                   userName: userName,
                   role: currentRole,
                   unreadNotifications: 0,
-                  onNotificationTap: () {},
-                  onProfileTap: () {},
-                  onVoiceTap: () {},
+                  onNotificationTap: widget.onNotificationTap,
+                  onProfileTap: () => _showLogoutDialog(context),
+                  onVoiceTap: () => context.push('/ai/voice-assistant'),
                   onSearchSubmit: (v) {},
                 ),
               ),
@@ -271,6 +274,32 @@ class _HomeDashboardState extends State<_HomeDashboard> {
           ),
         );
       },
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Đăng xuất'),
+        content: const Text('Bạn có chắc chắn muốn đăng xuất không?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await context.read<AuthController>().logout();
+              if (context.mounted) {
+                context.go('/login');
+              }
+            },
+            child: const Text('Đăng xuất', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
     );
   }
 }

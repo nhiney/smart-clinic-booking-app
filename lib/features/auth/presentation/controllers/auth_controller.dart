@@ -6,6 +6,8 @@ import '../../domain/usecases/register_usecase.dart';
 import '../../domain/usecases/verify_phone_usecase.dart';
 import '../../domain/usecases/signin_with_phone_usecase.dart';
 
+import '../../../app/router/app_router.dart';
+
 class AuthController extends ChangeNotifier {
   final LoginWithEmailUseCase loginWithEmailUseCase;
   final RegisterUseCase registerUseCase;
@@ -43,6 +45,7 @@ class AuthController extends ChangeNotifier {
       );
       if (currentUser != null) {
         await authRepository.saveSession(currentUser!);
+        AppRouter.hasLocalSession = true;
       }
 
       return true;
@@ -152,6 +155,7 @@ class AuthController extends ChangeNotifier {
       );
       if (currentUser != null) {
         await authRepository.saveSession(currentUser!);
+        AppRouter.hasLocalSession = true;
       }
 
       return true;
@@ -166,6 +170,7 @@ class AuthController extends ChangeNotifier {
 
   Future<void> logout() async {
     await authRepository.logout();
+    AppRouter.hasLocalSession = false; // Reset session status in router
     currentUser = null;
     notifyListeners();
   }

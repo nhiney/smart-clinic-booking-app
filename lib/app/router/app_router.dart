@@ -9,7 +9,7 @@ import 'package:smart_clinic_booking/features/auth/presentation/screens/staff_lo
 import 'package:smart_clinic_booking/features/auth/presentation/screens/sign_up_screen.dart';
 import 'package:smart_clinic_booking/features/home/presentation/screens/home_screen.dart';
 import 'package:smart_clinic_booking/features/admin/presentation/screens/admin_dashboard_screen.dart';
-import 'package:smart_clinic_booking/features/doctor/presentation/screens/doctor_dashboard_screen.dart';
+import 'package:smart_clinic_booking/features/doctor/presentation/screens/doctor_home_screen.dart';
 import 'package:smart_clinic_booking/features/admission/presentation/screens/admission_registration_screen.dart';
 import 'package:smart_clinic_booking/features/admission/presentation/screens/admission_history_screen.dart';
 import 'package:smart_clinic_booking/features/notification/presentation/screens/notification_screen.dart';
@@ -235,7 +235,7 @@ class AppRouter {
       ),
       GoRoute(
         path: '/doctor/dashboard',
-        builder: (context, state) => const DoctorDashboardScreen(),
+        builder: (context, state) => const DoctorHomeScreen(),
       ),
       GoRoute(
         path: '/admin/dashboard',

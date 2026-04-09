@@ -214,4 +214,187 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get password_validation_error =>
       'Password must be at least 8 characters, including uppercase, lowercase and numbers';
+
+  @override
+  String get nav_home => '首页';
+
+  @override
+  String get nav_schedule => '日程';
+
+  @override
+  String get nav_medical_record => '病历';
+
+  @override
+  String get nav_profile => '我的';
+
+  @override
+  String get admin_dashboard_title => '管理员面板';
+
+  @override
+  String get admin_manage_hospital => '医院管理';
+
+  @override
+  String get admin_manage_department => '科室管理';
+
+  @override
+  String get admin_manage_doctor => '医生管理';
+
+  @override
+  String get doctor_dashboard_title => '医生工作台';
+
+  @override
+  String get doctor_greeting => '医生您好';
+
+  @override
+  String get doctor_today_stats => '今日概览';
+
+  @override
+  String get doctor_patients_today => '今日患者';
+
+  @override
+  String get doctor_appointments_today => '今日预约';
+
+  @override
+  String get doctor_waiting => '等待中';
+
+  @override
+  String get doctor_quick_actions => '快捷操作';
+
+  @override
+  String get doctor_today_schedule => '今日排班';
+
+  @override
+  String get doctor_view_all => '查看全部';
+
+  @override
+  String get doctor_no_appointments_today => '今天没有预约';
+
+  @override
+  String get doctor_medical_record => '病历';
+
+  @override
+  String get doctor_diagnosis => '诊断';
+
+  @override
+  String get doctor_prescription => '处方';
+
+  @override
+  String get doctor_sign => '签名';
+
+  @override
+  String get doctor_send_prescription => '发送处方';
+
+  @override
+  String get doctor_upload_results => '上传结果';
+
+  @override
+  String get doctor_advanced_features => '高级功能';
+
+  @override
+  String get doctor_ai_support => 'AI 诊断辅助';
+
+  @override
+  String get doctor_patient_rating => '患者评分';
+
+  @override
+  String get doctor_dashboard_analytics => '数据分析';
+
+  @override
+  String get doctor_time_management => '时间管理';
+
+  @override
+  String get doctor_workload_management => '工作量管理';
+
+  @override
+  String get doctor_daily_limit => '每日上限';
+
+  @override
+  String get doctor_break_time => '休息时间';
+
+  @override
+  String get doctor_schedule_allocation => '排班分配';
+
+  @override
+  String get doctor_button_examine => '就诊';
+
+  @override
+  String get patient_header_greeting => '你好，';
+
+  @override
+  String get patient_search_hint => '搜索机构/医生/科室/服务';
+
+  @override
+  String get patient_section_facilities => '医疗机构';
+
+  @override
+  String get patient_section_facilities_sub => '本月精选';
+
+  @override
+  String get patient_section_doctors => '咨询医生';
+
+  @override
+  String get patient_section_doctors_sub => '视频问诊';
+
+  @override
+  String get patient_section_care => '健康管理';
+
+  @override
+  String get patient_section_care_sub => '全面健康';
+
+  @override
+  String get patient_view_all => '查看全部  >>';
+
+  @override
+  String get patient_book_now => '立即预约';
+
+  @override
+  String get patient_tab_health => '健康';
+
+  @override
+  String get patient_tab_test => '检验';
+
+  @override
+  String get patient_tab_vaccine => '疫苗';
+
+  @override
+  String get patient_banner_online_consult => '在线\n问诊咨询';
+
+  @override
+  String get patient_banner_personal_assistant => '个人\n助手';
+
+  @override
+  String get patient_action_book_facility => '机构\n预约';
+
+  @override
+  String get patient_action_book_specialty => '按科室\n预约';
+
+  @override
+  String get patient_action_book_test => '检验\n预约';
+
+  @override
+  String get patient_action_health_package => '健康\n套餐';
+
+  @override
+  String get patient_action_personal_assistant => '个人\n助手';
+
+  @override
+  String get patient_action_video_call => '与医生\n视频通话';
+
+  @override
+  String get patient_action_buy_medicine => '购买\n药品';
+
+  @override
+  String get patient_action_corporate_checkup => '企业\n体检';
+
+  @override
+  String get doctor_morning => '上午';
+
+  @override
+  String get doctor_workload_limit => '上限';
+
+  @override
+  String get doctor_workload_done => '已完成';
+
+  @override
+  String get doctor_workload_break => '休息';
 }

@@ -214,4 +214,187 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get password_validation_error =>
       'Password must be at least 8 characters, including uppercase, lowercase and numbers';
+
+  @override
+  String get nav_home => '홈';
+
+  @override
+  String get nav_schedule => '일정';
+
+  @override
+  String get nav_medical_record => '진료기록';
+
+  @override
+  String get nav_profile => '프로필';
+
+  @override
+  String get admin_dashboard_title => '관리자 대시보드';
+
+  @override
+  String get admin_manage_hospital => '병원 관리';
+
+  @override
+  String get admin_manage_department => '진료과 관리';
+
+  @override
+  String get admin_manage_doctor => '의사 관리';
+
+  @override
+  String get doctor_dashboard_title => '의사 대시보드';
+
+  @override
+  String get doctor_greeting => '안녕하세요, 선생님';
+
+  @override
+  String get doctor_today_stats => '오늘 요약';
+
+  @override
+  String get doctor_patients_today => '오늘 환자';
+
+  @override
+  String get doctor_appointments_today => '오늘 예약';
+
+  @override
+  String get doctor_waiting => '대기 중';
+
+  @override
+  String get doctor_quick_actions => '빠른 실행';
+
+  @override
+  String get doctor_today_schedule => '오늘 일정';
+
+  @override
+  String get doctor_view_all => '전체 보기';
+
+  @override
+  String get doctor_no_appointments_today => '오늘 일정이 없습니다';
+
+  @override
+  String get doctor_medical_record => '진료기록';
+
+  @override
+  String get doctor_diagnosis => '진단';
+
+  @override
+  String get doctor_prescription => '처방';
+
+  @override
+  String get doctor_sign => '서명';
+
+  @override
+  String get doctor_send_prescription => '처방 전송';
+
+  @override
+  String get doctor_upload_results => '결과 업로드';
+
+  @override
+  String get doctor_advanced_features => '고급 기능';
+
+  @override
+  String get doctor_ai_support => 'AI 진단 지원';
+
+  @override
+  String get doctor_patient_rating => '환자 평점';
+
+  @override
+  String get doctor_dashboard_analytics => '대시보드 분석';
+
+  @override
+  String get doctor_time_management => '시간 관리';
+
+  @override
+  String get doctor_workload_management => '업무량 관리';
+
+  @override
+  String get doctor_daily_limit => '일일 한도';
+
+  @override
+  String get doctor_break_time => '휴식 시간';
+
+  @override
+  String get doctor_schedule_allocation => '일정 배분';
+
+  @override
+  String get doctor_button_examine => '진료';
+
+  @override
+  String get patient_header_greeting => '안녕하세요,';
+
+  @override
+  String get patient_search_hint => '시설/의사/진료과/서비스 검색';
+
+  @override
+  String get patient_section_facilities => '의료 기관';
+
+  @override
+  String get patient_section_facilities_sub => '이번 달 추천';
+
+  @override
+  String get patient_section_doctors => '상담 의사';
+
+  @override
+  String get patient_section_doctors_sub => '영상 진료';
+
+  @override
+  String get patient_section_care => '케어';
+
+  @override
+  String get patient_section_care_sub => '종합 건강';
+
+  @override
+  String get patient_view_all => '전체 보기  >>';
+
+  @override
+  String get patient_book_now => '지금 예약';
+
+  @override
+  String get patient_tab_health => '건강';
+
+  @override
+  String get patient_tab_test => '검사';
+
+  @override
+  String get patient_tab_vaccine => '예방접종';
+
+  @override
+  String get patient_banner_online_consult => '온라인\n진료 상담';
+
+  @override
+  String get patient_banner_personal_assistant => '개인\n도우미';
+
+  @override
+  String get patient_action_book_facility => '기관에서\n예약';
+
+  @override
+  String get patient_action_book_specialty => '진료과로\n예약';
+
+  @override
+  String get patient_action_book_test => '검사\n예약';
+
+  @override
+  String get patient_action_health_package => '건강\n패키지';
+
+  @override
+  String get patient_action_personal_assistant => '개인\n도우미';
+
+  @override
+  String get patient_action_video_call => '의사와\n영상 통화';
+
+  @override
+  String get patient_action_buy_medicine => '약\n구매';
+
+  @override
+  String get patient_action_corporate_checkup => '기업\n검진';
+
+  @override
+  String get doctor_morning => '오전';
+
+  @override
+  String get doctor_workload_limit => '한도';
+
+  @override
+  String get doctor_workload_done => '완료';
+
+  @override
+  String get doctor_workload_break => '휴식';
 }

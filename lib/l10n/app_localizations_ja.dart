@@ -214,4 +214,187 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get password_validation_error =>
       'Password must be at least 8 characters, including uppercase, lowercase and numbers';
+
+  @override
+  String get nav_home => 'ホーム';
+
+  @override
+  String get nav_schedule => '予約';
+
+  @override
+  String get nav_medical_record => 'カルテ';
+
+  @override
+  String get nav_profile => 'プロフィール';
+
+  @override
+  String get admin_dashboard_title => '管理ダッシュボード';
+
+  @override
+  String get admin_manage_hospital => '病院管理';
+
+  @override
+  String get admin_manage_department => '診療科管理';
+
+  @override
+  String get admin_manage_doctor => '医師管理';
+
+  @override
+  String get doctor_dashboard_title => '医師ダッシュボード';
+
+  @override
+  String get doctor_greeting => '医師さん、こんにちは';
+
+  @override
+  String get doctor_today_stats => '本日の概要';
+
+  @override
+  String get doctor_patients_today => '本日の患者数';
+
+  @override
+  String get doctor_appointments_today => '本日の予約';
+
+  @override
+  String get doctor_waiting => '待機中';
+
+  @override
+  String get doctor_quick_actions => 'クイック操作';
+
+  @override
+  String get doctor_today_schedule => '本日のスケジュール';
+
+  @override
+  String get doctor_view_all => 'すべて表示';
+
+  @override
+  String get doctor_no_appointments_today => '本日の予約はありません';
+
+  @override
+  String get doctor_medical_record => 'カルテ';
+
+  @override
+  String get doctor_diagnosis => '診断';
+
+  @override
+  String get doctor_prescription => '処方';
+
+  @override
+  String get doctor_sign => '署名';
+
+  @override
+  String get doctor_send_prescription => '処方を送信';
+
+  @override
+  String get doctor_upload_results => '結果をアップロード';
+
+  @override
+  String get doctor_advanced_features => '高度な機能';
+
+  @override
+  String get doctor_ai_support => 'AI診断支援';
+
+  @override
+  String get doctor_patient_rating => '患者評価';
+
+  @override
+  String get doctor_dashboard_analytics => '分析';
+
+  @override
+  String get doctor_time_management => '時間管理';
+
+  @override
+  String get doctor_workload_management => '業務管理';
+
+  @override
+  String get doctor_daily_limit => '1日上限';
+
+  @override
+  String get doctor_break_time => '休憩時間';
+
+  @override
+  String get doctor_schedule_allocation => '予約配分';
+
+  @override
+  String get doctor_button_examine => '診察';
+
+  @override
+  String get patient_header_greeting => 'こんにちは、';
+
+  @override
+  String get patient_search_hint => '施設/医師/診療科/サービスを検索';
+
+  @override
+  String get patient_section_facilities => '医療施設';
+
+  @override
+  String get patient_section_facilities_sub => '今月の注目';
+
+  @override
+  String get patient_section_doctors => '相談医師';
+
+  @override
+  String get patient_section_doctors_sub => 'ビデオ診療';
+
+  @override
+  String get patient_section_care => 'ケア';
+
+  @override
+  String get patient_section_care_sub => '総合的な健康';
+
+  @override
+  String get patient_view_all => 'すべて表示  >>';
+
+  @override
+  String get patient_book_now => '今すぐ予約';
+
+  @override
+  String get patient_tab_health => '健康';
+
+  @override
+  String get patient_tab_test => '検査';
+
+  @override
+  String get patient_tab_vaccine => '予防接種';
+
+  @override
+  String get patient_banner_online_consult => 'オンライン\n診療相談';
+
+  @override
+  String get patient_banner_personal_assistant => 'パーソナル\nアシスタント';
+
+  @override
+  String get patient_action_book_facility => '施設で\n予約';
+
+  @override
+  String get patient_action_book_specialty => '診療科で\n予約';
+
+  @override
+  String get patient_action_book_test => '検査を\n予約';
+
+  @override
+  String get patient_action_health_package => '健康\nパッケージ';
+
+  @override
+  String get patient_action_personal_assistant => 'パーソナル\nアシスタント';
+
+  @override
+  String get patient_action_video_call => '医師と\nビデオ通話';
+
+  @override
+  String get patient_action_buy_medicine => '薬を\n購入';
+
+  @override
+  String get patient_action_corporate_checkup => '企業\n健診';
+
+  @override
+  String get doctor_morning => '午前';
+
+  @override
+  String get doctor_workload_limit => '上限';
+
+  @override
+  String get doctor_workload_done => '完了';
+
+  @override
+  String get doctor_workload_break => '休憩';
 }

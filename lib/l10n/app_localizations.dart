@@ -511,6 +511,372 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Password must be at least 8 characters, including uppercase, lowercase and numbers'**
   String get password_validation_error;
+
+  /// No description provided for @nav_home.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get nav_home;
+
+  /// No description provided for @nav_schedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule'**
+  String get nav_schedule;
+
+  /// No description provided for @nav_medical_record.
+  ///
+  /// In en, this message translates to:
+  /// **'Medical records'**
+  String get nav_medical_record;
+
+  /// No description provided for @nav_profile.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get nav_profile;
+
+  /// No description provided for @admin_dashboard_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin Dashboard'**
+  String get admin_dashboard_title;
+
+  /// No description provided for @admin_manage_hospital.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage hospitals'**
+  String get admin_manage_hospital;
+
+  /// No description provided for @admin_manage_department.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage departments'**
+  String get admin_manage_department;
+
+  /// No description provided for @admin_manage_doctor.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage doctors'**
+  String get admin_manage_doctor;
+
+  /// No description provided for @doctor_dashboard_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Doctor Dashboard'**
+  String get doctor_dashboard_title;
+
+  /// No description provided for @doctor_greeting.
+  ///
+  /// In en, this message translates to:
+  /// **'Hello doctor'**
+  String get doctor_greeting;
+
+  /// No description provided for @doctor_today_stats.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s summary'**
+  String get doctor_today_stats;
+
+  /// No description provided for @doctor_patients_today.
+  ///
+  /// In en, this message translates to:
+  /// **'Patients today'**
+  String get doctor_patients_today;
+
+  /// No description provided for @doctor_appointments_today.
+  ///
+  /// In en, this message translates to:
+  /// **'Appointments today'**
+  String get doctor_appointments_today;
+
+  /// No description provided for @doctor_waiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting'**
+  String get doctor_waiting;
+
+  /// No description provided for @doctor_quick_actions.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick actions'**
+  String get doctor_quick_actions;
+
+  /// No description provided for @doctor_today_schedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s schedule'**
+  String get doctor_today_schedule;
+
+  /// No description provided for @doctor_view_all.
+  ///
+  /// In en, this message translates to:
+  /// **'View all'**
+  String get doctor_view_all;
+
+  /// No description provided for @doctor_no_appointments_today.
+  ///
+  /// In en, this message translates to:
+  /// **'No appointments today'**
+  String get doctor_no_appointments_today;
+
+  /// No description provided for @doctor_medical_record.
+  ///
+  /// In en, this message translates to:
+  /// **'Medical record'**
+  String get doctor_medical_record;
+
+  /// No description provided for @doctor_diagnosis.
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnosis'**
+  String get doctor_diagnosis;
+
+  /// No description provided for @doctor_prescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Prescription'**
+  String get doctor_prescription;
+
+  /// No description provided for @doctor_sign.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign'**
+  String get doctor_sign;
+
+  /// No description provided for @doctor_send_prescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Send prescription'**
+  String get doctor_send_prescription;
+
+  /// No description provided for @doctor_upload_results.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload results'**
+  String get doctor_upload_results;
+
+  /// No description provided for @doctor_advanced_features.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced features'**
+  String get doctor_advanced_features;
+
+  /// No description provided for @doctor_ai_support.
+  ///
+  /// In en, this message translates to:
+  /// **'AI diagnosis assistant'**
+  String get doctor_ai_support;
+
+  /// No description provided for @doctor_patient_rating.
+  ///
+  /// In en, this message translates to:
+  /// **'Patient rating'**
+  String get doctor_patient_rating;
+
+  /// No description provided for @doctor_dashboard_analytics.
+  ///
+  /// In en, this message translates to:
+  /// **'Dashboard analytics'**
+  String get doctor_dashboard_analytics;
+
+  /// No description provided for @doctor_time_management.
+  ///
+  /// In en, this message translates to:
+  /// **'Time management'**
+  String get doctor_time_management;
+
+  /// No description provided for @doctor_workload_management.
+  ///
+  /// In en, this message translates to:
+  /// **'Workload management'**
+  String get doctor_workload_management;
+
+  /// No description provided for @doctor_daily_limit.
+  ///
+  /// In en, this message translates to:
+  /// **'Patients/day limit'**
+  String get doctor_daily_limit;
+
+  /// No description provided for @doctor_break_time.
+  ///
+  /// In en, this message translates to:
+  /// **'Break time'**
+  String get doctor_break_time;
+
+  /// No description provided for @doctor_schedule_allocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule allocation'**
+  String get doctor_schedule_allocation;
+
+  /// No description provided for @doctor_button_examine.
+  ///
+  /// In en, this message translates to:
+  /// **'Examine'**
+  String get doctor_button_examine;
+
+  /// No description provided for @patient_header_greeting.
+  ///
+  /// In en, this message translates to:
+  /// **'Hi,'**
+  String get patient_header_greeting;
+
+  /// No description provided for @patient_search_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search facilities/doctors/departments/services'**
+  String get patient_search_hint;
+
+  /// No description provided for @patient_section_facilities.
+  ///
+  /// In en, this message translates to:
+  /// **'FACILITIES'**
+  String get patient_section_facilities;
+
+  /// No description provided for @patient_section_facilities_sub.
+  ///
+  /// In en, this message translates to:
+  /// **'featured this month'**
+  String get patient_section_facilities_sub;
+
+  /// No description provided for @patient_section_doctors.
+  ///
+  /// In en, this message translates to:
+  /// **'CONSULTING DOCTORS'**
+  String get patient_section_doctors;
+
+  /// No description provided for @patient_section_doctors_sub.
+  ///
+  /// In en, this message translates to:
+  /// **'video consultation'**
+  String get patient_section_doctors_sub;
+
+  /// No description provided for @patient_section_care.
+  ///
+  /// In en, this message translates to:
+  /// **'CARE'**
+  String get patient_section_care;
+
+  /// No description provided for @patient_section_care_sub.
+  ///
+  /// In en, this message translates to:
+  /// **'wellness programs'**
+  String get patient_section_care_sub;
+
+  /// No description provided for @patient_view_all.
+  ///
+  /// In en, this message translates to:
+  /// **'View all  >>'**
+  String get patient_view_all;
+
+  /// No description provided for @patient_book_now.
+  ///
+  /// In en, this message translates to:
+  /// **'Book now'**
+  String get patient_book_now;
+
+  /// No description provided for @patient_tab_health.
+  ///
+  /// In en, this message translates to:
+  /// **'Health'**
+  String get patient_tab_health;
+
+  /// No description provided for @patient_tab_test.
+  ///
+  /// In en, this message translates to:
+  /// **'Tests'**
+  String get patient_tab_test;
+
+  /// No description provided for @patient_tab_vaccine.
+  ///
+  /// In en, this message translates to:
+  /// **'Vaccines'**
+  String get patient_tab_vaccine;
+
+  /// No description provided for @patient_banner_online_consult.
+  ///
+  /// In en, this message translates to:
+  /// **'Online\nconsultation'**
+  String get patient_banner_online_consult;
+
+  /// No description provided for @patient_banner_personal_assistant.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal\nassistant'**
+  String get patient_banner_personal_assistant;
+
+  /// No description provided for @patient_action_book_facility.
+  ///
+  /// In en, this message translates to:
+  /// **'Book at\nfacility'**
+  String get patient_action_book_facility;
+
+  /// No description provided for @patient_action_book_specialty.
+  ///
+  /// In en, this message translates to:
+  /// **'Book by\nspecialty'**
+  String get patient_action_book_specialty;
+
+  /// No description provided for @patient_action_book_test.
+  ///
+  /// In en, this message translates to:
+  /// **'Book a\ntest'**
+  String get patient_action_book_test;
+
+  /// No description provided for @patient_action_health_package.
+  ///
+  /// In en, this message translates to:
+  /// **'Health\npackage'**
+  String get patient_action_health_package;
+
+  /// No description provided for @patient_action_personal_assistant.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal\nassistant'**
+  String get patient_action_personal_assistant;
+
+  /// No description provided for @patient_action_video_call.
+  ///
+  /// In en, this message translates to:
+  /// **'Video call\nwith doctor'**
+  String get patient_action_video_call;
+
+  /// No description provided for @patient_action_buy_medicine.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy\nmedicine'**
+  String get patient_action_buy_medicine;
+
+  /// No description provided for @patient_action_corporate_checkup.
+  ///
+  /// In en, this message translates to:
+  /// **'Corporate\ncheckup'**
+  String get patient_action_corporate_checkup;
+
+  /// No description provided for @doctor_morning.
+  ///
+  /// In en, this message translates to:
+  /// **'AM'**
+  String get doctor_morning;
+
+  /// No description provided for @doctor_workload_limit.
+  ///
+  /// In en, this message translates to:
+  /// **'Limit'**
+  String get doctor_workload_limit;
+
+  /// No description provided for @doctor_workload_done.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get doctor_workload_done;
+
+  /// No description provided for @doctor_workload_break.
+  ///
+  /// In en, this message translates to:
+  /// **'Break'**
+  String get doctor_workload_break;
 }
 
 class _AppLocalizationsDelegate

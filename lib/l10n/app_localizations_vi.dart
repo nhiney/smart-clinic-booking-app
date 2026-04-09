@@ -218,4 +218,187 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get password_validation_error =>
       'Mật khẩu phải từ 8 ký tự, bao gồm chữ hoa, chữ thường và số';
+
+  @override
+  String get nav_home => 'Trang chủ';
+
+  @override
+  String get nav_schedule => 'Lịch khám';
+
+  @override
+  String get nav_medical_record => 'Bệnh án';
+
+  @override
+  String get nav_profile => 'Cá nhân';
+
+  @override
+  String get admin_dashboard_title => 'Admin Dashboard';
+
+  @override
+  String get admin_manage_hospital => 'Quản lý bệnh viện';
+
+  @override
+  String get admin_manage_department => 'Quản lý khoa';
+
+  @override
+  String get admin_manage_doctor => 'Quản lý bác sĩ';
+
+  @override
+  String get doctor_dashboard_title => 'Doctor Dashboard';
+
+  @override
+  String get doctor_greeting => 'Chào bác sĩ';
+
+  @override
+  String get doctor_today_stats => 'Thống kê hôm nay';
+
+  @override
+  String get doctor_patients_today => 'Số bệnh nhân hôm nay';
+
+  @override
+  String get doctor_appointments_today => 'Lịch khám hôm nay';
+
+  @override
+  String get doctor_waiting => 'Đang chờ khám';
+
+  @override
+  String get doctor_quick_actions => 'Thao tác nhanh';
+
+  @override
+  String get doctor_today_schedule => 'Lịch hôm nay';
+
+  @override
+  String get doctor_view_all => 'Xem tất cả';
+
+  @override
+  String get doctor_no_appointments_today => 'Không có lịch khám nào hôm nay';
+
+  @override
+  String get doctor_medical_record => 'Bệnh án';
+
+  @override
+  String get doctor_diagnosis => 'Chẩn đoán';
+
+  @override
+  String get doctor_prescription => 'Đơn thuốc';
+
+  @override
+  String get doctor_sign => 'Ký số';
+
+  @override
+  String get doctor_send_prescription => 'Gửi đơn thuốc';
+
+  @override
+  String get doctor_upload_results => 'Upload kết quả';
+
+  @override
+  String get doctor_advanced_features => 'Tính năng nâng cao';
+
+  @override
+  String get doctor_ai_support => 'AI hỗ trợ chẩn đoán';
+
+  @override
+  String get doctor_patient_rating => 'Rating bệnh nhân';
+
+  @override
+  String get doctor_dashboard_analytics => 'Dashboard analytics';
+
+  @override
+  String get doctor_time_management => 'Quản lý thời gian';
+
+  @override
+  String get doctor_workload_management => 'Quản lý khối lượng công việc';
+
+  @override
+  String get doctor_daily_limit => 'Số bệnh nhân/ngày (limit)';
+
+  @override
+  String get doctor_break_time => 'Lịch nghỉ (break time)';
+
+  @override
+  String get doctor_schedule_allocation => 'Phân bổ lịch khám';
+
+  @override
+  String get doctor_button_examine => 'Khám';
+
+  @override
+  String get patient_header_greeting => 'Xin chào,';
+
+  @override
+  String get patient_search_hint => 'Tìm CSYT/bác sĩ/chuyên khoa/dịch vụ';
+
+  @override
+  String get patient_section_facilities => 'CƠ SỞ Y TẾ';
+
+  @override
+  String get patient_section_facilities_sub => 'nổi bật trong tháng';
+
+  @override
+  String get patient_section_doctors => 'BÁC SĨ TƯ VẤN';
+
+  @override
+  String get patient_section_doctors_sub => 'khám bệnh qua video';
+
+  @override
+  String get patient_section_care => 'CHĂM SÓC';
+
+  @override
+  String get patient_section_care_sub => 'sức khỏe toàn diện';
+
+  @override
+  String get patient_view_all => 'Xem tất cả  >>';
+
+  @override
+  String get patient_book_now => 'Đặt khám ngay';
+
+  @override
+  String get patient_tab_health => 'Sức khỏe';
+
+  @override
+  String get patient_tab_test => 'Xét nghiệm';
+
+  @override
+  String get patient_tab_vaccine => 'Tiêm chủng';
+
+  @override
+  String get patient_banner_online_consult => 'Tư vấn khám bệnh\ntrực tuyến';
+
+  @override
+  String get patient_banner_personal_assistant => 'Giúp việc cá nhân';
+
+  @override
+  String get patient_action_book_facility => 'Đặt khám tại\ncơ sở';
+
+  @override
+  String get patient_action_book_specialty => 'Đặt khám\nchuyên khoa';
+
+  @override
+  String get patient_action_book_test => 'Đặt lịch xét\nnghiệm';
+
+  @override
+  String get patient_action_health_package => 'Gói sức khỏe\ntoàn diện';
+
+  @override
+  String get patient_action_personal_assistant => 'Giúp việc cá\nnhân';
+
+  @override
+  String get patient_action_video_call => 'Gọi video với\nbác sĩ';
+
+  @override
+  String get patient_action_buy_medicine => 'Mua thuốc tại\nAn Khang';
+
+  @override
+  String get patient_action_corporate_checkup => 'Khám doanh\nnghiệp';
+
+  @override
+  String get doctor_morning => 'Sáng';
+
+  @override
+  String get doctor_workload_limit => 'Giới hạn';
+
+  @override
+  String get doctor_workload_done => 'Đã khám';
+
+  @override
+  String get doctor_workload_break => 'Nghỉ';
 }

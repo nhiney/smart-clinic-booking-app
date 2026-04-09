@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:smart_clinic_booking/l10n/app_localizations.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Admin Dashboard')),
+      appBar: AppBar(title: Text(l10n.admin_dashboard_title)),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          children: const [
-            _ActionCard(title: 'Quản lý bệnh viện', icon: Icons.local_hospital_rounded),
-            SizedBox(height: 12),
-            _ActionCard(title: 'Quản lý khoa', icon: Icons.account_tree_rounded),
-            SizedBox(height: 12),
-            _ActionCard(title: 'Quản lý bác sĩ', icon: Icons.medical_services_rounded),
+          children: [
+            _ActionCard(title: l10n.admin_manage_hospital, icon: Icons.local_hospital_rounded),
+            const SizedBox(height: 12),
+            _ActionCard(title: l10n.admin_manage_department, icon: Icons.account_tree_rounded),
+            const SizedBox(height: 12),
+            _ActionCard(title: l10n.admin_manage_doctor, icon: Icons.medical_services_rounded),
           ],
         ),
       ),

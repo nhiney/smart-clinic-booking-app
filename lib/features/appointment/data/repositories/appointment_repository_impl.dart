@@ -57,6 +57,12 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   }
 
   @override
+  Future<List<AppointmentEntity>> getAppointmentsByDoctor(
+      String doctorId) async {
+    return await remoteDatasource.getAppointmentsByDoctor(doctorId);
+  }
+
+  @override
   Future<bool> lockSlot(String doctorId, DateTime date, String time) async {
     return await remoteDatasource.lockSlot(doctorId, date, '');
   }

@@ -142,6 +142,7 @@ Future<void> main() async {
         ChangeNotifierProvider(
           create: (_) => DoctorController(
             doctorRepository: getIt<DoctorRepository>(),
+            appointmentRepository: getIt<AppointmentRepository>(),
             storageService: getIt<FileStorageService>(),
           ),
         ),

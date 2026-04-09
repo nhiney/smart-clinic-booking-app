@@ -7,5 +7,6 @@ abstract class AppointmentRepository {
   Future<void> cancelAppointment(String id);
   Future<void> rescheduleAppointment(
       String id, DateTime newDate, String newTime);
+  Future<List<AppointmentEntity>> getAppointmentsByDoctor(String doctorId);
   Future<bool> lockSlot(String doctorId, DateTime date, String time);
 }
