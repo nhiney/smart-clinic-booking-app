@@ -1,5 +1,4 @@
-# Uncomment this line to define a global platform for your project
-platform :ios, '14.0'
+platform :ios, '17.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -40,17 +39,24 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
     target.build_configurations.each do |config|
-      # Fix warning: 'OS_CODE' macro redefined
+      # Silence all third-party warnings
       config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
+      config.build_settings['SWIFT_TREAT_WARNINGS_AS_ERRORS'] = 'NO'
+      config.build_settings['SWIFT_QUIET_DEPRECATIONS_AND_WARNINGS'] = 'YES'
 
-      # Fix duplicate libraries '-lc++'
-      config.build_settings['OTHER_LDFLAGS'] = ['$(inherited)']
+      # Fix duplicate libraries '-lc++' more robustly
+      if config.build_settings['OTHER_LDFLAGS']
+        config.build_settings['OTHER_LDFLAGS'].delete('-lc++')
+      end
 
-      # iOS 26+ simulators on Apple Silicon require arm64.
-      # Do not exclude arm64 for iphonesimulator builds.
+      # iOS 17+ simulators on Apple Silicon require arm64.
+      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'i386'
 
-      # Minimum deployment target
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
+      # Force Swift 5.10 for pods to avoid Swift 6 strict concurrency errors
+      config.build_settings['SWIFT_VERSION'] = '5.10'
+
+      # Lower deployment target to avoid iOS 26 deprecation warnings
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '17.0'
 
       # Fix gRPC/Firebase warnings
       config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'

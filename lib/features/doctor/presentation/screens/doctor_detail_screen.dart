@@ -11,9 +11,14 @@ import '../../domain/usecases/get_catalog_doctor_detail_usecase.dart';
 import '../../../booking/presentation/screens/booking_screen.dart';
 
 class DoctorDetailScreen extends StatefulWidget {
-  final DoctorEntity doctor;
+  final DoctorEntity? doctor;
+  final String? doctorId;
 
-  const DoctorDetailScreen({super.key, required this.doctor});
+  const DoctorDetailScreen({
+    super.key,
+    this.doctor,
+    this.doctorId,
+  }) : assert(doctor != null || doctorId != null, 'Either doctor or doctorId must be provided');
 
   @override
   State<DoctorDetailScreen> createState() => _DoctorDetailScreenState();
@@ -27,7 +32,16 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _doctor = widget.doctor;
+    if (widget.doctor != null) {
+      _doctor = widget.doctor!;
+    } else {
+      // Temporary stub while hydrating from remote
+      _doctor = DoctorEntity(
+        id: widget.doctorId!,
+        name: '',
+        specialty: '',
+      );
+    }
     _hydrateFromRemote();
   }
 

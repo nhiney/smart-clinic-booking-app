@@ -15,9 +15,14 @@ import 'doctor_detail_screen.dart';
 /// Patient flow: discover doctors in Firestore `doctors` with filters and sort.
 /// When [pickForBooking] is true, tapping a doctor pops with that [DoctorEntity].
 class DoctorSearchScreen extends StatefulWidget {
-  const DoctorSearchScreen({super.key, this.pickForBooking = false});
+  const DoctorSearchScreen({
+    super.key,
+    this.pickForBooking = false,
+    this.initialSearchText,
+  });
 
   final bool pickForBooking;
+  final String? initialSearchText;
 
   @override
   State<DoctorSearchScreen> createState() => _DoctorSearchScreenState();
@@ -30,6 +35,10 @@ class _DoctorSearchScreenState extends State<DoctorSearchScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialSearchText != null && widget.initialSearchText!.isNotEmpty) {
+      context.read<DoctorSearchController>().onSearchChanged(widget.initialSearchText!);
+      _searchCtrl.text = widget.initialSearchText!;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<DoctorSearchController>().load();
     });

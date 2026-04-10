@@ -5,6 +5,8 @@ import 'package:smart_clinic_booking/core/extensions/context_extension.dart';
 import 'package:smart_clinic_booking/core/widgets/branded_app_bar.dart';
 
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart' as mlkit;
 import '../controllers/auth_controller.dart';
 import '../navigation/role_navigation.dart';
 import '../utils/auth_error_localizer.dart';
@@ -87,49 +89,86 @@ class _QrLoginScannerScreenState extends State<QrLoginScannerScreen> {
   }
 
   Future<void> _pickAndScanImage() async {
+    mlkit.BarcodeScanner? barcodeScanner;
     try {
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-      if (image == null) return;
-
-      final BarcodeCapture? capture = await _scannerController.analyzeImage(image.path);
-      if (capture == null || capture.barcodes.isEmpty) {
+      // 1. Check permissions
+      final status = await Permission.photos.request();
+      if (status.isPermanentlyDenied) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              _tr(
-                'Không tìm thấy mã QR trong ảnh này.',
-                'No QR code found in this image.',
-                'この画像にQRコードが見つかりません。',
-                '이 이미지에서 QR 코드를 찾을 수 없습니다.',
-                '在此图片中未找到二维码。',
-              ),
-            ),
+            content: Text(_tr(
+              'Quyền truy cập ảnh bị từ chối. Vui lòng mở Cài đặt để cấp quyền.',
+              'Photo library permission denied. Please enable it in Settings.',
+              '写真ライブラリへのアクセス権が拒 phí されました。設定で有効にしてください。',
+              '사진 라이브러리 권한이 거부되었습니다. 설정에서 활성화하십시오.',
+              '相册权限被拒绝。请在设置中开启。',
+            )),
+            action: SnackBarAction(label: 'Settings', onPressed: openAppSettings),
           ),
         );
         return;
       }
 
-      final String? raw = capture.barcodes.first.rawValue;
-      if (raw == null || raw.trim().isEmpty) return;
+      // 2. Pause live camera
+      await _scannerController.stop();
+
+      // 3. Pick image
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 90,
+      );
+
+      if (image == null) {
+        await _scannerController.start();
+        return;
+      }
+
+      setState(() => _isHandlingScan = true);
+
+      // 4. Use Google ML Kit for definitive static analysis
+      barcodeScanner = mlkit.BarcodeScanner(formats: [mlkit.BarcodeFormat.qrCode]);
+      final mlkit.InputImage inputImage = mlkit.InputImage.fromFilePath(image.path);
+      final List<mlkit.Barcode> barcodes = await barcodeScanner.processImage(inputImage);
       
-      final token = _extractToken(raw);
-      await _processToken(token);
+      if (barcodes.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _tr(
+                'Không tìm thấy mã QR trong ảnh này. Hãy thử ảnh rõ nét hơn.',
+                'No QR code found in this image. Please try a clearer one.',
+                'この画像にQRコードが見つかりません。より鮮明な画像をお試しください。',
+                '이 이미지에서 QR 코드를 찾을 수 없습니다. 더 선명한 이미지를 시도해 보세요.',
+                '在此图片中未找到二维码。请尝试更清晰的图片。',
+              ),
+            ),
+          ),
+        );
+      } else {
+        final String? raw = barcodes.first.rawValue;
+        if (raw != null && raw.trim().isNotEmpty) {
+          final token = _extractToken(raw);
+          await _processToken(token);
+        }
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            _tr(
-              'Lỗi khi quét ảnh: $e',
-              'Error scanning image: $e',
-              '画像のスキャン中にエラー: $e',
-              '이미지 스캔 오류: $e',
-              '扫描图片出错: $e',
-            ),
-          ),
+          content: Text('Lỗi quét ảnh (ML Kit): $e'),
+          backgroundColor: context.colors.error,
         ),
       );
+    } finally {
+      setState(() => _isHandlingScan = false);
+      barcodeScanner?.close();
+      if (mounted) {
+        await _scannerController.start();
+      }
     }
   }
 

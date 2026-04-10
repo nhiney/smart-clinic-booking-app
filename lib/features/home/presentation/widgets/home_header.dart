@@ -117,6 +117,62 @@ class HomeHeader extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: 18),
+          // Search Bar
+          Hero(
+            tag: 'home_search_bar',
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(0.08),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  onSubmitted: onSearchSubmit,
+                  textInputAction: TextInputAction.search,
+                  decoration: InputDecoration(
+                    hintText: 'Tìm bác sĩ, chuyên khoa...',
+                    hintStyle: TextStyle(
+                      color: AppColors.textHint.withOpacity(0.6),
+                      fontSize: 15,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search_rounded,
+                      color: AppColors.primary,
+                    ),
+                    suffixIcon: Container(
+                      margin: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primarySurface,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(
+                          Icons.tune_rounded,
+                          color: AppColors.primary,
+                          size: 18,
+                        ),
+                        onPressed: () => onSearchSubmit(''),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 15),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
         ],
       ),
     );

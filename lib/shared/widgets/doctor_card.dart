@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../core/theme/colors/app_colors.dart';
 import '../../core/theme/typography/app_text_styles.dart';
@@ -57,10 +58,14 @@ class DoctorCard extends StatelessWidget {
               child: imageUrl.isNotEmpty
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(14),
-                      child: Image.network(
-                        imageUrl,
+                      child: CachedNetworkImage(
+                        imageUrl: imageUrl,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(
+                        placeholder: (_, __) => const Padding(
+                          padding: EdgeInsets.all(20),
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        errorWidget: (_, __, ___) => const Icon(
                           Icons.person,
                           size: 36,
                           color: AppColors.primary,

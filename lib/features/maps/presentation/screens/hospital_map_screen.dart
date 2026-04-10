@@ -168,6 +168,30 @@ class _HospitalMapScreenState extends ConsumerState<HospitalMapScreen> {
     });
   }
 
+  Widget _filterChip(String label, IconData icon, bool isSelected) {
+    return Container(
+      margin: const EdgeInsets.only(right: 8),
+      child: FilterChip(
+        label: Text(label),
+        avatar: Icon(icon, size: 16, color: isSelected ? Colors.white : AppColors.primary),
+        selected: isSelected,
+        onSelected: (val) {},
+        backgroundColor: Colors.white,
+        selectedColor: AppColors.primary,
+        checkmarkColor: Colors.white,
+        labelStyle: TextStyle(
+          color: isSelected ? Colors.white : AppColors.textPrimary,
+          fontSize: 12,
+          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: isSelected ? Colors.transparent : Colors.grey[200]!),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(hospitalMapProvider);
@@ -190,29 +214,55 @@ class _HospitalMapScreenState extends ConsumerState<HospitalMapScreen> {
                   onTap: (_) => ref.read(hospitalMapProvider.notifier).selectHospital(null),
                 ),
                 
-                // Search Bar
+                // Search & Filter Bar
                 Positioned(
                   top: 20,
-                  left: 16,
-                  right: 16,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 4))
-                      ],
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (val) => ref.read(hospitalMapProvider.notifier).searchHospitals(val),
-                      decoration: InputDecoration(
-                        hintText: 'Tìm theo tên hoặc chuyên khoa...',
-                        prefixIcon: const Icon(Icons.search, color: AppColors.primary),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                  left: 0,
+                  right: 0,
+                  child: Column(
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            )
+                          ],
+                        ),
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: (val) => ref.read(hospitalMapProvider.notifier).searchHospitals(val),
+                          decoration: InputDecoration(
+                            hintText: 'Tìm theo tên hoặc chuyên khoa...',
+                            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                            prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        height: 40,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          children: [
+                            _filterChip('Tất cả', Icons.all_inclusive_rounded, true),
+                            _filterChip('Đa khoa', Icons.local_hospital_rounded, false),
+                            _filterChip('Nhi khoa', Icons.child_care_rounded, false),
+                            _filterChip('Răng hàm mặt', Icons.medical_services_rounded, false),
+                            _filterChip('Mắt', Icons.visibility_rounded, false),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
 
@@ -246,7 +296,7 @@ class _HospitalMapScreenState extends ConsumerState<HospitalMapScreen> {
                     bottom: 20,
                     left: 0,
                     right: 0,
-                    height: 90,
+                    height: 110,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -262,29 +312,39 @@ class _HospitalMapScreenState extends ConsumerState<HospitalMapScreen> {
                             controller.animateCamera(CameraUpdate.newLatLng(LatLng(hospital.lat, hospital.lng)));
                             _showHospitalBottomSheet(hospital);
                           },
-                          child: Container(
-                            width: 260,
-                            margin: const EdgeInsets.only(right: 12),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            width: 280,
+                            margin: const EdgeInsets.only(right: 12, bottom: 8),
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(20),
                               border: Border.all(
                                 color: isSelected ? AppColors.primary : Colors.transparent,
                                 width: 2,
                               ),
-                              boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)],
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                )
+                              ],
                             ),
                             child: Row(
                               children: [
                                 Container(
-                                  width: 48,
-                                  height: 48,
+                                  width: 65,
+                                  height: 65,
                                   decoration: BoxDecoration(
                                     color: AppColors.primarySurface,
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(16),
+                                    image: const DecorationImage(
+                                      image: NetworkImage('https://images.unsplash.com/photo-1587350859728-117698f4eac0?q=80&w=200&auto=format&fit=crop'),
+                                      fit: BoxFit.cover,
+                                    ),
                                   ),
-                                  child: const Icon(Icons.local_hospital, color: AppColors.primary),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
@@ -294,14 +354,32 @@ class _HospitalMapScreenState extends ConsumerState<HospitalMapScreen> {
                                     children: [
                                       Text(
                                         hospital.name, 
-                                        style: AppTextStyles.subtitle.copyWith(fontSize: 14),
+                                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
                                         maxLines: 1, 
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                       const SizedBox(height: 4),
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.star_rounded, color: Colors.orange, size: 14),
+                                          const SizedBox(width: 4),
+                                          Text('4.8', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey[600])),
+                                          const SizedBox(width: 8),
+                                          Container(
+                                            height: 12,
+                                            width: 1,
+                                            color: Colors.grey[300],
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text('Đang mở cửa', style: TextStyle(fontSize: 12, color: Colors.green[600], fontWeight: FontWeight.w600)),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
                                       Text(
-                                        hospital.specialties.isNotEmpty ? hospital.specialties.first : 'Đa khoa',
-                                        style: AppTextStyles.caption,
+                                        hospital.address,
+                                        style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ],
                                   ),

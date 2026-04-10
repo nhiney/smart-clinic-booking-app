@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart' as legacy_provider;
 import '../../../../core/theme/colors/app_colors.dart';
-import '../../../../core/theme/typography/app_text_styles.dart';
 import '../../../../core/widgets/branded_app_bar.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/extensions/context_extension.dart';
@@ -65,88 +64,123 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
   }
 
   Widget _buildInvoiceCard(BuildContext context, InvoiceEntity invoice) {
-    return AppCard(
-      padding: EdgeInsets.all(context.spacing.m),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Mã HĐ: ${invoice.id.substring(0, 8).toUpperCase()}",
-                style: context.textStyles.bodyBold.copyWith(color: context.colors.primary),
+    final bool isPending = invoice.status.toLowerCase() == 'pending';
+    
+    return Container(
+      margin: EdgeInsets.only(bottom: context.spacing.m),
+      child: AppCard(
+        padding: const EdgeInsets.all(0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: context.colors.surface,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                border: Border(bottom: BorderSide(color: context.colors.divider.withValues(alpha: 0.5))),
               ),
-              _buildStatusBadge(context, invoice.status),
-            ],
-          ),
-          SizedBox(height: context.spacing.s),
-          Text(
-            DateFormat('dd/MM/yyyy HH:mm').format(invoice.createdAt),
-            style: context.textStyles.caption.copyWith(color: context.colors.textHint),
-          ),
-          Divider(height: context.spacing.l, color: context.colors.divider),
-          ...invoice.services.map((service) => Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(service.name, style: context.textStyles.bodySmall),
-                Text(
-                  "${service.total.toStringAsFixed(0)}đ", 
-                  style: context.textStyles.bodySmall.copyWith(fontWeight: FontWeight.bold),
-                ),
-              ],
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Hóa đơn #${invoice.id.substring(0, 8).toUpperCase()}",
+                    style: context.textStyles.bodyBold.copyWith(color: context.colors.primary),
+                  ),
+                  _buildStatusBadge(context, invoice.status),
+                ],
+              ),
             ),
-          )),
-          Divider(height: context.spacing.l, color: context.colors.divider),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("Tổng cộng", style: context.textStyles.bodyBold),
-              Text(
-                "${invoice.total.toStringAsFixed(0)}đ",
-                style: context.textStyles.heading3.copyWith(
-                  color: context.colors.primary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: context.spacing.m),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {
-                    // Download PDF logic
-                  },
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: context.colors.primary),
-                    shape: RoundedRectangleBorder(borderRadius: context.radius.sRadius),
+            
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    DateFormat('dd/MM/yyyy HH:mm').format(invoice.createdAt),
+                    style: context.textStyles.bodySmall.copyWith(color: context.colors.textHint),
                   ),
-                  child: Text("Tải PDF", style: TextStyle(color: context.colors.primary)),
-                ),
-              ),
-              SizedBox(width: context.spacing.m),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Detail view
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: context.colors.primary,
-                    shape: RoundedRectangleBorder(borderRadius: context.radius.sRadius),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "DỊCH VỤ SỬ DỤNG",
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.grey, letterSpacing: 0.5),
                   ),
-                  child: const Text("Chi tiết", style: TextStyle(color: Colors.white)),
-                ),
+                  const SizedBox(height: 12),
+                  ...invoice.services.map((service) => Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(child: Text(service.name, style: context.textStyles.bodySmall)),
+                        Text(
+                          NumberFormat.currency(locale: 'vi_VN', symbol: 'đ').format(service.total), 
+                          style: context.textStyles.bodySmall.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                    ),
+                  )),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: context.colors.primary.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("Tổng thanh toán", style: context.textStyles.bodyBold),
+                        Text(
+                          NumberFormat.currency(locale: 'vi_VN', symbol: 'đ').format(invoice.total),
+                          style: context.textStyles.heading3.copyWith(color: context.colors.primary),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {},
+                          icon: const Icon(Icons.description_outlined, size: 18),
+                          label: const Text("Chi tiết"),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: context.colors.textSecondary,
+                            side: BorderSide(color: context.colors.divider),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {},
+                          icon: Icon(isPending ? Icons.payment_rounded : Icons.download_rounded, size: 18),
+                          label: Text(isPending ? "Thanh toán" : "Tải về"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isPending ? context.colors.primary : const Color(0xFF2E7D32), // Green for completed
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
+
 
   Widget _buildStatusBadge(BuildContext context, String status) {
     Color color = AppColors.success;
@@ -163,7 +197,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: context.radius.xsRadius,
       ),
       child: Text(

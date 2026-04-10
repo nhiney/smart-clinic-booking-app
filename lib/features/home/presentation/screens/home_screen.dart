@@ -218,7 +218,9 @@ class _HomeDashboardState extends State<_HomeDashboard> {
                   onNotificationTap: widget.onNotificationTap,
                   onProfileTap: () => context.push('/profile/patient'),
                   onVoiceTap: () => context.push('/ai/voice-assistant'),
-                  onSearchSubmit: (v) {},
+                  onSearchSubmit: (v) {
+                    context.push('/doctor/search', extra: {'query': v});
+                  },
                 ),
               ),
               SliverPadding(
@@ -228,14 +230,14 @@ class _HomeDashboardState extends State<_HomeDashboard> {
                     QuickActionsGrid(
                       userRole: currentRole,
                       onBookAppointment: () => context.push('/maps'),
-                      onViewAppointments: () => context.push('/transactions'),
+                      onViewAppointments: () => context.push('/appointments'),
                       onMedicalRecords: () => context.push('/medical-records'),
-                      onPrescriptions: () => context.push('/invoices'),
+                      onPrescriptions: () => context.push('/prescriptions'),
                       onContactSupport: () => context.push('/support'),
                       onVoiceAssistant: () => context.push('/ai/voice-assistant'),
                       onInpatientAdmission: () => context.push('/admission/registration/${user?.id ?? ""}'),
                       onNotificationSettings: () => context.push('/notifications/settings'),
-                      onPricing: () => context.push('/payment', extra: {'amount': 500000, 'description': 'Thanh toán tạm ứng viện phí'}),
+                      onPricing: () => context.push('/transactions'),
                       onSurveys: () => context.push('/surveys'),
                       onProfile: () => context.push('/profile/patient'),
                     ),
@@ -260,7 +262,7 @@ class _HomeDashboardState extends State<_HomeDashboard> {
                     const SizedBox(height: 24),
                     const FeaturedHospitalsSection(),
                     const SizedBox(height: 24),
-                    const RecommendedDoctorsSection(),
+                    RecommendedDoctorsSection(doctors: state is HomeLoaded ? state.recommendedDoctors : []),
                     const SizedBox(height: 24),
                     HealthNewsFeed(
                       articles: articles,

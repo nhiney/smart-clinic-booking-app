@@ -59,15 +59,15 @@ class QuickActionsGrid extends StatelessWidget {
         role: 'patient',
       ),
       QuickAction(
-        label: 'Lịch sử khám',
-        icon: Icons.history_rounded,
+        label: 'Lịch hẹn',
+        icon: Icons.event_available_rounded,
         color: AppColors.success,
         onTap: onViewAppointments,
         role: 'patient',
       ),
       QuickAction(
-        label: 'Thanh toán',
-        icon: Icons.account_balance_wallet_rounded,
+        label: 'Lịch sử GD',
+        icon: Icons.history_rounded,
         color: AppColors.primary,
         onTap: onPricing,
         role: 'patient',
@@ -94,8 +94,8 @@ class QuickActionsGrid extends StatelessWidget {
         role: 'patient',
       ),
       QuickAction(
-        label: 'Cài đặt TB',
-        icon: Icons.settings_suggest_rounded,
+        label: 'Thông báo',
+        icon: Icons.notifications_active_rounded,
         color: AppColors.primary,
         onTap: onNotificationSettings,
       ),
@@ -114,17 +114,10 @@ class QuickActionsGrid extends StatelessWidget {
         role: 'doctor',
       ),
       QuickAction(
-        label: 'Hồ sơ',
+        label: 'Hồ sơ y tế',
         icon: Icons.folder_shared_rounded,
         color: const Color(0xFF9C27B0), // Purple
         onTap: onMedicalRecords,
-      ),
-      QuickAction(
-        label: 'Tiêm chủng',
-        icon: Icons.vaccines_rounded,
-        color: AppColors.error,
-        onTap: () {},
-        role: 'patient',
       ),
       QuickAction(
         label: 'Hỗ trợ',
@@ -133,13 +126,13 @@ class QuickActionsGrid extends StatelessWidget {
         onTap: onContactSupport,
       ),
       QuickAction(
-        label: 'AI Assistant',
+        label: 'AI Chat',
         icon: Icons.smart_toy_rounded,
         color: AppColors.primary,
         onTap: onVoiceAssistant,
       ),
       QuickAction(
-        label: 'Quản lý cá nhân',
+        label: 'Tài khoản',
         icon: Icons.manage_accounts_rounded,
         color: AppColors.secondary,
         onTap: onProfile,

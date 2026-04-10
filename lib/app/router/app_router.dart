@@ -10,6 +10,9 @@ import 'package:smart_clinic_booking/features/auth/presentation/screens/sign_up_
 import 'package:smart_clinic_booking/features/home/presentation/screens/home_screen.dart';
 import 'package:smart_clinic_booking/features/admin/presentation/screens/admin_dashboard_screen.dart';
 import 'package:smart_clinic_booking/features/doctor/presentation/screens/doctor_home_screen.dart';
+import 'package:smart_clinic_booking/features/doctor/presentation/screens/doctor_search_screen.dart';
+import 'package:smart_clinic_booking/features/doctor/presentation/screens/doctor_detail_screen.dart';
+import 'package:smart_clinic_booking/features/doctor/domain/entities/doctor_entity.dart';
 import 'package:smart_clinic_booking/features/admission/presentation/screens/admission_registration_screen.dart';
 import 'package:smart_clinic_booking/features/admission/presentation/screens/admission_history_screen.dart';
 import 'package:smart_clinic_booking/features/notification/presentation/screens/notification_screen.dart';
@@ -34,6 +37,8 @@ import 'package:smart_clinic_booking/features/payment/presentation/screens/trans
 import 'package:smart_clinic_booking/features/medical_record/presentation/screens/medical_record_screen.dart';
 import 'package:smart_clinic_booking/features/profile/presentation/screens/patient_profile_screen.dart';
 import 'package:smart_clinic_booking/features/invoice/presentation/screens/invoice_screen.dart';
+import 'package:smart_clinic_booking/features/appointment/presentation/screens/appointment_history_screen.dart';
+import 'package:smart_clinic_booking/features/medical_record/presentation/screens/prescription_screen.dart';
 
 // No longer need placeholders as we implemented the real screens
 class KycUploadScreen extends StatelessWidget {
@@ -327,8 +332,36 @@ class AppRouter {
         builder: (context, state) => const InvoiceScreen(),
       ),
       GoRoute(
+        path: '/appointments',
+        builder: (context, state) => const AppointmentHistoryScreen(),
+      ),
+      GoRoute(
+        path: '/prescriptions',
+        builder: (context, state) => const PrescriptionScreen(),
+      ),
+      GoRoute(
         path: '/profile/patient',
         builder: (context, state) => const PatientProfileScreen(),
+      ),
+      GoRoute(
+        path: '/doctor/search',
+        builder: (context, state) {
+          final extras = state.extra as Map<String, dynamic>? ?? {};
+          return DoctorSearchScreen(
+            initialSearchText: extras['query'] as String?,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/doctor/detail/:doctorId',
+        builder: (context, state) {
+          final doctorId = state.pathParameters['doctorId']!;
+          final doctor = state.extra as DoctorEntity?;
+          return DoctorDetailScreen(
+            doctorId: doctorId,
+            doctor: doctor,
+          );
+        },
       ),
     ],
   );
