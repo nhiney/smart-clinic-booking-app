@@ -114,7 +114,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
         }
         if (state.isSuccess) {
           // If auto-verified
-          context.push('/create-password', extra: state.phoneNumber);
+          context.push('/create-password', extra: {
+            'phone': state.phoneNumber,
+            'name': state.fullName,
+          });
         }
       },
       child: BlocBuilder<SignUpBloc, SignUpState>(

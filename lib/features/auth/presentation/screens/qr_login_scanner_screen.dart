@@ -20,6 +20,7 @@ class _QrLoginScannerScreenState extends State<QrLoginScannerScreen> {
   bool _isHandlingScan = false;
   final MobileScannerController _scannerController = MobileScannerController();
   final ImagePicker _picker = ImagePicker();
+  final TextEditingController _manualController = TextEditingController();
 
   String _tr(String vi, String en, String ja, String ko, String zh) {
     final lang = Localizations.localeOf(context).languageCode;
@@ -134,6 +135,7 @@ class _QrLoginScannerScreenState extends State<QrLoginScannerScreen> {
 
   @override
   void dispose() {
+    _manualController.dispose();
     _scannerController.dispose();
     super.dispose();
   }
@@ -180,6 +182,49 @@ class _QrLoginScannerScreenState extends State<QrLoginScannerScreen> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.92),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _manualController,
+                          decoration: InputDecoration(
+                            hintText: _tr(
+                              'Dán token QR tại đây',
+                              'Paste QR token here',
+                              'ここにQRトークンを貼り付け',
+                              '여기에 QR 토큰 붙여넣기',
+                              '在此粘贴二维码令牌',
+                            ),
+                            border: InputBorder.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: () async {
+                          final token = _extractToken(_manualController.text);
+                          if (token.isEmpty) return;
+                          await _processToken(token);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: context.colors.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: Text(
+                          _tr('Nhập', 'Submit', '送信', '확인', '提交'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

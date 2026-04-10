@@ -29,6 +29,7 @@ class QuickActionsGrid extends StatelessWidget {
   final VoidCallback onNotificationSettings;
   final VoidCallback onPricing;
   final VoidCallback onSurveys;
+  final VoidCallback onProfile;
 
   const QuickActionsGrid({
     super.key,
@@ -43,7 +44,9 @@ class QuickActionsGrid extends StatelessWidget {
     required this.onNotificationSettings,
     required this.onPricing,
     required this.onSurveys,
+    required this.onProfile,
   });
+
 
   @override
   Widget build(BuildContext context) {
@@ -135,7 +138,15 @@ class QuickActionsGrid extends StatelessWidget {
         color: AppColors.primary,
         onTap: onVoiceAssistant,
       ),
+      QuickAction(
+        label: 'Quản lý cá nhân',
+        icon: Icons.manage_accounts_rounded,
+        color: AppColors.secondary,
+        onTap: onProfile,
+        role: 'patient',
+      ),
     ];
+
 
     final filteredActions = allActions.where((a) => a.role == 'all' || a.role == userRole).toList();
 

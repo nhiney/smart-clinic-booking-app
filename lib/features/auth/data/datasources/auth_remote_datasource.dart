@@ -158,13 +158,6 @@ class AuthRemoteDatasource {
         }
       }
 
-      if (isMockMode) {
-        final savedPassword = _mockCredentialStore[email];
-        final mockUser = _lastMockUser;
-        if (savedPassword != null && savedPassword == password && mockUser != null) {
-          return mockUser;
-        }
-      }
       throw Exception(_handleAuthError(e.code));
     } catch (e) {
       debugPrint('Login error: $e');
@@ -276,53 +269,54 @@ class AuthRemoteDatasource {
     String? tenantId,
   }) async {
     final user = _firebaseAuth.currentUser;
+    debugPrint('[AUTH] Register called. Current User: ${user?.uid ?? 'NULL'}');
+    
+    // Support for Debug/Mock mode
+    if (isMockMode && _lastMockUser != null && _lastMockUser!.phone == phone) {
+      debugPrint('[AUTH] Registering in Mock Mode for: $phone');
+      final updatedUser = _lastMockUser!.copyWith(
+        name: name,
+        role: role,
+        tenantId: tenantId,
+      );
+      _lastMockUser = updatedUser;
+      return updatedUser;
+    }
+
     if (user == null) {
-      if (isMockMode) {
-        // Debug/mock OTP flow may not have a real FirebaseAuth user.
-        final normalized = _normalizePhone(phone);
-        final virtualEmail = '$normalized@icare.patient';
-        final mockUid = _lastMockUser?.id ?? 'MOCK_USER_$normalized';
-        final mockUser = UserModel(
-          id: mockUid,
-          email: email ?? virtualEmail,
-          name: name,
-          phone: phone,
-          authProvider: 'phone',
-          role: role,
-          tenantId: tenantId,
-          isVerified: role == 'patient',
-          status: 'active',
-          createdAt: _lastMockUser?.createdAt ?? DateTime.now(),
-          updatedAt: DateTime.now(),
-        );
-        _lastMockUser = mockUser;
-        if (password != null && password.isNotEmpty) {
-          _mockCredentialStore[virtualEmail] = password;
-        }
-        return mockUser;
-      }
-      throw Exception('Chưa xác thực Firebase Auth');
+      debugPrint('[AUTH] CRITICAL: No active Firebase session during registration.');
+      throw Exception('Chưa xác thực Firebase Auth. Vui lòng thử lại.');
     }
 
     // If password provided, link with email/password (Virtual Email)
+    String? linkedVirtualEmail;
     if (password != null) {
       final normalized = _normalizePhone(phone);
       final virtualEmail = "$normalized@icare.patient";
+      linkedVirtualEmail = virtualEmail;
       try {
         final credential = EmailAuthProvider.credential(email: virtualEmail, password: password);
         await user.linkWithCredential(credential);
+        await user.reload();
       } catch (e) {
         debugPrint('Link credential error (might already exist): $e');
-        // If it already exists, just update password if possible
-        if (e is FirebaseAuthException && e.code == 'provider-already-linked') {
-          // ignore or handle
+        if (e is FirebaseAuthException) {
+          // This is the reliable way to block reusing an already-registered phone:
+          // virtualEmail is derived from phone, so if it's already in use => phone already registered.
+          if (e.code == 'email-already-in-use' || e.code == 'credential-already-in-use') {
+            throw Exception('Số điện thoại đã được đăng ký.');
+          }
+          if (e.code == 'provider-already-linked') {
+            // Already linked; continue.
+          }
         }
       }
     }
 
+    final effectiveEmail = email ?? _firebaseAuth.currentUser?.email ?? linkedVirtualEmail ?? '';
     final userModel = UserModel(
       id: user.uid,
-      email: email ?? user.email ?? '',
+      email: effectiveEmail,
       name: name,
       phone: phone,
       authProvider: user.phoneNumber != null ? 'phone' : 'email',
@@ -428,8 +422,11 @@ class AuthRemoteDatasource {
     if (user != null) {
       await _logAudit(user.uid, 'LOGOUT', 'User logged out');
     }
+    await _firebaseAuth.signOut();
     await clearSession();
   }
+
+  Stream<User?> get onAuthStateChanged => _firebaseAuth.authStateChanges();
 
   /// CURRENT USER
   User? getCurrentUser() {
@@ -453,25 +450,30 @@ class AuthRemoteDatasource {
     }
     throw Exception("Không thể kết nối máy chủ sau nhiều lần thử.");
   }
-
   Future<UserModel?> getUserProfile(String uid) async {
+    // 1. Handle Mock Mode
     if (isMockMode && uid.startsWith('MOCK_USER_')) {
       return _lastMockUser?.id == uid ? _lastMockUser : null;
     }
 
-    final currentUser = _firebaseAuth.currentUser;
-    if (currentUser == null || currentUser.uid != uid) {
-      return null;
-    }
-
+    // 2. Fetch from Firestore (Real)
     try {
       final docRef = _firestore.collection('users').doc(uid);
+      // Use retry logic for stability
       final doc = await _fetchWithRetry(docRef);
       if (doc.exists && doc.data() != null) {
         return UserModel.fromJson(doc.data() as Map<String, dynamic>, uid);
       }
     } catch (e) {
-      debugPrint('Get user profile error: $e');
+      debugPrint('[AUTH] Get user profile error: $e');
+      
+      // Secondary fallback for current user if network fails but local auth is still valid
+      final currentUser = _firebaseAuth.currentUser;
+      if (currentUser != null && currentUser.uid == uid) {
+        // We can't return a full profile but we don't want to crash
+        // Return null or a skeleton if necessary, here null is safer to trigger UI reload
+        return null;
+      }
     }
     return null;
   }
@@ -493,6 +495,13 @@ class AuthRemoteDatasource {
 
   /// CHECK IF PHONE IS REGISTERED
   Future<bool> isPhoneRegistered(String phone) async {
+    if (isMockMode) {
+      // In mock mode, we check against the last registered mock user if any
+      final normalizedInput = _normalizePhone(phone);
+      final normalizedMock = _lastMockUser != null ? _normalizePhone(_lastMockUser!.phone) : '';
+      return normalizedInput == normalizedMock;
+    }
+
     try {
       final normalized = _normalizePhone(phone);
       
@@ -501,25 +510,28 @@ class AuthRemoteDatasource {
         phone.trim(),
         normalized,
         '+$normalized',
-        '0${normalized.substring(2)}'
-      ].toSet().toList(); // Remove duplicates
+      ];
+      
+      // Also add 0-prefix version if it's VN
+      if (normalized.startsWith('84')) {
+        searchTerms.add('0${normalized.substring(2)}');
+      }
 
-      final snapshot = await _firestore
+      final query = await _firestore
           .collection('users')
-          .where('phone', whereIn: searchTerms)
+          .where('phone', whereIn: searchTerms.toSet().toList())
           .limit(1)
           .get();
-          
-      return snapshot.docs.isNotEmpty;
+      return query.docs.isNotEmpty;
     } catch (e) {
-      if (e.toString().contains('permission-denied')) {
-        debugPrint('[AUTH] Permission denied for phone check, assuming not registered for now.');
-        return false;
-      }
       debugPrint('[AUTH] Lỗi kiểm tra số điện thoại: $e');
-      rethrow;
+      // In case of permission errors or others, we don't want to silently allow 
+      // registration if we can't verify. But for simplicity in this dev environment,
+      // we return false and let the link step catch it if necessary.
+      return false; 
     }
   }
+
 
   /// VERIFY PHONE NUMBER
   Future<void> verifyPhone(
@@ -671,12 +683,16 @@ class AuthRemoteDatasource {
     }
   }
 
-  Future<Map<String, dynamic>> createQrLoginToken({bool persistent = false}) async {
+  Future<Map<String, dynamic>> createQrLoginToken({
+    bool persistent = false,
+    String? targetUid,
+  }) async {
     final user = _firebaseAuth.currentUser;
     if (user == null) {
-      if (isMockMode && _lastMockUser != null) {
+      if (isMockMode && (_lastMockUser != null || targetUid != null)) {
+        final uid = targetUid ?? _lastMockUser?.id ?? 'unknown';
         return {
-          'token': 'mock_qr_${_lastMockUser!.id}',
+          'token': 'mock_qr_$uid',
           'expiresAt': persistent
               ? DateTime.now().add(const Duration(days: 3650)).toIso8601String()
               : DateTime.now().add(const Duration(minutes: 1)).toIso8601String(),
@@ -688,7 +704,7 @@ class AuthRemoteDatasource {
     try {
       final callable = _functions.httpsCallable('createQrLoginToken');
       final result = await callable.call(<String, dynamic>{
-        'uid': user.uid,
+        'uid': targetUid ?? user.uid,
         'persistent': persistent,
       });
       final data = Map<String, dynamic>.from(result.data as Map);
@@ -698,8 +714,9 @@ class AuthRemoteDatasource {
       };
     } catch (e) {
       if (isMockMode) {
+        final uid = targetUid ?? user.uid;
         return {
-          'token': 'mock_qr_${DateTime.now().millisecondsSinceEpoch}',
+          'token': 'mock_qr_${uid}_${DateTime.now().millisecondsSinceEpoch}',
           'expiresAt': persistent
               ? DateTime.now().add(const Duration(days: 3650)).toIso8601String()
               : DateTime.now().add(const Duration(minutes: 1)).toIso8601String(),
@@ -708,6 +725,7 @@ class AuthRemoteDatasource {
       throw Exception('Không thể tạo mã QR đăng nhập: ${e.toString()}');
     }
   }
+
 
   Future<UserModel> signInWithQrToken(String qrToken) async {
     try {

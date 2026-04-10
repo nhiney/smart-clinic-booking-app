@@ -34,6 +34,8 @@ import 'features/auth/data/datasources/auth_remote_datasource.dart';
 import 'features/doctor/domain/repositories/doctor_repository.dart';
 import 'features/doctor/data/datasources/doctor_remote_datasource.dart';
 import 'features/doctor/presentation/controllers/doctor_controller.dart';
+import 'features/doctor/presentation/controllers/doctor_search_controller.dart';
+import 'features/doctor/domain/usecases/get_catalog_doctors_usecase.dart';
 import 'core/services/file_storage_service.dart';
 
 // Admin
@@ -51,7 +53,10 @@ import 'features/medication/presentation/controllers/medication_controller.dart'
 
 // Profile
 import 'features/profile/domain/repositories/profile_repository.dart';
+import 'features/profile/domain/usecases/get_patient_profile.dart';
+import 'features/profile/domain/usecases/update_patient_profile.dart';
 import 'features/profile/presentation/controllers/profile_controller.dart';
+import 'features/profile/presentation/controllers/patient_profile_controller.dart';
 
 // Maps
 import 'features/maps/domain/repositories/maps_repository.dart';
@@ -119,7 +124,6 @@ Future<void> main() async {
 
   // Initialize Dependency Injection
   await configureDependencies();
-  AppRouter.hasLocalSession = await getIt<AuthRepository>().hasSavedSession();
 
   // Initialize Localization
   await LanguageService.init();
@@ -146,6 +150,11 @@ Future<void> main() async {
             storageService: getIt<FileStorageService>(),
           ),
         ),
+        ChangeNotifierProvider(
+          create: (_) => DoctorSearchController(
+            getCatalogDoctors: getIt<GetCatalogDoctorsUseCase>(),
+          ),
+        ),
 
         ChangeNotifierProvider(
           create: (_) => AdminController(
@@ -162,6 +171,12 @@ Future<void> main() async {
         ),
         ChangeNotifierProvider(
           create: (_) => ProfileController(repository: getIt<ProfileRepository>()),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => PatientProfileController(
+            getPatientProfileUseCase: getIt<GetPatientProfile>(),
+            updatePatientProfileUseCase: getIt<UpdatePatientProfile>(),
+          ),
         ),
         ChangeNotifierProvider(
           create: (_) => NotificationController(repository: getIt<NotificationRepository>()),

@@ -16,6 +16,10 @@
 	<string>Ứng dụng cần quyền camera để quét mã QR đăng nhập.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Ứng dụng dùng Face ID để đăng nhập nhanh và an toàn.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Ứng dụng cần quyền Truy cập ảnh để lưu mã QR của bạn.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Ứng dụng cần quyền Truy cập ảnh để lưu mã QR của bạn.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

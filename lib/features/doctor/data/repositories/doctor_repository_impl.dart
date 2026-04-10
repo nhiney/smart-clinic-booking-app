@@ -2,8 +2,6 @@ import '../../domain/entities/doctor_entity.dart';
 import '../../domain/repositories/doctor_repository.dart';
 import '../datasources/doctor_remote_datasource.dart';
 import '../models/doctor_model.dart';
-import 'package:injectable/injectable.dart';
-
 // Removed to use FirestoreDoctorRepository instead
 class DoctorRepositoryImpl implements DoctorRepository {
   final DoctorRemoteDatasource remoteDatasource;
@@ -42,6 +40,7 @@ class DoctorRepositoryImpl implements DoctorRepository {
       hospital: doctor.hospital,
       imageUrl: doctor.imageUrl,
       rating: doctor.rating,
+      totalReviews: doctor.totalReviews,
       experience: doctor.experience,
       about: doctor.about,
       resumePdfUrl: doctor.resumePdfUrl,
@@ -51,6 +50,10 @@ class DoctorRepositoryImpl implements DoctorRepository {
       phone: doctor.phone,
       availableDays: doctor.availableDays,
       availableTimeSlots: doctor.availableTimeSlots,
+      clinicName: doctor.clinicName,
+      location: doctor.location,
+      schedule: doctor.schedule,
+      distanceKm: doctor.distanceKm,
     );
     await remoteDatasource.updateDoctorProfile(model);
   }

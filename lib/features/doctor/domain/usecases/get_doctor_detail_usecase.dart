@@ -7,6 +7,6 @@ class GetDoctorDetailUseCase {
   GetDoctorDetailUseCase(this.repository);
 
   Future<DoctorEntity?> call(String id) async {
-    return await repository.getDoctorById(id);
+    return repository.getDoctorProfile(id);
   }
 }

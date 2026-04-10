@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/extensions/context_extension.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../controllers/admin_controller.dart';
 import '../../domain/entities/facility_entities.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../auth/data/models/user_model.dart';
+
 
 class AddDoctorScreen extends StatefulWidget {
   const AddDoctorScreen({super.key});
@@ -168,8 +172,10 @@ class _AddDoctorScreenState extends State<AddDoctorScreen> {
   void _submit() async {
     if (!_formKey.currentState!.validate()) return;
     
-    final controller = context.read<AdminController>();
-    await controller.createDoctor(
+    final adminController = context.read<AdminController>();
+    final authController = context.read<AuthController>();
+
+    final newUser = await adminController.createDoctor(
       fullName: _nameController.text,
       hospitalId: _selectedHospital!.id,
       hospitalName: _selectedHospital!.name,
@@ -180,11 +186,27 @@ class _AddDoctorScreenState extends State<AddDoctorScreen> {
       address: _addressController.text,
     );
 
-    if (mounted && controller.errorMessage == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tạo tài khoản bác sĩ thành công!')),
+    if (mounted && newUser != null) {
+      // Generate QR Token for the NEW doctor (not current Admin)
+      final qrData = await authController.createQrLoginToken(
+        targetUid: newUser.id,
+        persistent: true,
       );
-      Navigator.pop(context);
+
+      if (mounted && qrData != null) {
+        // Show success and move to QR screen
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tạo tài khoản bác sĩ thành công!')),
+        );
+        
+        // Navigate to QR screen so Admin can save it for the doctor
+        context.go('/account-qr', extra: qrData);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tạo tài khoản thành công nhưng không thể tạo mã QR.')),
+        );
+        Navigator.pop(context);
+      }
     }
   }
 }

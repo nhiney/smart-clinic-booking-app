@@ -9,6 +9,17 @@ class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDatasource remoteDatasource;
 
   AuthRepositoryImpl(this.remoteDatasource);
+  
+  @override
+  Stream<UserEntity?> get onAuthStateChanged => remoteDatasource.onAuthStateChanged.map((user) {
+    if (user == null) return null;
+    return UserEntity(
+      id: user.uid,
+      name: user.displayName ?? '',
+      email: user.email ?? '',
+      phone: user.phoneNumber ?? '',
+    );
+  });
 
   @override
   Future<UserEntity> loginWithEmail(String email, String password, {String? requiredRole}) async {
@@ -117,9 +128,10 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Map<String, dynamic>> createQrLoginToken({bool persistent = false}) async {
-    return await remoteDatasource.createQrLoginToken(persistent: persistent);
+  Future<Map<String, dynamic>> createQrLoginToken({bool persistent = false, String? targetUid}) async {
+    return await remoteDatasource.createQrLoginToken(persistent: persistent, targetUid: targetUid);
   }
+
 
   @override
   Future<bool> isBiometricAvailable() async {

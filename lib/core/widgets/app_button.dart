@@ -9,6 +9,8 @@ class AppButton extends StatelessWidget {
   final bool isLoading;
   final Color? backgroundColor;
   final Color? foregroundColor;
+  final Color? textColor;
+  final BorderSide? borderSide;
   final double? width;
   final double height;
   final bool isSecondary;
@@ -20,6 +22,8 @@ class AppButton extends StatelessWidget {
     this.isLoading = false,
     this.backgroundColor,
     this.foregroundColor,
+    this.textColor,
+    this.borderSide,
     this.width,
     this.height = 56,
     this.isSecondary = false,
@@ -33,7 +37,7 @@ class AppButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bgColor = backgroundColor ?? (isSecondary ? context.colors.secondary : context.colors.primary);
-    final fgColor = foregroundColor ?? Colors.white;
+    final fgColor = textColor ?? foregroundColor ?? Colors.white;
 
     return SizedBox(
       width: width ?? double.infinity,
@@ -43,10 +47,11 @@ class AppButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: bgColor,
           foregroundColor: fgColor,
+          elevation: 0,
+          side: borderSide,
           shape: RoundedRectangleBorder(
             borderRadius: AppRadius.mRadius,
           ),
-          elevation: 0,
         ),
         child: isLoading
             ? const SizedBox(

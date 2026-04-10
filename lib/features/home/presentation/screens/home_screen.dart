@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/colors/app_colors.dart';
-import '../../../../core/widgets/language_selector.dart';
 import '../../../../core/extensions/context_extension.dart';
 import '../../../notification/presentation/screens/notification_screen.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
@@ -60,7 +59,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ),
           const NotificationScreen(),
           Center(child: Text(AppLocalizations.of(context)!.map_title, style: context.textStyles.heading3)),
-          Center(child: Text(AppLocalizations.of(context)!.settings_language, style: context.textStyles.heading3)),
         ],
       ),
       bottomNavigationBar: _buildBottomNav(),
@@ -87,7 +85,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             const SizedBox(width: 50), // Gap for FAB
             Expanded(child: _navItem(2, Icons.grid_view_rounded, l10n.map_title)),
             Expanded(
-              child: _navItem(3, Icons.person_rounded, l10n.settings_language),
+              child: _navItem(3, Icons.person_rounded, 'Của tôi'),
             ),
           ],
         ),
@@ -100,7 +98,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     return InkWell(
       onTap: () {
         if (index == 3) {
-          LanguageSelector.show(context);
+          context.push('/profile/patient');
         } else {
           setState(() => _currentIndex = index);
         }
@@ -218,7 +216,7 @@ class _HomeDashboardState extends State<_HomeDashboard> {
                   role: currentRole,
                   unreadNotifications: 0,
                   onNotificationTap: widget.onNotificationTap,
-                  onProfileTap: () => _showLogoutDialog(context),
+                  onProfileTap: () => context.push('/profile/patient'),
                   onVoiceTap: () => context.push('/ai/voice-assistant'),
                   onSearchSubmit: (v) {},
                 ),
@@ -239,7 +237,9 @@ class _HomeDashboardState extends State<_HomeDashboard> {
                       onNotificationSettings: () => context.push('/notifications/settings'),
                       onPricing: () => context.push('/payment', extra: {'amount': 500000, 'description': 'Thanh toán tạm ứng viện phí'}),
                       onSurveys: () => context.push('/surveys'),
+                      onProfile: () => context.push('/profile/patient'),
                     ),
+
                     const SizedBox(height: 24),
                     UpcomingAppointmentCard(
                       appointments: appointments,

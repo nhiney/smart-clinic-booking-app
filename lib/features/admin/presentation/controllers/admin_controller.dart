@@ -6,6 +6,8 @@ import '../../../doctor/domain/repositories/doctor_repository.dart';
 import '../../../../core/services/seed_data_service.dart';
 
 import '../../../auth/data/datasources/auth_remote_datasource.dart';
+import '../../../auth/data/models/user_model.dart';
+
 
 class AdminController extends ChangeNotifier {
   final FacilityRepository facilityRepository;
@@ -129,7 +131,7 @@ class AdminController extends ChangeNotifier {
     }
   }
 
-  Future<void> createDoctor({
+  Future<UserModel?> createDoctor({
     required String fullName,
     required String hospitalId,
     required String hospitalName,
@@ -144,7 +146,7 @@ class AdminController extends ChangeNotifier {
       isLoading = true;
       notifyListeners();
       
-      await authRemoteDatasource.createDoctorAccount(
+      final doctor = await authRemoteDatasource.createDoctorAccount(
         fullName: fullName,
         hospitalId: hospitalId,
         hospitalName: hospitalName,
@@ -155,15 +157,16 @@ class AdminController extends ChangeNotifier {
         bio: bio,
         address: address,
       );
-      
-      // Refresh data if needed (e.g. unassigned doctors list or specific hospital staff)
+      return doctor;
     } catch (e) {
       errorMessage = e.toString();
+      return null;
     } finally {
       isLoading = false;
       notifyListeners();
     }
   }
+
 
   Future<void> seedData() async {
     try {

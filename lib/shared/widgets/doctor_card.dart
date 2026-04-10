@@ -8,6 +8,10 @@ class DoctorCard extends StatelessWidget {
   final String imageUrl;
   final double rating;
   final String hospital;
+  /// Optional review count (e.g. from Firestore `totalReviews`).
+  final int? totalReviews;
+  /// e.g. "2.1 km" when user location is known.
+  final String? distanceLabel;
   final VoidCallback? onTap;
 
   const DoctorCard({
@@ -17,6 +21,8 @@ class DoctorCard extends StatelessWidget {
     this.imageUrl = '',
     this.rating = 0.0,
     this.hospital = '',
+    this.totalReviews,
+    this.distanceLabel,
     this.onTap,
   });
 
@@ -106,6 +112,23 @@ class DoctorCard extends StatelessWidget {
                         ),
                       ],
                     ),
+                  if (distanceLabel != null && distanceLabel!.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.near_me_outlined,
+                          size: 14,
+                          color: AppColors.textHint,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          distanceLabel!,
+                          style: AppTextStyles.caption,
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -124,6 +147,13 @@ class DoctorCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (totalReviews != null && totalReviews! > 0) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    '($totalReviews)',
+                    style: AppTextStyles.caption.copyWith(fontSize: 10),
+                  ),
+                ],
                 const SizedBox(height: 8),
                 const Icon(
                   Icons.arrow_forward_ios,

@@ -6,12 +6,13 @@ import 'dart:io';
 import 'package:go_router/go_router.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:smart_clinic_booking/core/extensions/context_extension.dart';
 import 'package:smart_clinic_booking/core/widgets/app_button.dart';
 import 'package:smart_clinic_booking/core/widgets/branded_app_bar.dart';
 
-class AccountQrScreen extends StatelessWidget {
+class AccountQrScreen extends StatefulWidget {
   final String token;
   final String expiresAt;
 
@@ -20,6 +21,14 @@ class AccountQrScreen extends StatelessWidget {
     required this.token,
     required this.expiresAt,
   });
+
+  @override
+  State<AccountQrScreen> createState() => _AccountQrScreenState();
+}
+
+class _AccountQrScreenState extends State<AccountQrScreen> {
+  final GlobalKey _qrBoundaryKey = GlobalKey();
+
 
   String _tr(BuildContext context, String vi, String en, String ja, String ko, String zh) {
     final lang = Localizations.localeOf(context).languageCode;
@@ -37,28 +46,49 @@ class AccountQrScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _saveQrToGallery(BuildContext context, GlobalKey boundaryKey) async {
+  Future<void> _saveQrToGallery(BuildContext context) async {
     try {
-      PermissionStatus permissionStatus;
+      PermissionStatus status;
+      
       if (Platform.isIOS) {
-        permissionStatus = await Permission.photosAddOnly.request();
+        status = await Permission.photosAddOnly.request();
       } else {
-        permissionStatus = await Permission.storage.request();
+        // Android logic
+        final deviceInfo = DeviceInfoPlugin();
+        final androidInfo = await deviceInfo.androidInfo;
+        final sdkInt = androidInfo.version.sdkInt;
+
+        if (sdkInt >= 33) {
+          status = await Permission.photos.request();
+        } else {
+          status = await Permission.storage.request();
+        }
       }
 
-      if (!permissionStatus.isGranted) {
+      if (status.isPermanentlyDenied) {
+        if (context.mounted) {
+          _showSettingsDialog(context);
+        }
+        return;
+      }
+
+      if (!status.isGranted) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
                 _tr(
                   context,
-                  'Bạn đã từ chối quyền lưu ảnh.',
-                  'You denied permission to save images.',
-                  '画像保存の権限が拒否されました。',
-                  '이미지 저장 권한이 거부되었습니다.',
-                  '您已拒绝保存图片权限。',
+                  'Bạn cần cấp quyền truy cập ảnh để lưu mã QR.',
+                  'You need to grant photo access to save the QR code.',
+                  'QRコードを保存するには写真へのアクセス権限が必要です。',
+                  'QR 코드를 저장하려면 사진 접근 권한이 필요합니다.',
+                  '您需要授予照片访问权限才能保存二维码。',
                 ),
+              ),
+              action: SnackBarAction(
+                label: _tr(context, 'Cài đặt', 'Settings', '設定', '설정', '设置'),
+                onPressed: () => openAppSettings(),
               ),
             ),
           );
@@ -66,7 +96,7 @@ class AccountQrScreen extends StatelessWidget {
         return;
       }
 
-      final boundary = boundaryKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      final boundary = _qrBoundaryKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (boundary == null) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -89,25 +119,48 @@ class AccountQrScreen extends StatelessWidget {
 
       final image = await boundary.toImage(pixelRatio: 3.0);
       final byteData = await image.toByteData(format: ImageByteFormat.png);
-      final bytes = byteData?.buffer.asUint8List();
-      if (bytes == null) throw Exception('QR image bytes is null');
+      
+      if (byteData == null) {
+        throw Exception('Could not convert QR boundary to byte data');
+      }
+
+      // CRITICAL FIX: Use offset and length to get the exact bytes for the image
+      final bytes = byteData.buffer.asUint8List(
+        byteData.offsetInBytes,
+        byteData.lengthInBytes,
+      );
+
+      debugPrint('[AUTH] Attempting to save QR image. Bytes length: ${bytes.length}');
 
       final result = await ImageGallerySaver.saveImage(
         Uint8List.fromList(bytes),
         quality: 100,
         name: 'icare_qr_${DateTime.now().millisecondsSinceEpoch}',
       );
-      final resultMap = Map<String, dynamic>.from(result as Map);
-      final isSuccess = (resultMap['isSuccess'] == true) || (resultMap['filePath'] != null);
+
+      debugPrint('[AUTH] Gallery saver result: $result');
+
+      bool isSuccess = false;
+      if (result != null) {
+        if (result is Map) {
+          isSuccess = (result['isSuccess'] == true) || (result['filePath'] != null);
+        } else if (result is String && result.isNotEmpty) {
+          // Some versions/platforms return the path directly upon success
+          isSuccess = true;
+        }
+      }
+
       if (!context.mounted) return;
+      
       if (!isSuccess) {
+        debugPrint('[AUTH] Gallery saving failed. Detailed result: $result');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               _tr(
                 context,
-                'Lưu mã QR thất bại.',
-                'Failed to save QR code.',
+                'Lưu mã QR thất bại. Vui lòng thử lại sau.',
+                'Failed to save QR code. Please try again later.',
                 'QRコードの保存に失敗しました。',
                 'QR 코드 저장에 실패했습니다.',
                 '保存二维码失败。',
@@ -152,10 +205,39 @@ class AccountQrScreen extends StatelessWidget {
     }
   }
 
+  void _showSettingsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(_tr(context, 'Cần quyền truy cập', 'Permission Required', '権限が必要です', '권한이 필요합니다', '需要权限')),
+        content: Text(_tr(
+          context,
+          'Bạn đã từ chối quyền truy cập ảnh. Vui lòng mở Cài đặt để cấp quyền thủ công.',
+          'You have denied photo access. Please open Settings to grant permission manually.',
+          '写真へのアクセス権限が拒否されています。手動で許可するには設定を開いてください。',
+          '사진 접근 권한이 거부되었습니다. 수동으로 허용하려면 설정을 열어주세요.',
+          '您已拒绝照片访问权限。请打开设置以手动授予权限。',
+        )),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(_tr(context, 'Hủy', 'Cancel', 'キャンセル', '취소', '取消')),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              openAppSettings();
+            },
+            child: Text(_tr(context, 'Mở Cài đặt', 'Open Settings', '設定を開く', '설정 열기', '打开设置')),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final payload = 'icare://qr-login?token=$token';
-    final qrBoundaryKey = GlobalKey();
+    final payload = 'icare://qr-login?token=${widget.token}';
     
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -240,7 +322,7 @@ class AccountQrScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       RepaintBoundary(
-                        key: qrBoundaryKey,
+                        key: _qrBoundaryKey,
                         child: Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
@@ -278,24 +360,26 @@ class AccountQrScreen extends StatelessWidget {
                 const SizedBox(height: 32),
                 
                 AppButton(
-                  text: _tr(context, 'Lưu', 'Save', '保存', '저장', '保存'),
-                  onPressed: () => _saveQrToGallery(context, qrBoundaryKey),
-                  backgroundColor: const Color(0xFF0D47A1), // Navy Blue
-                  prefixIcon: const Icon(Icons.download_rounded, color: Colors.white),
+                  text: _tr(context, 'Lưu mã QR về điện thoại', 'Save QR to gallery', 'QRを保存', 'QR 저장', '保存二维码'),
+                  onPressed: () => _saveQrToGallery(context),
+                  backgroundColor: Colors.white,
+                  textColor: const Color(0xFF0D47A1),
+                  borderSide: const BorderSide(color: Color(0xFF0D47A1)),
+                  prefixIcon: const Icon(Icons.download_rounded, color: Color(0xFF0D47A1)),
                 ),
                 const SizedBox(height: 16),
                 AppButton(
                   text: _tr(
                     context,
-                    'Tiếp tục',
-                    'Continue',
-                    '続行',
-                    '계속',
-                    '继续',
+                    'Tiếp tục đăng nhập',
+                    'Continue to login',
+                    'ログインへ進む',
+                    '로그인으로 계속',
+                    '继续登录',
                   ),
                   onPressed: () => context.go('/login'),
                   backgroundColor: context.colors.primary,
-                  prefixIcon: const Icon(Icons.login_rounded, color: Colors.white),
+                  prefixIcon: const Icon(Icons.arrow_forward_rounded, color: Colors.white),
                 ),
                 const SizedBox(height: 32),
                 

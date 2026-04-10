@@ -1,10 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/doctor_model.dart';
+import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
+
+import '../../domain/entities/doctor_catalog_query.dart';
+import '../../domain/entities/doctor_entity.dart';
+import '../models/doctor_model.dart';
 
 @lazySingleton
 class DoctorRemoteDatasource {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  static const int _catalogFetchCap = 200;
 
   Future<List<DoctorModel>> getDoctors() async {
     final snapshot = await _firestore.collection('doctors').get();
@@ -19,6 +25,27 @@ class DoctorRemoteDatasource {
     return DoctorModel.fromJson(doc.data()!, doc.id);
   }
 
+  /// Resolves document id or `doctorId` field.
+  Future<DoctorModel?> getDoctorCatalogById(String doctorId) async {
+    try {
+      final direct = await _firestore.collection('doctors').doc(doctorId).get();
+      if (direct.exists) {
+        return DoctorModel.fromJson(direct.data()!, direct.id);
+      }
+      final q = await _firestore
+          .collection('doctors')
+          .where('doctorId', isEqualTo: doctorId)
+          .limit(1)
+          .get();
+      if (q.docs.isEmpty) return null;
+      final d = q.docs.first;
+      return DoctorModel.fromJson(d.data(), d.id);
+    } on FirebaseException catch (e) {
+      debugPrint('[DoctorCatalog] getDoctorCatalogById: ${e.code} ${e.message}');
+      rethrow;
+    }
+  }
+
   Future<List<DoctorModel>> searchDoctors(String query) async {
     final snapshot = await _firestore.collection('doctors').get();
     final lowerQuery = query.toLowerCase();
@@ -29,6 +56,167 @@ class DoctorRemoteDatasource {
             doctor.specialty.toLowerCase().contains(lowerQuery) ||
             doctor.hospital.toLowerCase().contains(lowerQuery))
         .toList();
+  }
+
+  /// Filtered catalog search with Firestore query + in-memory refinement.
+  Future<List<DoctorModel>> searchDoctorsCatalog(DoctorCatalogQuery q) async {
+    try {
+      Query<Map<String, dynamic>> query = _firestore.collection('doctors');
+      final spec = q.specialty?.trim();
+      if (spec != null && spec.isNotEmpty) {
+        query = query.where('specialty', isEqualTo: spec);
+      }
+      query = query.orderBy('rating', descending: true);
+      final snap = await query.limit(_catalogFetchCap).get();
+      var list =
+          snap.docs.map((d) => DoctorModel.fromJson(d.data(), d.id)).toList();
+
+      if (list.length >= _catalogFetchCap) {
+        // Avoid silent truncation confusion: if capped, note in debug.
+        debugPrint(
+            '[DoctorCatalog] Hit fetch cap ($_catalogFetchCap); refine filters locally.');
+      }
+
+      list = _applyLocalFilters(list, q);
+      list = _applySort(list, q);
+      return list;
+    } on FirebaseException catch (e) {
+      if (e.code == 'failed-precondition') {
+        debugPrint(
+            '[DoctorCatalog] Composite index may be missing; falling back to unordered fetch.');
+        final snap =
+            await _firestore.collection('doctors').limit(_catalogFetchCap).get();
+        var list = snap.docs
+            .map((d) => DoctorModel.fromJson(d.data(), d.id))
+            .toList();
+        list = _applyLocalFilters(list, q);
+        list = _applySort(list, q);
+        return list;
+      }
+      rethrow;
+    }
+  }
+
+  List<DoctorModel> _applyLocalFilters(
+    List<DoctorModel> list,
+    DoctorCatalogQuery q,
+  ) {
+    var out = list;
+
+    final text = q.searchText?.trim().toLowerCase();
+    if (text != null && text.isNotEmpty) {
+      out = out.where((d) {
+        return d.name.toLowerCase().contains(text) ||
+            d.specialty.toLowerCase().contains(text) ||
+            d.displayClinic.toLowerCase().contains(text) ||
+            d.location.toLowerCase().contains(text);
+      }).toList();
+    }
+
+    final minR = q.minRating;
+    if (minR != null) {
+      out = out.where((d) => d.rating >= minR).toList();
+    }
+
+    final loc = q.locationSubstring?.trim().toLowerCase();
+    if (loc != null && loc.isNotEmpty) {
+      out = out
+          .where(
+            (d) =>
+                d.location.toLowerCase().contains(loc) ||
+                d.displayClinic.toLowerCase().contains(loc),
+          )
+          .toList();
+    }
+
+    return out;
+  }
+
+  List<DoctorModel> _applySort(List<DoctorModel> list, DoctorCatalogQuery q) {
+    final sorted = List<DoctorModel>.from(list);
+
+    switch (q.sort) {
+      case DoctorCatalogSort.ratingDesc:
+        sorted.sort((a, b) {
+          final c = b.rating.compareTo(a.rating);
+          if (c != 0) return c;
+          return b.totalReviews.compareTo(a.totalReviews);
+        });
+        break;
+      case DoctorCatalogSort.popular:
+        sorted.sort((a, b) {
+          final c = b.totalReviews.compareTo(a.totalReviews);
+          if (c != 0) return c;
+          return b.rating.compareTo(a.rating);
+        });
+        break;
+      case DoctorCatalogSort.nearest:
+        final uLat = q.userLatitude;
+        final uLng = q.userLongitude;
+        if (uLat == null || uLng == null) {
+          sorted.sort((a, b) => b.rating.compareTo(a.rating));
+          break;
+        }
+        sorted.sort((a, b) {
+          final da = DoctorCatalogQuery.haversineKm(
+                uLat,
+                uLng,
+                a.latitude,
+                a.longitude,
+              ) ??
+              double.maxFinite;
+          final db = DoctorCatalogQuery.haversineKm(
+                uLat,
+                uLng,
+                b.latitude,
+                b.longitude,
+              ) ??
+              double.maxFinite;
+          return da.compareTo(db);
+        });
+        break;
+    }
+    return sorted;
+  }
+
+  /// Applies distanceKm on models when user coords exist (for UI).
+  List<DoctorEntity> withDistances(
+    List<DoctorModel> models,
+    double? userLat,
+    double? userLng,
+  ) {
+    if (userLat == null || userLng == null) return models;
+
+    return models.map((m) {
+      final km = DoctorCatalogQuery.haversineKm(
+        userLat,
+        userLng,
+        m.latitude,
+        m.longitude,
+      );
+      return DoctorModel(
+        id: m.id,
+        name: m.name,
+        specialty: m.specialty,
+        hospital: m.hospital,
+        imageUrl: m.imageUrl,
+        rating: m.rating,
+        totalReviews: m.totalReviews,
+        experience: m.experience,
+        about: m.about,
+        resumePdfUrl: m.resumePdfUrl,
+        departmentId: m.departmentId,
+        latitude: m.latitude,
+        longitude: m.longitude,
+        phone: m.phone,
+        availableDays: m.availableDays,
+        availableTimeSlots: m.availableTimeSlots,
+        clinicName: m.clinicName,
+        location: m.location,
+        schedule: m.schedule,
+        distanceKm: km,
+      );
+    }).toList();
   }
 
   Future<List<DoctorModel>> getDoctorsBySpecialty(String specialty) async {
@@ -67,89 +255,5 @@ class DoctorRemoteDatasource {
         .collection('doctors')
         .doc(doctor.id)
         .update(doctor.toJson());
-  }
-
-  /// Seed sample doctors for development
-  Future<void> seedDoctors() async {
-    final collection = _firestore.collection('doctors');
-    final snapshot = await collection.limit(1).get();
-    if (snapshot.docs.isNotEmpty) return; // Already seeded
-
-    final sampleDoctors = [
-      {
-        'name': 'BS. Nguyễn Văn An',
-        'specialty': 'Tim mạch',
-        'hospital': 'Bệnh viện Chợ Rẫy',
-        'imageUrl': '',
-        'rating': 4.8,
-        'experience': 15,
-        'about': 'Chuyên gia tim mạch hàng đầu với 15 năm kinh nghiệm. Tốt nghiệp Đại học Y Dược TP.HCM.',
-        'latitude': 10.7552,
-        'longitude': 106.6602,
-        'phone': '0901234567',
-        'availableDays': ['Thứ 2', 'Thứ 4', 'Thứ 6'],
-        'availableTimeSlots': ['08:00', '09:00', '10:00', '14:00', '15:00'],
-      },
-      {
-        'name': 'BS. Trần Thị Bình',
-        'specialty': 'Da liễu',
-        'hospital': 'Bệnh viện Da Liễu',
-        'imageUrl': '',
-        'rating': 4.6,
-        'experience': 10,
-        'about': 'Bác sĩ chuyên khoa Da liễu, giàu kinh nghiệm điều trị các bệnh về da.',
-        'latitude': 10.7769,
-        'longitude': 106.6951,
-        'phone': '0901234568',
-        'availableDays': ['Thứ 3', 'Thứ 5', 'Thứ 7'],
-        'availableTimeSlots': ['08:30', '09:30', '10:30', '14:30', '15:30'],
-      },
-      {
-        'name': 'BS. Lê Hoàng Cường',
-        'specialty': 'Thần kinh',
-        'hospital': 'Bệnh viện 115',
-        'imageUrl': '',
-        'rating': 4.9,
-        'experience': 20,
-        'about': 'Phó giáo sư, Tiến sĩ Thần kinh học. Chuyên gia đầu ngành về thần kinh.',
-        'latitude': 10.7879,
-        'longitude': 106.6659,
-        'phone': '0901234569',
-        'availableDays': ['Thứ 2', 'Thứ 3', 'Thứ 5'],
-        'availableTimeSlots': ['07:30', '08:30', '09:30', '13:30', '14:30'],
-      },
-      {
-        'name': 'BS. Phạm Minh Đức',
-        'specialty': 'Nhi khoa',
-        'hospital': 'Bệnh viện Nhi Đồng 1',
-        'imageUrl': '',
-        'rating': 4.7,
-        'experience': 12,
-        'about': 'Bác sĩ Nhi khoa tận tâm, chuyên điều trị các bệnh ở trẻ em.',
-        'latitude': 10.7690,
-        'longitude': 106.6802,
-        'phone': '0901234570',
-        'availableDays': ['Thứ 2', 'Thứ 4', 'Thứ 6', 'Thứ 7'],
-        'availableTimeSlots': ['08:00', '09:00', '10:00', '11:00', '14:00', '15:00'],
-      },
-      {
-        'name': 'BS. Vũ Thị Em',
-        'specialty': 'Mắt',
-        'hospital': 'Bệnh viện Mắt TP.HCM',
-        'imageUrl': '',
-        'rating': 4.5,
-        'experience': 8,
-        'about': 'Bác sĩ nhãn khoa, chuyên phẫu thuật và điều trị các bệnh về mắt.',
-        'latitude': 10.7861,
-        'longitude': 106.6835,
-        'phone': '0901234571',
-        'availableDays': ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5'],
-        'availableTimeSlots': ['08:00', '09:00', '10:00', '14:00'],
-      },
-    ];
-
-    for (final doctor in sampleDoctors) {
-      await collection.add(doctor);
-    }
   }
 }

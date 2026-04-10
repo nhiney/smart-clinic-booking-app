@@ -1,6 +1,8 @@
 import '../../domain/entities/user_entity.dart';
 
 abstract class AuthRepository {
+  Stream<UserEntity?> get onAuthStateChanged;
+
   // Doctor / Staff / Patient Login (Email/Phone + Password)
   Future<UserEntity> loginWithEmail(String email, String password, {String? requiredRole});
 
@@ -12,7 +14,7 @@ abstract class AuthRepository {
   });
   Future<UserEntity> signInWithPhone(String verificationId, String smsCode, {String? displayName});
   Future<UserEntity> signInWithQrToken(String qrToken);
-  Future<Map<String, dynamic>> createQrLoginToken({bool persistent = false});
+  Future<Map<String, dynamic>> createQrLoginToken({bool persistent = false, String? targetUid});
 
   // Common
   Future<void> logout();

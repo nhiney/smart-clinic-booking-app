@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smart_clinic_booking/l10n/app_localizations.dart';
+import 'package:smart_clinic_booking/features/booking/presentation/screens/booking_screen.dart';
+import 'package:smart_clinic_booking/features/doctor/presentation/screens/doctor_search_screen.dart';
 
 class PatientHomeScreen extends StatelessWidget {
   const PatientHomeScreen({super.key});
@@ -17,7 +19,7 @@ class PatientHomeScreen extends StatelessWidget {
                 slivers: [
                   SliverToBoxAdapter(child: _buildHeader(context, l10n)),
                   SliverToBoxAdapter(child: _buildBannerCarousel(l10n)),
-                  SliverToBoxAdapter(child: _buildQuickActions(l10n)),
+                  SliverToBoxAdapter(child: _buildQuickActions(context, l10n)),
                   SliverToBoxAdapter(child: _buildSectionTitle(l10n.patient_section_facilities, l10n.patient_section_facilities_sub, l10n)),
                   SliverToBoxAdapter(child: _buildHospitalCards()),
                   SliverToBoxAdapter(child: _buildSectionTitle(l10n.patient_section_doctors, l10n.patient_section_doctors_sub, l10n)),
@@ -134,8 +136,10 @@ class PatientHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickActions(AppLocalizations l10n) {
+  Widget _buildQuickActions(BuildContext context, AppLocalizations l10n) {
     final items = [
+      ('Tìm kiếm & Khám bệnh', Icons.manage_search_rounded),
+      ('Đặt lịch khám', Icons.event_available_rounded),
       (l10n.patient_action_book_facility, Icons.calendar_month_rounded),
       (l10n.patient_action_book_specialty, Icons.medical_services_rounded),
       (l10n.patient_action_book_test, Icons.vaccines_rounded),
@@ -164,21 +168,39 @@ class PatientHomeScreen extends StatelessWidget {
           mainAxisSpacing: 10,
           crossAxisSpacing: 8,
         ),
-        itemBuilder: (_, i) => Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: const Color(0xFFE6F7FF),
-              child: Icon(items[i].$2, size: 18, color: const Color(0xFF1BAFE9)),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              items[i].$1,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 11, height: 1.2),
-            ),
-          ],
+        itemBuilder: (_, i) => InkWell(
+          onTap: () {
+            if (i == 0) {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const DoctorSearchScreen(),
+                ),
+              );
+            } else if (i == 1) {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const BookingScreen(),
+                ),
+              );
+            }
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: const Color(0xFFE6F7FF),
+                child: Icon(items[i].$2, size: 18, color: const Color(0xFF1BAFE9)),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                items[i].$1,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 11, height: 1.2),
+              ),
+            ],
+          ),
         ),
       ),
     );

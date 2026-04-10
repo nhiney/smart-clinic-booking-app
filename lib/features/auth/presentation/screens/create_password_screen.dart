@@ -148,10 +148,11 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
           if (!mounted) return;
           if (qrData != null && (qrData['token'] as String?)?.isNotEmpty == true) {
             // Sign out so the user is forced to see QR then login manually as requested
-            authController.logout();
+            await authController.logout();
             if (!mounted) return;
             context.go('/account-qr', extra: qrData);
           } else {
+
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(

@@ -6,7 +6,7 @@ import '../../domain/usecases/register_usecase.dart';
 import '../../domain/usecases/verify_phone_usecase.dart';
 import '../../domain/usecases/signin_with_phone_usecase.dart';
 
-import 'package:smart_clinic_booking/app/router/app_router.dart';
+import 'dart:async';
 
 class AuthController extends ChangeNotifier {
   final LoginWithEmailUseCase loginWithEmailUseCase;
@@ -15,13 +15,47 @@ class AuthController extends ChangeNotifier {
   final SignInWithPhoneUseCase signInWithPhoneUseCase;
   final AuthRepository authRepository;
 
+  StreamSubscription<UserEntity?>? _authSubscription;
+
   AuthController({
     required this.loginWithEmailUseCase,
     required this.registerUseCase,
     required this.verifyPhoneUseCase,
     required this.signInWithPhoneUseCase,
     required this.authRepository,
-  });
+  }) {
+    _initAuthListener();
+  }
+
+  void _initAuthListener() {
+    _authSubscription?.cancel();
+    _authSubscription = authRepository.onAuthStateChanged.listen((user) async {
+      debugPrint('[AUTH] Trạng thái Auth thay đổi: ${user?.id ?? "Thoát"}');
+      if (user != null) {
+        await _loadUserProfile(user.id);
+      } else {
+        currentUser = null;
+        notifyListeners();
+      }
+    });
+  }
+
+  Future<void> _loadUserProfile(String uid) async {
+    try {
+      final profile = await authRepository.getUserProfile(uid);
+      if (profile != null) {
+        currentUser = profile;
+        debugPrint('[AUTH] Đã tải profile cho: ${profile.name}');
+      } else {
+        debugPrint('[AUTH] Không tìm thấy profile Firestore cho UID: $uid');
+        // If we have auth but no profile, we might still be in registration flow
+        // so we don't force log out here, but we set a minimal user
+      }
+      notifyListeners();
+    } catch (e) {
+      debugPrint('[AUTH] Lỗi tải profile: $e');
+    }
+  }
 
   bool isLoading = false;
   String? errorMessage;
@@ -45,7 +79,6 @@ class AuthController extends ChangeNotifier {
       );
       if (currentUser != null) {
         await authRepository.saveSession(currentUser!);
-        AppRouter.hasLocalSession = true;
       }
 
       return true;
@@ -101,12 +134,19 @@ class AuthController extends ChangeNotifier {
     await authRepository.clearBiometricCredential();
   }
 
-  Future<Map<String, dynamic>?> createQrLoginToken({bool persistent = false}) async {
+  Future<Map<String, dynamic>?> createQrLoginToken({
+    bool persistent = false,
+    String? targetUid,
+  }) async {
     try {
       errorMessage = null;
       notifyListeners();
-      return await authRepository.createQrLoginToken(persistent: persistent);
+      return await authRepository.createQrLoginToken(
+        persistent: persistent,
+        targetUid: targetUid,
+      );
     } catch (e) {
+
       errorMessage = e.toString().replaceAll('Exception: ', '');
       notifyListeners();
       return null;
@@ -121,7 +161,6 @@ class AuthController extends ChangeNotifier {
       currentUser = await authRepository.signInWithQrToken(qrToken);
       if (currentUser != null) {
         await authRepository.saveSession(currentUser!);
-        AppRouter.hasLocalSession = true;
       }
       return true;
     } catch (e) {
@@ -156,7 +195,6 @@ class AuthController extends ChangeNotifier {
       );
       if (currentUser != null) {
         await authRepository.saveSession(currentUser!);
-        AppRouter.hasLocalSession = true;
       }
 
       return true;
@@ -171,10 +209,10 @@ class AuthController extends ChangeNotifier {
 
   Future<void> logout() async {
     await authRepository.logout();
-    AppRouter.hasLocalSession = false; // Reset session status in router
     currentUser = null;
     notifyListeners();
   }
+
 
   void updateUser(UserEntity user) {
     currentUser = user;
@@ -253,7 +291,6 @@ class AuthController extends ChangeNotifier {
       );
       if (currentUser != null) {
         await authRepository.saveSession(currentUser!);
-        AppRouter.hasLocalSession = true;
       }
       return true;
     } catch (e) {

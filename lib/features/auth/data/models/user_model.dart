@@ -102,4 +102,48 @@ class UserModel extends UserEntity {
       updatedAt: entity.updatedAt,
     );
   }
+
+  UserModel copyWith({
+    String? id,
+    String? email,
+    String? name,
+    String? phone,
+    String? authProvider,
+    String? role,
+    String? tenantId,
+    String? departmentId,
+    String? specialty,
+    int? experienceYears,
+    String? bio,
+    String? address,
+    bool? isVerified,
+    String? status,
+    String? avatarUrl,
+    String? idCardUrl,
+    String? medicalCertUrl,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return UserModel(
+      id: id ?? this.id,
+      email: email ?? this.email,
+      name: name ?? this.name,
+      phone: phone ?? this.phone,
+      authProvider: authProvider ?? this.authProvider,
+      role: role ?? this.role,
+      tenantId: tenantId ?? this.tenantId,
+      departmentId: departmentId ?? this.departmentId,
+      specialty: specialty ?? this.specialty,
+      experienceYears: experienceYears ?? this.experienceYears,
+      bio: bio ?? this.bio,
+      address: address ?? this.address,
+      isVerified: isVerified ?? this.isVerified,
+      status: status ?? this.status,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      idCardUrl: idCardUrl ?? this.idCardUrl,
+      medicalCertUrl: medicalCertUrl ?? this.medicalCertUrl,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
 }

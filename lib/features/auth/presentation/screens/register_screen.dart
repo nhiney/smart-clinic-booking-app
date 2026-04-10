@@ -13,8 +13,6 @@ import '../../../../core/widgets/language_selector.dart';
 import '../controllers/auth_controller.dart';
 import '../utils/auth_error_localizer.dart';
 import 'terms_screen.dart';
-import 'otp_screen.dart';
-import 'create_password_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -60,47 +58,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final authController = context.read<AuthController>();
 
-    authController.checkPhoneRegistered(fullPhone).then((isRegistered) {
-      if (isRegistered) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                localizeAuthError(
-                  context,
-                  authController.errorMessage,
-                  fallback: 'Số điện thoại đã tồn tại',
-                ),
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        return;
-      }
-
-      authController.verifyPhone(
-        fullPhone,
-        onCodeSent: () {
-          if (!mounted) return;
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => OtpScreen(phone: fullPhone)),
-          );
-        },
-        onAutoVerified: () {
-          if (!mounted) return;
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => CreatePasswordScreen(phoneNumber: fullPhone)),
-          );
-        },
-        onError: (error) {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(localizeAuthError(context, error))),
-          );
-        },
-      );
-    });
+    // NOTE: We must not query other users' /users documents here due to Firestore rules.
+    // Duplicate phone is enforced later when linking virtual email during password setup.
+    authController.verifyPhone(
+      fullPhone,
+      onCodeSent: () {
+        if (!mounted) return;
+        context.push('/verify-otp', extra: {
+          'phone': fullPhone,
+          'name': fullNameController.text.trim(),
+        });
+      },
+      onAutoVerified: () {
+        if (!mounted) return;
+        context.push('/create-password', extra: {
+          'phone': fullPhone,
+          'name': fullNameController.text.trim(),
+        });
+      },
+      onError: (error) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(localizeAuthError(context, error))),
+        );
+      },
+    );
   }
 
   void _openTerms() {

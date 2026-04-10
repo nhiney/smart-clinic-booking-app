@@ -4,7 +4,7 @@ import '../../../../core/theme/colors/app_colors.dart';
 import '../../../../core/theme/typography/app_text_styles.dart';
 import '../controllers/auth_controller.dart';
 import '../../../../core/widgets/branded_app_bar.dart';
-import 'account_qr_screen.dart';
+import 'create_password_screen.dart';
 
 import 'dart:async';
 
@@ -73,7 +73,7 @@ class _OtpScreenState extends State<OtpScreen> {
         }
       },
       onAutoVerified: () {
-        _handleOtpSuccess();
+        _goToCreatePassword();
       },
       onError: (error) {
         if (mounted) {
@@ -85,42 +85,20 @@ class _OtpScreenState extends State<OtpScreen> {
     );
   }
 
-  Future<void> _handleOtpSuccess() async {
-    final authController = context.read<AuthController>();
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Xác minh thành công!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    }
-
-    try {
-      final qr = await authController.createQrLoginToken(persistent: true);
-      final token = (qr['token'] ?? '').toString();
-      final expiresAt = (qr['expiresAt'] ?? '').toString();
-
-      // Force user to login again later (via QR scan / normal login)
-      await authController.logout();
-      if (!mounted) return;
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => AccountQrScreen(token: token, expiresAt: expiresAt),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-          backgroundColor: AppColors.error,
-        ),
-      );
-    }
+  void _goToCreatePassword() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Xác minh thành công!'),
+        backgroundColor: Colors.green,
+      ),
+    );
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CreatePasswordScreen(phoneNumber: widget.phone),
+      ),
+    );
   }
 
   void _verifyOtp() async {
@@ -131,7 +109,7 @@ class _OtpScreenState extends State<OtpScreen> {
     );
     
     if (success) {
-      await _handleOtpSuccess();
+      _goToCreatePassword();
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

@@ -27,6 +27,8 @@ import '../../features/medication/domain/usecases/get_medications_usecase.dart';
 import '../../features/profile/data/datasources/profile_remote_datasource.dart';
 import '../../features/profile/data/repositories/profile_repository_impl.dart';
 import '../../features/profile/domain/repositories/profile_repository.dart';
+import '../../features/profile/domain/usecases/get_patient_profile.dart';
+import '../../features/profile/domain/usecases/update_patient_profile.dart';
 
 import '../../features/maps/data/repositories/maps_repository_impl.dart';
 import '../../features/maps/domain/repositories/maps_repository.dart';
@@ -42,7 +44,22 @@ import '../../core/services/notification_service.dart';
 import '../../features/admin/domain/repositories/facility_repository.dart';
 import '../../features/admin/data/repositories/firestore_facility_repository.dart';
 import '../../features/doctor/domain/repositories/doctor_repository.dart';
+import '../../features/doctor/domain/repositories/doctor_catalog_repository.dart';
 import '../../features/doctor/data/repositories/firestore_doctor_repository.dart';
+import '../../features/doctor/data/repositories/doctor_catalog_repository_impl.dart';
+import '../../features/doctor/data/datasources/doctor_remote_datasource.dart';
+import '../../features/doctor/domain/usecases/get_catalog_doctors_usecase.dart';
+import '../../features/doctor/domain/usecases/get_catalog_doctor_detail_usecase.dart';
+import '../../features/booking/data/datasources/booking_remote_datasource.dart';
+import '../../features/booking/data/repositories/booking_repository_impl.dart';
+import '../../features/booking/domain/repositories/booking_repository.dart';
+import '../../features/booking/domain/usecases/check_slot_availability_usecase.dart';
+import '../../features/booking/domain/usecases/lock_slot_usecase.dart';
+import '../../features/booking/domain/usecases/release_slot_lock_usecase.dart';
+import '../../features/booking/domain/usecases/confirm_booking_usecase.dart';
+import '../../features/booking/domain/usecases/join_waitlist_usecase.dart';
+import '../../features/booking/domain/usecases/reschedule_booking_usecase.dart';
+import '../../features/booking/domain/usecases/expire_stale_unpaid_bookings_usecase.dart';
 import '../../core/services/file_storage_service.dart';
 import '../../core/services/seed_data_service.dart';
 
@@ -82,6 +99,8 @@ Future<void> configureDependencies() async {
   // Profile
   getIt.registerLazySingleton(() => ProfileRemoteDatasource());
   getIt.registerLazySingleton<ProfileRepository>(() => ProfileRepositoryImpl(getIt<ProfileRemoteDatasource>()));
+  getIt.registerLazySingleton(() => GetPatientProfile(getIt<ProfileRepository>()));
+  getIt.registerLazySingleton(() => UpdatePatientProfile(getIt<ProfileRepository>()));
 
   // Maps
   getIt.registerLazySingleton<MapsRepository>(() => MapsRepositoryImpl());
@@ -107,5 +126,67 @@ Future<void> configureDependencies() async {
   }
   if (!getIt.isRegistered<SeedDataService>()) {
     getIt.registerLazySingleton(() => SeedDataService());
+  }
+
+  // Patient doctor discovery (`doctors` collection)
+  if (!getIt.isRegistered<DoctorCatalogRepository>()) {
+    getIt.registerLazySingleton<DoctorCatalogRepository>(
+      () => DoctorCatalogRepositoryImpl(getIt<DoctorRemoteDatasource>()),
+    );
+  }
+  if (!getIt.isRegistered<GetCatalogDoctorsUseCase>()) {
+    getIt.registerLazySingleton(
+      () => GetCatalogDoctorsUseCase(getIt<DoctorCatalogRepository>()),
+    );
+  }
+  if (!getIt.isRegistered<GetCatalogDoctorDetailUseCase>()) {
+    getIt.registerLazySingleton(
+      () => GetCatalogDoctorDetailUseCase(getIt<DoctorCatalogRepository>()),
+    );
+  }
+
+  // Medical booking (`bookings`, `slots`, `waitlist`)
+  if (!getIt.isRegistered<BookingRemoteDatasource>()) {
+    getIt.registerLazySingleton(() => BookingRemoteDatasource());
+  }
+  if (!getIt.isRegistered<BookingRepository>()) {
+    getIt.registerLazySingleton<BookingRepository>(
+      () => BookingRepositoryImpl(getIt<BookingRemoteDatasource>()),
+    );
+  }
+  if (!getIt.isRegistered<CheckSlotAvailabilityUseCase>()) {
+    getIt.registerLazySingleton(
+      () => CheckSlotAvailabilityUseCase(getIt<BookingRepository>()),
+    );
+  }
+  if (!getIt.isRegistered<LockSlotUseCase>()) {
+    getIt.registerLazySingleton(
+      () => LockSlotUseCase(getIt<BookingRepository>()),
+    );
+  }
+  if (!getIt.isRegistered<ReleaseSlotLockUseCase>()) {
+    getIt.registerLazySingleton(
+      () => ReleaseSlotLockUseCase(getIt<BookingRepository>()),
+    );
+  }
+  if (!getIt.isRegistered<ConfirmBookingUseCase>()) {
+    getIt.registerLazySingleton(
+      () => ConfirmBookingUseCase(getIt<BookingRepository>()),
+    );
+  }
+  if (!getIt.isRegistered<JoinWaitlistUseCase>()) {
+    getIt.registerLazySingleton(
+      () => JoinWaitlistUseCase(getIt<BookingRepository>()),
+    );
+  }
+  if (!getIt.isRegistered<RescheduleBookingUseCase>()) {
+    getIt.registerLazySingleton(
+      () => RescheduleBookingUseCase(getIt<BookingRepository>()),
+    );
+  }
+  if (!getIt.isRegistered<ExpireStaleUnpaidBookingsUseCase>()) {
+    getIt.registerLazySingleton(
+      () => ExpireStaleUnpaidBookingsUseCase(getIt<BookingRepository>()),
+    );
   }
 }

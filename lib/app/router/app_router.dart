@@ -32,6 +32,7 @@ import 'package:smart_clinic_booking/features/support/domain/entities/support_en
 import 'package:smart_clinic_booking/features/payment/presentation/screens/payment_screen.dart';
 import 'package:smart_clinic_booking/features/payment/presentation/screens/transaction_screen.dart';
 import 'package:smart_clinic_booking/features/medical_record/presentation/screens/medical_record_screen.dart';
+import 'package:smart_clinic_booking/features/profile/presentation/screens/patient_profile_screen.dart';
 import 'package:smart_clinic_booking/features/invoice/presentation/screens/invoice_screen.dart';
 
 // No longer need placeholders as we implemented the real screens
@@ -58,7 +59,6 @@ class GoRouterRefreshStream extends ChangeNotifier {
 
 /// Centralized Router using GoRouter to enforce RBAC, ABAC, and Onboarding validation.
 class AppRouter {
-  static bool hasLocalSession = false;
   
   static Stream<User?> get authStateChanges => FirebaseAuth.instance.idTokenChanges();
 
@@ -81,19 +81,21 @@ class AppRouter {
 
       // 1. Unauthenticated Block
       if (user == null) {
-        if (hasLocalSession && path != '/home') return '/home';
-        if (hasLocalSession && path == '/home') return null;
-        if (isPublicRoute || (kDebugMode && path == '/home')) return null;
+        debugPrint('[ROUTER] No user found. Path: $path');
+        if (isPublicRoute) return null;
         return '/login';
       }
 
+      debugPrint('[ROUTER] User: ${user.uid}, Path: $path');
+
       // REQUIREMENT: Role-based navigation
-      // For a simple system without Cloud Functions, we check claims first, then roles from Firestore if needed
       final idTokenResult = await user.getIdTokenResult(); 
       final claims = idTokenResult.claims ?? {};
       String role = claims['role'] as String? ?? 'unverified';
       
-      // Special case for seed admin/doctor if claims are missing (Demo/Seed mode)
+      debugPrint('[ROUTER] Current Role: $role');
+
+      // Special case for seed accounts or just-signed-in users
       if (role == 'unverified') {
         if (user.email == 'admin@icare.com') {
           role = 'super_admin';
@@ -102,7 +104,7 @@ class AppRouter {
         }
       }
 
-      // 2. Pending KYC Approval Flow (for patients/new docs)
+      // 2. Pending KYC Approval Flow
       final status = claims['status'] as String? ?? 'active';
       if (status == 'pending') {
         if (path != '/pending-approval' && path != '/kyc_upload') {
@@ -112,17 +114,25 @@ class AppRouter {
       }
 
       // 3. User is Active but trying to view Onboarding / Login / Pending screens
-      final bool isRegistrationFlow = path == '/verify-otp' || 
+      final bool isRegistrationFlow = path == '/register' ||
+                                     path == '/sign-up' ||
+                                     path == '/verify-otp' || 
                                      path == '/create-password' || 
                                      path == '/account-qr';
 
-      if ((isPublicRoute || path == '/pending-approval') && !isRegistrationFlow) {
+      if ((isPublicRoute || path == '/pending-approval') && !isRegistrationFlow && path != '/') {
+         debugPrint('[ROUTER] Redirecting authenticated user away from public route to home/dashboard');
          if (role == 'doctor') return '/doctor/dashboard';
          if (role == 'admin' || role == 'super_admin' || role == 'hospital_manager') return '/admin/dashboard';
          return '/home'; 
       }
 
-      // 4. Strict Role-Based ACL checks
+      // 4. Registration Flow Guard
+      // If we are in registration flow but user is ALREADY fully registered (has role), 
+      // maybe we should move them to home? 
+      // BUT for now we allow them to finish the flow (e.g. creating password)
+      
+      // 5. Strict Role-Based ACL checks
       if (path.startsWith('/admin') && role != 'super_admin' && role != 'admin' && role != 'hospital_manager') {
         return '/forbidden';
       }
@@ -130,7 +140,6 @@ class AppRouter {
         return '/forbidden';
       }
       
-      // Authorized for generic or matching route
       return null;
     },
     routes: [
@@ -317,6 +326,11 @@ class AppRouter {
         path: '/invoices',
         builder: (context, state) => const InvoiceScreen(),
       ),
+      GoRoute(
+        path: '/profile/patient',
+        builder: (context, state) => const PatientProfileScreen(),
+      ),
     ],
   );
 }
+
