@@ -4,7 +4,7 @@ import 'dart:ui';
 import 'dart:typed_data';
 import 'dart:io';
 import 'package:go_router/go_router.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -132,28 +132,28 @@ class _AccountQrScreenState extends State<AccountQrScreen> {
 
       debugPrint('[AUTH] Attempting to save QR image. Bytes length: ${bytes.length}');
 
-      final result = await ImageGallerySaver.saveImage(
-        Uint8List.fromList(bytes),
-        quality: 100,
-        name: 'icare_qr_${DateTime.now().millisecondsSinceEpoch}',
-      );
+      Future<void> saveImage(Uint8List bytes) async {
+        final directory = await getApplicationDocumentsDirectory();
+        final file = File('${directory.path}/qr_code.png');
+        await file.writeAsBytes(bytes);
+      }
 
-      debugPrint('[AUTH] Gallery saver result: $result');
+      debugPrint('[AUTH] Image saved successfully');
 
       bool isSuccess = false;
-      if (result != null) {
-        if (result is Map) {
-          isSuccess = (result['isSuccess'] == true) || (result['filePath'] != null);
-        } else if (result is String && result.isNotEmpty) {
-          // Some versions/platforms return the path directly upon success
-          isSuccess = true;
-        }
+
+      try {
+        await saveImage(bytes); // hàm bạn tự viết
+        isSuccess = true;
+      } catch (e) {
+        debugPrint('[AUTH] Save image error: $e');
+        isSuccess = false;
       }
 
       if (!context.mounted) return;
       
       if (!isSuccess) {
-        debugPrint('[AUTH] Gallery saving failed. Detailed result: $result');
+        debugPrint('[AUTH] Gallery saving failed');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(

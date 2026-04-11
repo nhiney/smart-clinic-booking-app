@@ -33,6 +33,12 @@ class _FakeAppointmentRepository implements AppointmentRepository {
 
   @override
   Future<void> updateAppointmentStatus(String id, String status) async {}
+
+  @override
+  Future<List<AppointmentEntity>> getAppointmentsByDoctor(String doctorId) {
+    // TODO: implement getAppointmentsByDoctor
+    throw UnimplementedError();
+  }
 }
 
 void main() {
