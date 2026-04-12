@@ -1,4 +1,5 @@
-platform :ios, '17.0'
+platform :ios, '16.0'
+use_modular_headers!
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -27,7 +28,7 @@ require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelpe
 flutter_ios_podfile_setup
 
 target 'Runner' do
-  use_frameworks!
+  use_frameworks! :linkage => :static
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   target 'RunnerTests' do
@@ -39,34 +40,40 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
     target.build_configurations.each do |config|
-      # Silence all third-party warnings
+      
+      # 1. Sync Deployment Target to 16.0
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
+
+      # 2. Architecture settings (Optimized for Apple Silicon & Real Devices)
+      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'i386 arm64'
+      config.build_settings['EXCLUDED_ARCHS[sdk=iphoneos*]'] = 'armv7'
+
+      # 3. Only Build Active Architecture
+      config.build_settings['ONLY_ACTIVE_ARCH'] = 'YES'
+
+      # 4. Use project default Swift version
+      # config.build_settings['SWIFT_VERSION'] = '5.10'
+
+      # 5. Silence all third-party warnings
       config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
       config.build_settings['SWIFT_TREAT_WARNINGS_AS_ERRORS'] = 'NO'
       config.build_settings['SWIFT_QUIET_DEPRECATIONS_AND_WARNINGS'] = 'YES'
 
-      # Fix duplicate libraries '-lc++' more robustly
+      # 6. Fix duplicate libraries '-lc++'
       if config.build_settings['OTHER_LDFLAGS']
         config.build_settings['OTHER_LDFLAGS'].delete('-lc++')
       end
 
-      # iOS 17+ simulators on Apple Silicon require arm64.
-      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'i386'
-
-      # Force Swift 5.10 for pods to avoid Swift 6 strict concurrency errors
-      config.build_settings['SWIFT_VERSION'] = '5.10'
-
-      # Lower deployment target to avoid iOS 26 deprecation warnings
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '17.0'
-
-      # Fix gRPC/Firebase warnings
+      # 7. Compatibility fixes for Google ML Kit / Firebase
       config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
 
-      # Enable permissions for permission_handler
+      # 8. Enable permissions for permission_handler
       config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
         '$(inherited)',
         'PERMISSION_PHOTOS=1',
         'PERMISSION_CAMERA=1',
         'PERMISSION_MICROPHONE=1',
+        'PERMISSION_LOCATION=1',
       ]
     end
   end

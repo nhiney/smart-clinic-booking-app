@@ -354,7 +354,23 @@ class AppLocalizationsKo extends AppLocalizations {
   String get patient_tab_test => '검사';
 
   @override
-  String get patient_tab_vaccine => '예방접종';
+  String get patient_tab_vaccine => '백신/예방접종';
+
+  @override
+  String get patient_hospital_intro_title => '병원 소개';
+
+  @override
+  String get patient_hospital_intro_desc =>
+      'ICARE 의료 시스템은 최고 전문가와 최첨단 의료 장비를 갖추고 있습니다.';
+
+  @override
+  String get patient_facilities_title => '편의 시설';
+
+  @override
+  String get patient_doctors_title => '의료진 소개';
+
+  @override
+  String get patient_see_more => '더 보기';
 
   @override
   String get patient_banner_online_consult => '온라인\n진료 상담';
@@ -385,6 +401,24 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get patient_action_corporate_checkup => '기업\n검진';
+
+  @override
+  String get patient_bottom_visit_slip => '진료';
+
+  @override
+  String get patient_quick_search_care => '검색·진료';
+
+  @override
+  String get patient_action_book_appointment => '예약\n진료';
+
+  @override
+  String get patient_language => '언어';
+
+  @override
+  String get patient_bottom_medical => '건강 기록';
+
+  @override
+  String get patient_bottom_account => '계정';
 
   @override
   String get doctor_morning => '오전';

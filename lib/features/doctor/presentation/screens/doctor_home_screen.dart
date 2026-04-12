@@ -4,10 +4,14 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../controllers/doctor_controller.dart';
 import '../../../appointment/domain/entities/appointment_entity.dart';
+import '../../../appointment/presentation/screens/appointment_history_screen.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
-import '../../../../core/theme/colors/app_color_scheme.dart';
+import '../../../medical_record/presentation/screens/medical_record_screen.dart';
 import '../../../../core/extensions/context_extension.dart';
 import 'package:smart_clinic_booking/l10n/app_localizations.dart';
+import 'doctor_auxiliary_screens.dart';
+import 'doctor_examine_screen.dart';
+import 'doctor_profile_screen.dart';
 
 class DoctorHomeScreen extends StatefulWidget {
   const DoctorHomeScreen({super.key});
@@ -15,6 +19,8 @@ class DoctorHomeScreen extends StatefulWidget {
   @override
   State<DoctorHomeScreen> createState() => _DoctorHomeScreenState();
 }
+
+enum _DoctorQuickAction { schedule, appointmentsToday, examine, medicalRecord, videoCall, chat }
 
 class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
   int _currentIndex = 0;
@@ -43,38 +49,78 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
     return Scaffold(
       backgroundColor: context.colors.background,
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () async {
-            final user = context.read<AuthController>().currentUser;
-            if (user != null) {
-              await controller.fetchDoctorProfile(user.id);
-            }
-          },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.only(bottom: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(context, doctor, l10n),
-                const SizedBox(height: 24),
-                _buildSummary(context, controller, l10n),
-                const SizedBox(height: 24),
-                _buildQuickActions(context, l10n),
-                const SizedBox(height: 24),
-                _buildWorkloadManagement(context, controller, l10n),
-                const SizedBox(height: 24),
-                _buildTodaySchedule(context, controller, l10n),
-                const SizedBox(height: 24),
-                _buildMedicalRecordForm(context, l10n),
-                const SizedBox(height: 24),
-                _buildAdvancedFeatures(context, l10n),
-              ],
+        child: IndexedStack(
+          index: _currentIndex,
+          sizing: StackFit.expand,
+          children: [
+            RefreshIndicator(
+              onRefresh: () async {
+                final user = context.read<AuthController>().currentUser;
+                if (user != null) {
+                  await controller.fetchDoctorProfile(user.id);
+                }
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.only(bottom: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader(context, doctor, l10n),
+                    const SizedBox(height: 24),
+                    _buildSummary(context, controller, l10n),
+                    const SizedBox(height: 24),
+                    _buildQuickActions(context, l10n),
+                    const SizedBox(height: 24),
+                    _buildWorkloadManagement(context, controller, l10n),
+                    const SizedBox(height: 24),
+                    _buildTodaySchedule(context, controller, l10n),
+                    const SizedBox(height: 24),
+                    _buildMedicalRecordForm(context, l10n),
+                    const SizedBox(height: 24),
+                    _buildAdvancedFeatures(context, l10n),
+                  ],
+                ),
+              ),
             ),
-          ),
+            const AppointmentHistoryScreen(),
+            const MedicalRecordScreen(),
+            const DoctorProfileScreen(),
+          ],
         ),
       ),
       bottomNavigationBar: _buildBottomNav(context),
+    );
+  }
+
+  void _onQuickAction(BuildContext context, _DoctorQuickAction action) {
+    switch (action) {
+      case _DoctorQuickAction.schedule:
+      case _DoctorQuickAction.appointmentsToday:
+        setState(() => _currentIndex = 1);
+        break;
+      case _DoctorQuickAction.examine:
+        Navigator.of(context).push<void>(
+          MaterialPageRoute<void>(builder: (_) => const DoctorExamineScreen()),
+        );
+        break;
+      case _DoctorQuickAction.medicalRecord:
+        setState(() => _currentIndex = 2);
+        break;
+      case _DoctorQuickAction.videoCall:
+        Navigator.of(context).push<void>(
+          MaterialPageRoute<void>(builder: (_) => const DoctorVideoConsultScreen()),
+        );
+        break;
+      case _DoctorQuickAction.chat:
+        context.push('/support/chatbot');
+        break;
+    }
+  }
+
+  void _openExamineForAppointment(BuildContext context, AppointmentEntity apt) {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(builder: (_) => DoctorExamineScreen(appointment: apt)),
     );
   }
 
@@ -117,7 +163,7 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
             ),
           ),
           InkWell(
-            onTap: () => _showLogoutDialog(context),
+            onTap: () => setState(() => _currentIndex = 3),
             borderRadius: BorderRadius.circular(30),
             child: Stack(
               children: [
@@ -154,33 +200,6 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
     );
   }
 
-  void _showLogoutDialog(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.logout_confirm_title),
-        content: Text(l10n.logout_confirm_message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(l10n.cancel_button_text),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context); // Close dialog
-              context.read<AuthController>().logout();
-            },
-            child: Text(
-              l10n.logout_button,
-              style: TextStyle(color: context.colors.error),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   // 2. DASHBOARD SUMMARY
   Widget _buildSummary(BuildContext context, DoctorController controller, AppLocalizations l10n) {
     final stats = controller.stats;
@@ -193,14 +212,17 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 100,
+          height: 108,
           child: ListView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             children: [
-              _buildStatCard(context, l10n.doctor_patients_today, stats['today_total'].toString(), Icons.people_outline, Colors.blue),
-              _buildStatCard(context, l10n.doctor_appointments_today, stats['confirmed'].toString(), Icons.calendar_today_outlined, Colors.orange),
-              _buildStatCard(context, l10n.doctor_waiting, stats['waiting'].toString(), Icons.hourglass_empty_rounded, Colors.green),
+              _buildStatCard(context, l10n.doctor_patients_today, stats['today_total'].toString(), Icons.people_outline, Colors.blue,
+                  onTap: () => setState(() => _currentIndex = 1)),
+              _buildStatCard(context, l10n.doctor_appointments_today, stats['confirmed'].toString(), Icons.calendar_today_outlined, Colors.orange,
+                  onTap: () => setState(() => _currentIndex = 1)),
+              _buildStatCard(context, l10n.doctor_waiting, stats['waiting'].toString(), Icons.hourglass_empty_rounded, Colors.green,
+                  onTap: () => setState(() => _currentIndex = 1)),
             ],
           ),
         ),
@@ -208,43 +230,63 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
     );
   }
 
-  Widget _buildStatCard(BuildContext context, String title, String value, IconData icon, Color color) {
-    return Container(
-      width: 140,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+  Widget _buildStatCard(BuildContext context, String title, String value, IconData icon, Color color, {VoidCallback? onTap}) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
+        child: Container(
+          width: 156,
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: color.withOpacity(0.2)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: color, size: 20),
-              const SizedBox(width: 8),
-              Text(title, style: context.textStyles.bodySmall.copyWith(color: color, fontWeight: FontWeight.bold)),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(icon, color: color, size: 18),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.textStyles.bodySmall.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                        height: 1.2,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(value, style: context.textStyles.heading1.copyWith(color: color, fontSize: 22)),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(value, style: context.textStyles.heading1.copyWith(color: color, fontSize: 24)),
-        ],
+        ),
       ),
     );
   }
 
   // 3. QUICK ACTIONS (GRID)
   Widget _buildQuickActions(BuildContext context, AppLocalizations l10n) {
-    final actions = [
-      {'title': l10n.nav_schedule, 'icon': Icons.event_note_rounded, 'color': Colors.blue},
-      {'title': l10n.doctor_appointments_today, 'icon': Icons.verified_user_outlined, 'color': Colors.teal},
-      {'title': l10n.doctor_button_examine, 'icon': Icons.medical_services_outlined, 'color': Colors.redAccent},
-      {'title': l10n.nav_medical_record, 'icon': Icons.contact_page_outlined, 'color': Colors.purple},
-      {'title': 'Video call', 'icon': Icons.video_call_outlined, 'color': Colors.indigo},
-      {'title': 'Chat', 'icon': Icons.chat_bubble_outline_rounded, 'color': Colors.blueGrey},
+    final actions = <({_DoctorQuickAction id, String title, IconData icon, Color color})>[
+      (id: _DoctorQuickAction.schedule, title: l10n.nav_schedule, icon: Icons.event_note_rounded, color: Colors.blue),
+      (id: _DoctorQuickAction.appointmentsToday, title: l10n.doctor_appointments_today, icon: Icons.verified_user_outlined, color: Colors.teal),
+      (id: _DoctorQuickAction.examine, title: l10n.doctor_button_examine, icon: Icons.medical_services_outlined, color: Colors.redAccent),
+      (id: _DoctorQuickAction.medicalRecord, title: l10n.nav_medical_record, icon: Icons.contact_page_outlined, color: Colors.purple),
+      (id: _DoctorQuickAction.videoCall, title: 'Video call', icon: Icons.video_call_outlined, color: Colors.indigo),
+      (id: _DoctorQuickAction.chat, title: 'Chat', icon: Icons.chat_bubble_outline_rounded, color: Colors.blueGrey),
     ];
 
     return Padding(
@@ -267,7 +309,7 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
             itemBuilder: (context, index) {
               final action = actions[index];
               return InkWell(
-                onTap: () {},
+                onTap: () => _onQuickAction(context, action.id),
                 borderRadius: BorderRadius.circular(16),
                 child: Container(
                   decoration: BoxDecoration(
@@ -280,10 +322,10 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(action['icon'] as IconData, color: action['color'] as Color, size: 30),
+                      Icon(action.icon, color: action.color, size: 30),
                       const SizedBox(height: 8),
                       Text(
-                        action['title'] as String,
+                        action.title,
                         textAlign: TextAlign.center,
                         style: context.textStyles.bodySmall.copyWith(fontWeight: FontWeight.bold, fontSize: 11),
                       ),
@@ -332,7 +374,7 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(l10n.doctor_today_schedule, style: context.textStyles.heading3),
-              TextButton(onPressed: () {}, child: Text(l10n.doctor_view_all)),
+              TextButton(onPressed: () => setState(() => _currentIndex = 1), child: Text(l10n.doctor_view_all)),
             ],
           ),
           ListView.builder(
@@ -406,7 +448,7 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
             ),
           ),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () => _openExamineForAppointment(context, apt),
             style: ElevatedButton.styleFrom(
               backgroundColor: context.colors.primary,
               foregroundColor: Colors.white,
@@ -502,21 +544,27 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
             children: [
               Expanded(
                 child: _buildAdvancedCard(
-                  context, 
-                  'AI Diagnosis', 
-                  l10n.doctor_ai_support, 
-                  Icons.auto_awesome, 
-                  Colors.deepPurple
+                  context,
+                  'AI Diagnosis',
+                  l10n.doctor_ai_support,
+                  Icons.auto_awesome,
+                  Colors.deepPurple,
+                  onTap: () => context.push('/ai/voice-assistant'),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: _buildAdvancedCard(
-                  context, 
-                  'Patient Ratings', 
-                  l10n.doctor_patient_rating, 
-                  Icons.star_rounded, 
-                  Colors.amber
+                  context,
+                  'Patient Ratings',
+                  l10n.doctor_patient_rating,
+                  Icons.star_rounded,
+                  Colors.amber,
+                  onTap: () {
+                    Navigator.of(context).push<void>(
+                      MaterialPageRoute<void>(builder: (_) => const DoctorPatientRatingsScreen()),
+                    );
+                  },
                 ),
               ),
             ],
@@ -526,26 +574,40 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
     );
   }
 
-  Widget _buildAdvancedCard(BuildContext context, String title, String subtitle, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [color.withOpacity(0.8), color],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+  Widget _buildAdvancedCard(
+    BuildContext context,
+    String title,
+    String subtitle,
+    IconData icon,
+    Color color, {
+    VoidCallback? onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: Colors.white, size: 28),
-          const SizedBox(height: 12),
-          Text(title, style: context.textStyles.bodyBold.copyWith(color: Colors.white)),
-          const SizedBox(height: 4),
-          Text(subtitle, style: context.textStyles.bodySmall.copyWith(color: Colors.white.withOpacity(0.9), fontSize: 10)),
-        ],
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [color.withOpacity(0.8), color],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: Colors.white, size: 28),
+              const SizedBox(height: 12),
+              Text(title, style: context.textStyles.bodyBold.copyWith(color: Colors.white)),
+              const SizedBox(height: 4),
+              Text(subtitle, style: context.textStyles.bodySmall.copyWith(color: Colors.white.withOpacity(0.9), fontSize: 10)),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -609,11 +671,15 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
     final l10n = AppLocalizations.of(context)!;
     return BottomNavigationBar(
       currentIndex: _currentIndex,
-      onTap: (index) => setState(() => _currentIndex = index),
+      onTap: (index) {
+        setState(() => _currentIndex = index);
+      },
       type: BottomNavigationBarType.fixed,
       selectedItemColor: context.colors.primary,
       unselectedItemColor: context.colors.textHint,
       showUnselectedLabels: true,
+      selectedFontSize: 10,
+      unselectedFontSize: 9,
       items: [
         BottomNavigationBarItem(icon: const Icon(Icons.home_filled), label: l10n.nav_home),
         BottomNavigationBarItem(icon: const Icon(Icons.calendar_month_rounded), label: l10n.nav_schedule),

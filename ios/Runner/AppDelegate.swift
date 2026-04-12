@@ -1,7 +1,11 @@
 import Flutter
 import UIKit
+#if canImport(FirebaseCore)
 import FirebaseCore
+#endif
+#if canImport(FirebaseAuth)
 import FirebaseAuth
+#endif
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -10,7 +14,9 @@ import FirebaseAuth
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    #if canImport(FirebaseCore)
     FirebaseApp.configure()
+    #endif
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
@@ -20,9 +26,11 @@ import FirebaseAuth
     open url: URL,
     options: [UIApplication.OpenURLOptionsKey : Any] = [:]
   ) -> Bool {
+    #if canImport(FirebaseAuth)
     if Auth.auth().canHandle(url) {
       return true
     }
+    #endif
     return super.application(application, open: url, options: options)
   }
 }

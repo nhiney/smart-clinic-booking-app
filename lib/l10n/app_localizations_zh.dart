@@ -357,6 +357,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get patient_tab_vaccine => '疫苗';
 
   @override
+  String get patient_hospital_intro_title => '医院介绍';
+
+  @override
+  String get patient_hospital_intro_desc => 'ICARE医疗系统，汇聚顶级专家与更前沿的医疗设备。';
+
+  @override
+  String get patient_facilities_title => '医疗设施';
+
+  @override
+  String get patient_doctors_title => '医生团队';
+
+  @override
+  String get patient_see_more => '查看更多';
+
+  @override
   String get patient_banner_online_consult => '在线\n问诊咨询';
 
   @override
@@ -385,6 +400,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get patient_action_corporate_checkup => '企业\n体检';
+
+  @override
+  String get patient_bottom_visit_slip => '就诊';
+
+  @override
+  String get patient_quick_search_care => '搜索与就诊';
+
+  @override
+  String get patient_action_book_appointment => '预约\n就诊';
+
+  @override
+  String get patient_language => '语言';
+
+  @override
+  String get patient_bottom_medical => '健康档案';
+
+  @override
+  String get patient_bottom_account => '账户';
 
   @override
   String get doctor_morning => '上午';

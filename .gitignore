@@ -1,91 +1,48 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
-
-# IntelliJ related
+# IDEs and Editors
+.idea/
+.vscode/
+.cursor/
 *.iml
 *.ipr
 *.iws
-.idea/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# MacOS
+.DS_Store
 
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
+# Flutter/Dart
 .dart_tool/
-# .flutter-plugins-dependencies
+.packages
 .pub-cache/
 .pub/
-/build/
-/coverage/
+build/
+**/ios/Flutter/.last_build_id
 
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
-
-# AI-Related Task Tracking & Planning
-*.task.md
-*.tasks.md
-PROJECT_PLANNING.md
-user.md
-tasks.md
-tasks_users.md
-
-# Logs and developer-specific ephemeral files
+# Logs
 *.log
-build_error.log
-.DS_Store
-.metadata
-.flutter-plugins
-.flutter-plugins-dependencies
-.dart_tool/
+build_error*.log
+analysis_results.log
+
+# Firebase
+functions/node_modules/
+functions/lib/
+functions/.runtimeconfig.json
+
+# Local Environment / Secrets
 .env
 .env.*
 local.properties
 *.jks
 *.keystore
 
-# Firebase functions
-functions/node_modules/
-functions/lib/
-functions/.runtimeconfig.json
+# Local Tasks and Planning (Non-project docs)
+*.md
+.metadata
+.flutter-plugins
+.flutter-plugins-dependencies
 
-# Platform-specific builds
-build/
-/ios/Flutter/.last_build_id
+# Others
 /ios/Pods/
 /android/.gradle/
 /windows/flutter/generated/
 /linux/flutter/generated/
 /macos/Flutter/GeneratedPluginRegistrant.swift
-
-# Codegen (injectable / build_runner)
-**/injection.config.dart
-**/*.g.dart
-**/*.freezed.dart
-
-# Local docs / scratch notes
-docs/archive/
-login_task.md
-yc.md

@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:local_auth/local_auth.dart';
+import '../../../../core/config/debug_test_login_config.dart';
 import '../../domain/entities/user_entity.dart';
 import '../models/user_model.dart';
 
@@ -27,12 +28,26 @@ class AuthRemoteDatasource {
   static const String _biometricCredentialKey = 'auth_biometric_credential_v1';
   static const String _sessionUidKey = 'session_uid';
   static const String _sessionTokenKey = 'session_token';
+  static const String _registrationPhoneKey = 'reg_phone';
+  static const String _registrationPasswordKey = 'reg_password';
 
-  /// Normalizes phone number to digits-only format, replacing leading 0 with 84 for VN
+  /// Normalizes phone number to digits-only format, replacing leading 0 or +84 with 84 for VN
   String _normalizePhone(String phone) {
     String clean = phone.replaceAll(RegExp(r'\D'), '');
+    // Handle cases like +84 or 84 prefixing
+    if (clean.startsWith('84') && clean.length > 10) {
+      return clean;
+    }
     if (clean.startsWith('0') && clean.length == 10) {
-      clean = '84${clean.substring(1)}';
+      return '84${clean.substring(1)}';
+    }
+    // If it's already 84 + 9 digits (total 11)
+    if (clean.length == 11 && clean.startsWith('84')) {
+      return clean;
+    }
+    // If it's 9 digits, assume VN and add 84
+    if (clean.length == 9) {
+      return '84$clean';
     }
     return clean;
   }
@@ -44,6 +59,39 @@ class AuthRemoteDatasource {
     String? requiredRole,
   }) async {
     try {
+      if (kDebugMode) {
+        debugPrint('[AUTH] Attempting login with: $email');
+        
+        final normalizedTarget = email.split('@').first;
+
+        // 0. CHECK HARDCODED DEBUG SEED (User's account)
+        if ((normalizedTarget == '84326583876' || normalizedTarget == '326583876') && password == 'Nhi@1234') {
+            debugPrint('[AUTH] Debug Seed Login Success for: $email');
+            return _createMockUser('84326583876@icare.patient');
+        }
+
+        // 1. CHECK MOCK STORE FIRST (Memory)
+        if (_mockCredentialStore.containsKey(email)) {
+          final mockPassword = _mockCredentialStore[email];
+          if (mockPassword == password) {
+            debugPrint('[AUTH] Mock Login Success (Memory) for: $email');
+            return _createMockUser(email);
+          }
+        }
+        
+        // 2. FAILOVER TO SECURE STORAGE (for persistence across restarts)
+        final localPhone = await _secureStorage.read(key: _registrationPhoneKey);
+        final localPass = await _secureStorage.read(key: _registrationPasswordKey);
+        if (localPhone != null && localPass != null) {
+          final normalizedLocal = _normalizePhone(localPhone);
+          // Compare normalized versions to be safe
+          if (normalizedLocal == normalizedTarget && localPass == password) {
+            debugPrint('[AUTH] Mock Login Success (Storage) for: $email');
+            return _createMockUser(email);
+          }
+        }
+      }
+      
       final result = await _firebaseAuth.signInWithEmailAndPassword(
         email: email,
         password: password,
@@ -61,15 +109,30 @@ class AuthRemoteDatasource {
       } catch (firestoreError) {
         debugPrint('[AUTH] Firestore profile fetch failed: $firestoreError');
         // If it's a seed account, we will handle it in the bootstrap/fallback logic
-        if (!['admin@icare.com', 'annv.choray@icare.com'].contains(email)) {
+        if (!['admin@icare.com', 'annv.choray@icare.com'].contains(email) &&
+            !email.endsWith('@icare.patient')) {
           rethrow;
         }
       }
 
+      if (userData == null && email.endsWith('@icare.patient')) {
+        try {
+          await _firestore.collection('users').doc(user.uid).set({
+            'email': email,
+            'role': 'patient',
+            'name': 'Bệnh nhân',
+            'phone': email.split('@').first,
+            'status': 'active',
+            'created_at': FieldValue.serverTimestamp(),
+          });
+          final snap = await _firestore.collection('users').doc(user.uid).get();
+          userData = snap.data();
+        } catch (bootstrapErr) {
+          debugPrint('[AUTH] Không tạo được hồ sơ BN trên Firestore: $bootstrapErr');
+        }
+      }
+
       if (userData == null) {
-        // If profile doesn't exist/can't be read, but it's a seed account, 
-        // trigger the bootstrap logic in the catch block by throwing a dummy exception
-        // or just proceed to bootstrap if we're certain.
         throw FirebaseAuthException(code: 'user-not-found', message: 'Triggering bootstrap for seed account');
       }
       
@@ -82,8 +145,8 @@ class AuthRemoteDatasource {
           throw Exception('Tài khoản không đúng quyền truy cập: Yêu cầu $requiredRole.');
         }
       } else {
-        // Default behavior (original): Must be staff/doctor/admin
-        if (userModel.role == 'patient') {
+        final isPatientAppLogin = email.endsWith('@icare.patient');
+        if (userModel.role == 'patient' && !isPatientAppLogin) {
           await _firebaseAuth.signOut();
           throw Exception('Tài khoản này không có quyền truy cập dành cho nhân viên y tế.');
         }
@@ -158,11 +221,86 @@ class AuthRemoteDatasource {
         }
       }
 
+      // Debug: tạo Auth + Firestore cho tài khoản BN test nếu chưa tồn tại (chỉ khi thiếu user / sai credential lưu)
+      if (kDebugMode &&
+          email == DebugTestLoginConfig.patientVirtualEmail &&
+          password == DebugTestLoginConfig.patientPassword &&
+          (e.code == 'user-not-found' || e.code == 'invalid-credential')) {
+        try {
+          UserCredential? cred;
+          try {
+            cred = await _firebaseAuth.signInWithEmailAndPassword(email: email, password: password);
+          } on FirebaseAuthException catch (ce) {
+            if (ce.code == 'user-not-found' || ce.code == 'invalid-credential') {
+              cred = await _firebaseAuth.createUserWithEmailAndPassword(email: email, password: password);
+            } else {
+              rethrow;
+            }
+          }
+
+          if (cred.user != null) {
+            final realUid = cred.user!.uid;
+            final docSnapshot = await _firestore.collection('users').doc(realUid).get();
+
+            Map<String, dynamic> data;
+            if (!docSnapshot.exists) {
+              data = {
+                'email': email,
+                'role': 'patient',
+                'name': 'BN Test ICare',
+                'phone': '84912345678',
+                'status': 'active',
+                'created_at': FieldValue.serverTimestamp(),
+              };
+              await _firestore.collection('users').doc(realUid).set(data);
+            } else {
+              data = docSnapshot.data()!;
+            }
+
+            await _logSession(realUid);
+            return UserModel.fromJson(data, realUid);
+          }
+        } catch (hydrationError) {
+          debugPrint('[AUTH] Debug patient bootstrap failed: $hydrationError');
+        }
+      }
+
       throw Exception(_handleAuthError(e.code));
-    } catch (e) {
-      debugPrint('Login error: $e');
-      throw Exception('Đăng nhập thất bại: ${e.toString()}');
     }
+  }
+
+  Future<UserModel> _createMockUser(String email) async {
+    final phone = email.split('@').first;
+    final mockUid = 'MOCK_USER_$phone';
+    
+    // Only try fetching from Firestore if we have a real session and permissions
+    // Mock users usually don't have permissions unless signed into Firebase Auth
+    if (_firebaseAuth.currentUser != null) {
+      try {
+        final docSnapshot = await _firestore.collection('users').doc(mockUid).get();
+        if (docSnapshot.exists) {
+          return UserModel.fromJson(docSnapshot.data()!, mockUid);
+        }
+      } catch (e) {
+        // Suppress permission-denied for mocks
+        if (!e.toString().contains('permission-denied')) {
+          debugPrint('[AUTH] Mock Firestore fetch failed: $e');
+        }
+      }
+    }
+    
+    // Fallback if metadata not in firestore yet
+    return UserModel(
+      id: mockUid,
+      email: email,
+      name: email.contains('84326583876') ? 'Nhi Yến' : 'BN Test (Mock)',
+      phone: phone,
+      authProvider: 'email',
+      role: 'patient',
+      status: 'active',
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
   }
 
   /// Create Doctor Account (Admin action)
@@ -272,7 +410,7 @@ class AuthRemoteDatasource {
     debugPrint('[AUTH] Register called. Current User: ${user?.uid ?? 'NULL'}');
     
     // Support for Debug/Mock mode
-    if (isMockMode && _lastMockUser != null && _lastMockUser!.phone == phone) {
+    if (isMockMode && _lastMockUser != null && _normalizePhone(_lastMockUser!.phone) == _normalizePhone(phone)) {
       debugPrint('[AUTH] Registering in Mock Mode for: $phone');
       final updatedUser = _lastMockUser!.copyWith(
         name: name,
@@ -280,6 +418,23 @@ class AuthRemoteDatasource {
         tenantId: tenantId,
       );
       _lastMockUser = updatedUser;
+
+      // Persistence for Virtual Email login in Mock mode
+      if (password != null) {
+        final normalized = _normalizePhone(phone);
+        final virtualEmail = "$normalized@icare.patient";
+        _mockCredentialStore[virtualEmail] = password;
+        debugPrint('[AUTH] Saved Mock Credentials for: $virtualEmail');
+      }
+
+      // Save to Firestore so profile persists for Home screen
+      try {
+        await _firestore.collection('users').doc(updatedUser.id).set(updatedUser.toJson(), SetOptions(merge: true));
+        debugPrint('[AUTH] Mock Profile saved to Firestore: ${updatedUser.id}');
+      } catch (e) {
+        debugPrint('[AUTH] Mock Profile Firestore save failed: $e');
+      }
+
       return updatedUser;
     }
 
@@ -388,6 +543,28 @@ class AuthRemoteDatasource {
     } catch (e) {
       debugPrint('Save session error: $e');
     }
+  }
+
+  Future<void> saveRegistrationLocally(String phone, String password) async {
+    try {
+      await _secureStorage.write(key: _registrationPhoneKey, value: phone);
+      await _secureStorage.write(key: _registrationPasswordKey, value: password);
+    } catch (e) {
+      debugPrint('Save registration locally error: $e');
+    }
+  }
+
+  Future<Map<String, String>?> getLocalRegistrationInfo() async {
+    try {
+      final phone = await _secureStorage.read(key: _registrationPhoneKey);
+      final password = await _secureStorage.read(key: _registrationPasswordKey);
+      if (phone != null && password != null) {
+        return {'phone': phone, 'password': password};
+      }
+    } catch (e) {
+      debugPrint('Get local registration info error: $e');
+    }
+    return null;
   }
 
   Future<bool> hasSavedSession() async {

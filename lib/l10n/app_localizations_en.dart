@@ -361,6 +361,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get patient_tab_vaccine => 'Vaccines';
 
   @override
+  String get patient_hospital_intro_title => 'Hospital Introduction';
+
+  @override
+  String get patient_hospital_intro_desc =>
+      'ICARE Health System with top experts and state-of-the-art medical equipment.';
+
+  @override
+  String get patient_facilities_title => 'Facilities';
+
+  @override
+  String get patient_doctors_title => 'Doctors Team';
+
+  @override
+  String get patient_see_more => 'See more';
+
+  @override
   String get patient_banner_online_consult => 'Online\nconsultation';
 
   @override
@@ -389,6 +405,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get patient_action_corporate_checkup => 'Corporate\ncheckup';
+
+  @override
+  String get patient_bottom_visit_slip => 'Visits';
+
+  @override
+  String get patient_quick_search_care => 'Search & care';
+
+  @override
+  String get patient_action_book_appointment => 'Book a\nvisit';
+
+  @override
+  String get patient_language => 'Language';
+
+  @override
+  String get patient_bottom_medical => 'Health records';
+
+  @override
+  String get patient_bottom_account => 'Account';
 
   @override
   String get doctor_morning => 'AM';

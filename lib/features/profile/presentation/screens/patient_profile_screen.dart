@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/theme/colors/app_colors.dart';
-import '../../../../core/theme/typography/app_text_styles.dart';
-import '../../../../core/widgets/branded_app_bar.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../controllers/patient_profile_controller.dart';
 import '../../domain/entities/patient_profile.dart';
 
 class PatientProfileScreen extends StatefulWidget {
-  const PatientProfileScreen({super.key});
+  const PatientProfileScreen({super.key, this.embeddedInTab = false});
+
+  /// Khi true: không nút back, chỉ nút Lưu; phù hợp nhúng trong tab tài khoản trang chủ bệnh nhân.
+  final bool embeddedInTab;
 
   @override
   State<PatientProfileScreen> createState() => _PatientProfileScreenState();
@@ -91,13 +91,16 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          "Hồ sơ cá nhân",
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w800, fontSize: 18),
+        automaticallyImplyLeading: !widget.embeddedInTab,
+        leading: widget.embeddedInTab
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87, size: 20),
+                onPressed: () => Navigator.pop(context),
+              ),
+        title: Text(
+          widget.embeddedInTab ? "Tài khoản" : "Hồ sơ cá nhân",
+          style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w800, fontSize: 18),
         ),
         centerTitle: true,
       ),
@@ -423,6 +426,24 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
   }
 
   Widget _buildActionButtons(PatientProfileController controller) {
+    final saveButton = ElevatedButton(
+      onPressed: controller.status == PatientProfileStatus.updating ? null : _saveProfile,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF4A90E2),
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 0,
+      ),
+      child: controller.status == PatientProfileStatus.updating
+          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+          : const Text("Lưu thông tin", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+    );
+
+    if (widget.embeddedInTab) {
+      return SizedBox(width: double.infinity, child: saveButton);
+    }
+
     return Row(
       children: [
         Expanded(
@@ -437,22 +458,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
           ),
         ),
         const SizedBox(width: 16),
-        Expanded(
-          flex: 2,
-          child: ElevatedButton(
-            onPressed: controller.status == PatientProfileStatus.updating ? null : _saveProfile,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4A90E2),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              elevation: 0,
-            ),
-            child: controller.status == PatientProfileStatus.updating
-                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : const Text("Lưu thông tin", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          ),
-        ),
+        Expanded(flex: 2, child: saveButton),
       ],
     );
   }
@@ -476,7 +482,9 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Close profile screen
+              if (!widget.embeddedInTab) {
+                Navigator.pop(context); // Close pushed profile screen
+              }
               await context.read<AuthController>().logout();
               if (context.mounted) context.go('/login');
             },

@@ -35,6 +35,10 @@ abstract class AuthRepository {
   Future<void> clearBiometricCredential();
   Future<UserEntity> loginWithBiometrics();
 
+  // Local Registration Persistence (for comparison at login)
+  Future<void> saveRegistrationLocally(String phone, String password);
+  Future<Map<String, String>?> getLocalRegistrationInfo();
+
   // Registration (Primarily for initial Patient setup if needed)
   Future<UserEntity> register({
     required String name,

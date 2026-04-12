@@ -7,7 +7,7 @@ import 'package:smart_clinic_booking/features/auth/presentation/screens/onboardi
 import 'package:smart_clinic_booking/features/auth/presentation/screens/login_screen.dart';
 import 'package:smart_clinic_booking/features/auth/presentation/screens/staff_login_screen.dart';
 import 'package:smart_clinic_booking/features/auth/presentation/screens/sign_up_screen.dart';
-import 'package:smart_clinic_booking/features/home/presentation/screens/home_screen.dart';
+import 'package:smart_clinic_booking/features/auth/presentation/screens/patient_home_screen.dart';
 import 'package:smart_clinic_booking/features/admin/presentation/screens/admin_dashboard_screen.dart';
 import 'package:smart_clinic_booking/features/doctor/presentation/screens/doctor_home_screen.dart';
 import 'package:smart_clinic_booking/features/doctor/presentation/screens/doctor_search_screen.dart';
@@ -66,12 +66,19 @@ class GoRouterRefreshStream extends ChangeNotifier {
 class AppRouter {
   
   static Stream<User?> get authStateChanges => FirebaseAuth.instance.idTokenChanges();
+  
+  /// Global notifier for mock login sessions (Debug only)
+  static final ValueNotifier<bool> mockAuthNotifier = ValueNotifier(false);
 
   static final GoRouter router = GoRouter(
     initialLocation: '/',
-    refreshListenable: GoRouterRefreshStream(authStateChanges),
+    refreshListenable: Listenable.merge([
+        GoRouterRefreshStream(authStateChanges),
+        mockAuthNotifier,
+    ]),
     redirect: (BuildContext context, GoRouterState state) async {
       final user = FirebaseAuth.instance.currentUser;
+      final bool isMockAuthenticated = mockAuthNotifier.value;
       final path = state.uri.path;
       
       final bool isPublicRoute = path == '/' || 
@@ -85,37 +92,48 @@ class AppRouter {
                                 path == '/account-qr';
 
       // 1. Unauthenticated Block
-      if (user == null) {
+      if (user == null && !isMockAuthenticated) {
         debugPrint('[ROUTER] No user found. Path: $path');
         if (isPublicRoute) return null;
         return '/login';
       }
 
-      debugPrint('[ROUTER] User: ${user.uid}, Path: $path');
+      if (user != null) {
+        debugPrint('[ROUTER] Real User: ${user.uid}, Path: $path');
+      } else {
+        debugPrint('[ROUTER] Mock User Authenticated, Path: $path');
+      }
 
       // REQUIREMENT: Role-based navigation
-      final idTokenResult = await user.getIdTokenResult(); 
-      final claims = idTokenResult.claims ?? {};
-      String role = claims['role'] as String? ?? 'unverified';
+      String role = 'patient';
+      Map<String, dynamic> claims = {};
+      
+      if (user != null) {
+        final idTokenResult = await user.getIdTokenResult(); 
+        claims = idTokenResult.claims ?? {};
+        role = claims['role'] as String? ?? 'unverified';
+        
+        // Special case for seed accounts or just-signed-in users
+        if (role == 'unverified') {
+          if (user.email == 'admin@icare.com') {
+            role = 'super_admin';
+          } else if (user.email == 'annv.choray@icare.com') {
+            role = 'doctor';
+          }
+        }
+      } 
       
       debugPrint('[ROUTER] Current Role: $role');
 
-      // Special case for seed accounts or just-signed-in users
-      if (role == 'unverified') {
-        if (user.email == 'admin@icare.com') {
-          role = 'super_admin';
-        } else if (user.email == 'annv.choray@icare.com') {
-          role = 'doctor';
+      // 2. Pending KYC Approval Flow (Real Users only)
+      if (user != null) {
+        final status = claims['status'] as String? ?? 'active';
+        if (status == 'pending') {
+          if (path != '/pending-approval' && path != '/kyc_upload') {
+            return '/pending-approval';
+          }
+          return null;
         }
-      }
-
-      // 2. Pending KYC Approval Flow
-      final status = claims['status'] as String? ?? 'active';
-      if (status == 'pending') {
-        if (path != '/pending-approval' && path != '/kyc_upload') {
-          return '/pending-approval';
-        }
-        return null;
       }
 
       // 3. User is Active but trying to view Onboarding / Login / Pending screens
@@ -203,7 +221,7 @@ class AppRouter {
       ),
       GoRoute(
         path: '/home',
-        builder: (context, state) => const HomeScreen(),
+        builder: (context, state) => const PatientHomeScreen(),
       ),
       GoRoute(
         path: '/notifications',

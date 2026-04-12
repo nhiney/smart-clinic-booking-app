@@ -361,6 +361,22 @@ class AppLocalizationsVi extends AppLocalizations {
   String get patient_tab_vaccine => 'Tiêm chủng';
 
   @override
+  String get patient_hospital_intro_title => 'Giới thiệu bệnh viện';
+
+  @override
+  String get patient_hospital_intro_desc =>
+      'Hệ thống y tế ICARE với đội ngũ chuyên gia hàng đầu và trang thiết bị hiện đại bậc nhất.';
+
+  @override
+  String get patient_facilities_title => 'Cơ sở vật chất';
+
+  @override
+  String get patient_doctors_title => 'Đội ngũ bác sĩ';
+
+  @override
+  String get patient_see_more => 'Xem thêm';
+
+  @override
   String get patient_banner_online_consult => 'Tư vấn khám bệnh\ntrực tuyến';
 
   @override
@@ -389,6 +405,24 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get patient_action_corporate_checkup => 'Khám doanh\nnghiệp';
+
+  @override
+  String get patient_bottom_visit_slip => 'Phiếu khám';
+
+  @override
+  String get patient_quick_search_care => 'Tìm kiếm & Khám bệnh';
+
+  @override
+  String get patient_action_book_appointment => 'Đặt lịch\nkhám';
+
+  @override
+  String get patient_language => 'Ngôn ngữ';
+
+  @override
+  String get patient_bottom_medical => 'Hồ sơ';
+
+  @override
+  String get patient_bottom_account => 'Tài khoản';
 
   @override
   String get doctor_morning => 'Sáng';

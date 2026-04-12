@@ -165,4 +165,14 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<UserEntity> loginWithBiometrics() async {
     return await remoteDatasource.loginWithBiometrics();
   }
+
+  @override
+  Future<void> saveRegistrationLocally(String phone, String password) async {
+    await remoteDatasource.saveRegistrationLocally(phone, password);
+  }
+
+  @override
+  Future<Map<String, String>?> getLocalRegistrationInfo() async {
+    return await remoteDatasource.getLocalRegistrationInfo();
+  }
 }

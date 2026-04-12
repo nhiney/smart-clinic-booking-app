@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:smart_clinic_booking/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/config/debug_test_login_config.dart';
 import '../../../../core/extensions/context_extension.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
@@ -57,16 +59,26 @@ class _LoginScreenState extends State<LoginScreen> {
     final l10n = AppLocalizations.of(context)!;
     final authController = context.read<AuthController>();
     
-    String phone = phoneController.text.trim();
-    if (selectedCountryCode == "+84" && phone.startsWith('0')) {
-      phone = phone.substring(1);
-    }
-    final normalizedPhone = '$selectedCountryCode$phone'.replaceAll(RegExp(r'\D'), '');
+    final normalizedPhone = AuthController.normalizePhone(selectedCountryCode, phoneController.text);
     final virtualEmail = "$normalizedPhone@icare.patient";
+    final password = passwordController.text.trim();
+
+    // Compare with local registration if available
+    final isLocalMatch = await authController.verifyAgainstLocalRegistration(normalizedPhone, password);
+    if (!isLocalMatch) {
+      _showError(_tr(
+        'Mật khẩu không khớp với thông tin đã đăng ký trên thiết bị này.',
+        'Password does not match the registration info on this device.',
+        'パスワードがこのデバイスの登録情報と一致しません。',
+        '비밀번호가 이 기기의 등록 정보와 일치하지 않습니다.',
+        '密码与此设备上的注册信息不匹配。'
+      ));
+      return;
+    }
 
     final success = await authController.login(
       virtualEmail,
-      passwordController.text,
+      password,
     );
 
     if (!mounted) return;
@@ -237,6 +249,23 @@ class _LoginScreenState extends State<LoginScreen> {
               onPressed: handleLogin,
               isLoading: controller.isLoading,
             ),
+            if (kDebugMode) ...[
+              const SizedBox(height: 12),
+              TextButton.icon(
+                onPressed: controller.isLoading
+                    ? null
+                    : () async {
+                        setState(() {
+                          selectedCountryCode = '+84';
+                          phoneController.text = DebugTestLoginConfig.patientPhoneNational;
+                          passwordController.text = DebugTestLoginConfig.patientPassword;
+                        });
+                        await handleLogin();
+                      },
+                icon: const Icon(Icons.bug_report_outlined, size: 18),
+                label: const Text('Đăng nhập test (BN) — 912345678'),
+              ),
+            ],
             const SizedBox(height: 24),
             Row(
               children: [

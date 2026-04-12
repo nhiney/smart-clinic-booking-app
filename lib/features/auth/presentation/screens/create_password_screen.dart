@@ -134,39 +134,25 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
       setState(() => _isLoading = true);
       
       final authController = context.read<AuthController>();
+      final password = _passwordController.text.trim();
       final success = await authController.register(
         name: widget.name ?? 'Người dùng Patient',
         phone: widget.phoneNumber,
-        password: _passwordController.text,
+        password: password,
         role: 'patient',
       );
       
-      if (mounted) {
-        setState(() => _isLoading = false);
-        if (success) {
-          final qrData = await authController.createQrLoginToken(persistent: true);
+      if (success) {
+        // Save registration info locally for comparison at login as requested
+        await authController.saveRegistrationLocally(widget.phoneNumber, password);
+        
+        final qrData = await authController.createQrLoginToken(persistent: true);
+        if (!mounted) return;
+        if (qrData != null && (qrData['token'] as String?)?.isNotEmpty == true) {
+          // Sign out so the user is forced to see QR then login manually as requested
+          await authController.logout();
           if (!mounted) return;
-          if (qrData != null && (qrData['token'] as String?)?.isNotEmpty == true) {
-            // Sign out so the user is forced to see QR then login manually as requested
-            await authController.logout();
-            if (!mounted) return;
-            context.go('/account-qr', extra: qrData);
-          } else {
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  localizeAuthError(
-                    context,
-                    authController.errorMessage,
-                    fallback: AppLocalizations.of(context)!.registration_success,
-                  ),
-                ),
-                backgroundColor: context.colors.primary,
-              ),
-            );
-            context.go('/login');
-          }
+          context.go('/account-qr', extra: qrData);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -174,19 +160,35 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                 localizeAuthError(
                   context,
                   authController.errorMessage,
-                  fallback: _tr(
-                    'Đăng ký thất bại',
-                    'Registration failed',
-                    '登録に失敗しました',
-                    '회원가입에 실패했습니다',
-                    '注册失败',
-                  ),
+                  fallback: AppLocalizations.of(context)!.registration_success,
                 ),
               ),
-              backgroundColor: context.colors.error,
+              backgroundColor: context.colors.primary,
             ),
           );
+          context.go('/login');
         }
+      } else {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              localizeAuthError(
+                context,
+                authController.errorMessage,
+                fallback: _tr(
+                  'Đăng ký thất bại',
+                  'Registration failed',
+                  '登録に失敗しました',
+                  '회원가입에 실패했습니다',
+                  '注册失败',
+                ),
+              ),
+            ),
+            backgroundColor: context.colors.error,
+          ),
+        );
       }
     }
   }

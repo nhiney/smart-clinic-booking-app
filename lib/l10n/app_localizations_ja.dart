@@ -354,7 +354,23 @@ class AppLocalizationsJa extends AppLocalizations {
   String get patient_tab_test => '検査';
 
   @override
-  String get patient_tab_vaccine => '予防接種';
+  String get patient_tab_vaccine => 'ワクチン';
+
+  @override
+  String get patient_hospital_intro_title => '病院紹介';
+
+  @override
+  String get patient_hospital_intro_desc =>
+      'ICAREヘルスシステムは、トップクラスの専門家と最先端の医療機器を備えています。';
+
+  @override
+  String get patient_facilities_title => '医療施設';
+
+  @override
+  String get patient_doctors_title => '医師チーム';
+
+  @override
+  String get patient_see_more => '詳細を見る';
 
   @override
   String get patient_banner_online_consult => 'オンライン\n診療相談';
@@ -385,6 +401,24 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get patient_action_corporate_checkup => '企業\n健診';
+
+  @override
+  String get patient_bottom_visit_slip => '受診';
+
+  @override
+  String get patient_quick_search_care => '検索・診療';
+
+  @override
+  String get patient_action_book_appointment => '予約\n受診';
+
+  @override
+  String get patient_language => '言語';
+
+  @override
+  String get patient_bottom_medical => 'カルテ';
+
+  @override
+  String get patient_bottom_account => 'アカウント';
 
   @override
   String get doctor_morning => '午前';

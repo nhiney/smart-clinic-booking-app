@@ -181,4 +181,17 @@ class AdminController extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> seedPatients() async {
+    try {
+      isLoading = true;
+      notifyListeners();
+      await SeedDataService().seedSamplePatients();
+    } catch (e) {
+      errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
 }

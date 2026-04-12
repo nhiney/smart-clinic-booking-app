@@ -794,6 +794,36 @@ abstract class AppLocalizations {
   /// **'Vaccines'**
   String get patient_tab_vaccine;
 
+  /// No description provided for @patient_hospital_intro_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Hospital Introduction'**
+  String get patient_hospital_intro_title;
+
+  /// No description provided for @patient_hospital_intro_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'ICARE Health System with top experts and state-of-the-art medical equipment.'**
+  String get patient_hospital_intro_desc;
+
+  /// No description provided for @patient_facilities_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Facilities'**
+  String get patient_facilities_title;
+
+  /// No description provided for @patient_doctors_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Doctors Team'**
+  String get patient_doctors_title;
+
+  /// No description provided for @patient_see_more.
+  ///
+  /// In en, this message translates to:
+  /// **'See more'**
+  String get patient_see_more;
+
   /// No description provided for @patient_banner_online_consult.
   ///
   /// In en, this message translates to:
@@ -853,6 +883,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Corporate\ncheckup'**
   String get patient_action_corporate_checkup;
+
+  /// No description provided for @patient_bottom_visit_slip.
+  ///
+  /// In en, this message translates to:
+  /// **'Visits'**
+  String get patient_bottom_visit_slip;
+
+  /// No description provided for @patient_quick_search_care.
+  ///
+  /// In en, this message translates to:
+  /// **'Search & care'**
+  String get patient_quick_search_care;
+
+  /// No description provided for @patient_action_book_appointment.
+  ///
+  /// In en, this message translates to:
+  /// **'Book a\nvisit'**
+  String get patient_action_book_appointment;
+
+  /// No description provided for @patient_language.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get patient_language;
+
+  /// No description provided for @patient_bottom_medical.
+  ///
+  /// In en, this message translates to:
+  /// **'Health records'**
+  String get patient_bottom_medical;
+
+  /// No description provided for @patient_bottom_account.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get patient_bottom_account;
 
   /// No description provided for @doctor_morning.
   ///
