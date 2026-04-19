@@ -17,9 +17,27 @@ import '../widgets/health_news_feed.dart';
 import '../widgets/featured_hospitals_section.dart';
 import '../widgets/recommended_doctors_section.dart';
 import '../widgets/medication_reminder_section.dart';
+import '../widgets/consulting_doctors_section.dart';
+import '../widgets/medical_facilities_section.dart';
+import '../widgets/care_section.dart';
 import '../../domain/entities/medication_reminder.dart';
 import '../../domain/entities/health_article.dart';
 import '../../../appointment/domain/entities/appointment_entity.dart';
+
+import 'package:flutter/material.dart';
+import 'package:smart_clinic_booking/l10n/app_localizations.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../../../../core/theme/colors/app_colors.dart';
+import '../../../../core/extensions/context_extension.dart';
+import '../../../notification/presentation/screens/notification_screen.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../bloc/home_bloc.dart';
+import '../bloc/home_bloc_handler.dart';
+import '../widgets/home_header.dart';
+import '../widgets/quick_actions_grid.dart';
+import '../widgets/hospital_banner.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -28,147 +46,102 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
-  late AnimationController _pulseController;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: context.colors.background,
+      backgroundColor: Colors.white,
       body: IndexedStack(
         index: _currentIndex,
         children: [
-          _HomeDashboard(
-            onNotificationTap: () => setState(() => _currentIndex = 1),
-          ),
+          const _HomeDashboard(),
           const NotificationScreen(),
-          Center(child: Text(AppLocalizations.of(context)!.map_title, style: context.textStyles.heading3)),
+          Center(child: Text('Chức năng', style: context.textStyles.heading3)),
+          Center(child: Text('Cá nhân', style: context.textStyles.heading3)),
         ],
       ),
       bottomNavigationBar: _buildBottomNav(),
-      floatingActionButton: _buildAIButton(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 
   Widget _buildBottomNav() {
-    final l10n = AppLocalizations.of(context)!;
-    return BottomAppBar(
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 10,
-      elevation: 20,
-      color: context.colors.surface,
-      child: Container(
-        height: 65,
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(child: _navItem(0, Icons.home_rounded, l10n.home_welcome)),
-            Expanded(child: _navItem(1, Icons.notifications_rounded, l10n.notification_title)),
-            const SizedBox(width: 50), // Gap for FAB
-            Expanded(child: _navItem(2, Icons.grid_view_rounded, l10n.map_title)),
-            Expanded(
-              child: _navItem(3, Icons.person_rounded, 'Của tôi'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _navItem(int index, IconData icon, String label) {
-    final isSelected = _currentIndex == index;
-    return InkWell(
-      onTap: () {
-        if (index == 3) {
-          context.push('/profile/patient');
-        } else {
-          setState(() => _currentIndex = index);
-        }
-      },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            color: isSelected ? context.colors.primary : context.colors.textHint,
-            size: 26,
-          ),
-          const SizedBox(height: 4),
-          Flexible(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                label,
-                style: context.textStyles.bodySmall.copyWith(
-                  color: isSelected ? context.colors.primary : context.colors.textHint,
-                  fontSize: 10,
-                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                ),
-              ),
-            ),
+    return Container(
+      decoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildAIButton() {
-    return AnimatedBuilder(
-      animation: _pulseController,
-      builder: (context, child) {
-        return Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: context.colors.primary.withOpacity(0.4 * _pulseController.value),
-                blurRadius: 18 * _pulseController.value,
-                spreadRadius: 6 * _pulseController.value,
-              ),
-            ],
+      child: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          if (index == 3) {
+            context.push('/profile/patient');
+          } else if (index == 2) {
+             setState(() => _currentIndex = index);
+          } else {
+             setState(() => _currentIndex = index);
+          }
+        },
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.white,
+        selectedItemColor: const Color(0xFF0D62A2),
+        unselectedItemColor: const Color(0xFF546E7A),
+        showUnselectedLabels: true,
+        selectedFontSize: 12,
+        unselectedFontSize: 12,
+        elevation: 0,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+        items: [
+          const BottomNavigationBarItem(
+            icon: Padding(padding: EdgeInsets.only(bottom: 4), child: Icon(Icons.home_rounded, size: 28)),
+            label: 'Trang chủ',
           ),
-          child: FloatingActionButton(
-            onPressed: () => context.push('/ai/voice-assistant'),
-            backgroundColor: Colors.transparent,
-            elevation: 8,
-            child: Container(
-              width: 65,
-              height: 65,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: AppColors.aiGradient,
+           BottomNavigationBarItem(
+            icon: Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  const Icon(Icons.notifications_none_rounded, size: 28),
+                  Positioned(
+                    right: -6,
+                    top: -4,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Text('10', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
               ),
-              child: const Icon(Icons.mic_rounded, color: Colors.white, size: 34),
             ),
+            label: 'Thông báo',
           ),
-        );
-      },
+          const BottomNavigationBarItem(
+            icon: Padding(padding: EdgeInsets.only(bottom: 4), child: Icon(Icons.layers_outlined, size: 28)),
+            label: 'Chức năng',
+          ),
+          const BottomNavigationBarItem(
+            icon: Padding(padding: EdgeInsets.only(bottom: 4), child: Icon(Icons.person_outline_rounded, size: 28)),
+            label: 'Cá nhân',
+          ),
+        ],
+      ),
     );
   }
 }
 
 class _HomeDashboard extends StatefulWidget {
-  final VoidCallback onNotificationTap;
-  const _HomeDashboard({required this.onNotificationTap});
+  const _HomeDashboard();
 
   @override
   State<_HomeDashboard> createState() => _HomeDashboardState();
@@ -193,84 +166,75 @@ class _HomeDashboardState extends State<_HomeDashboard> {
   Widget build(BuildContext context) {
     final authController = context.watch<AuthController>();
     final user = authController.currentUser;
-    final userName = user?.name ?? 'Bạn';
+    final currentRole = user?.role ?? 'patient';
 
     return BlocBuilder<HomeBlocHandler, HomeState>(
       builder: (context, state) {
-        final appointments = state is HomeLoaded ? state.upcomingAppointments : <AppointmentEntity>[];
-        final reminders = state is HomeLoaded ? state.medicationReminders : <MedicationReminder>[];
-        final articles = state is HomeLoaded ? state.healthNews : <HealthArticle>[];
-        final currentRole = user?.role ?? 'patient';
-
         return RefreshIndicator(
           onRefresh: () async {
             final userId = authController.currentUser?.id ?? '';
             context.read<HomeBlocHandler>().add(HomeRefreshRequested(userId: userId));
           },
-          child: CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              SliverToBoxAdapter(
-                child: HomeHeader(
-                  userName: userName,
-                  role: currentRole,
-                  unreadNotifications: 0,
-                  onNotificationTap: widget.onNotificationTap,
-                  onProfileTap: () => context.push('/profile/patient'),
-                  onVoiceTap: () => context.push('/ai/voice-assistant'),
-                  onSearchSubmit: (v) {
-                    context.push('/doctor/search', extra: {'query': v});
-                  },
+          child: Stack(
+            children: [
+              // Blue Gradient Background spanning the top section
+              Container(
+                height: 380,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Color(0xFFD4EFFF), // light blue top
+                      Color(0xFFEAF6FF),
+                      Colors.white,
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
                 ),
               ),
-              SliverPadding(
-                padding: const EdgeInsets.all(16.0),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    QuickActionsGrid(
-                      userRole: currentRole,
-                      onBookAppointment: () => context.push('/maps'),
-                      onViewAppointments: () => context.push('/appointments'),
-                      onMedicalRecords: () => context.push('/medical-records'),
-                      onPrescriptions: () => context.push('/prescriptions'),
-                      onContactSupport: () => context.push('/support'),
-                      onVoiceAssistant: () => context.push('/ai/voice-assistant'),
-                      onInpatientAdmission: () => context.push('/admission/registration/${user?.id ?? ""}'),
-                      onNotificationSettings: () => context.push('/notifications/settings'),
-                      onPricing: () => context.push('/transactions'),
-                      onSurveys: () => context.push('/surveys'),
-                      onProfile: () => context.push('/profile/patient'),
+              // Optional Geometric Shapes could be drawn here using CustomPaint
+              
+              CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                slivers: [
+                  const SliverToBoxAdapter(
+                    child: HomeHeader(),
+                  ),
+                  SliverToBoxAdapter(
+                    child: Column(
+                      children: [
+                        QuickActionsGrid(
+                          userRole: currentRole,
+                          onBookAppointment: () => context.push('/maps'),
+                          onViewAppointments: () => context.push('/appointments'),
+                          onMedicalRecords: () => context.push('/medical-records'),
+                          onPrescriptions: () => context.push('/prescriptions'),
+                          onContactSupport: () => context.push('/support'),
+                          onVoiceAssistant: () => context.push('/ai/voice-assistant'),
+                          onInpatientAdmission: () => context.push('/admission/registration/${user?.id ?? ""}'),
+                          onNotificationSettings: () => context.push('/notifications/settings'),
+                          onPricing: () => context.push('/transactions'),
+                          onSurveys: () => context.push('/surveys'),
+                          onProfile: () => context.push('/profile/patient'),
+                        ),
+                        // The big hospital banner image
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.network(
+                              'https://images.sampletemplates.com/wp-content/uploads/2016/03/Patient-Logo-Template.jpg',
+                              height: 180,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 80),
+                      ],
                     ),
-
-                    const SizedBox(height: 24),
-                    UpcomingAppointmentCard(
-                      appointments: appointments,
-                      onViewAll: () {},
-                      onBook: () {},
-                      onCancel: (a) {},
-                      onReschedule: (a) {},
-                    ),
-                    const SizedBox(height: 24),
-                    MedicationReminderSection(
-                      reminders: reminders,
-                      onMarkTaken: (id) {
-                        context.read<HomeBlocHandler>().add(HomeMedicationMarkedTaken(reminderId: id));
-                      },
-                    ),
-                    const SizedBox(height: 24),
-                    const HospitalBanner(),
-                    const SizedBox(height: 24),
-                    const FeaturedHospitalsSection(),
-                    const SizedBox(height: 24),
-                    RecommendedDoctorsSection(doctors: state is HomeLoaded ? state.recommendedDoctors : []),
-                    const SizedBox(height: 24),
-                    HealthNewsFeed(
-                      articles: articles,
-                      onArticleTap: (a) {},
-                    ),
-                    const SizedBox(height: 80),
-                  ]),
-                ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -278,7 +242,7 @@ class _HomeDashboardState extends State<_HomeDashboard> {
       },
     );
   }
-
+}
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,

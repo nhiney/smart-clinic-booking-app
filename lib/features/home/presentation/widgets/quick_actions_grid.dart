@@ -1,21 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/colors/app_colors.dart';
-
-class QuickAction {
-  final String label;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-  final String role; // 'patient', 'doctor', or 'all'
-
-  const QuickAction({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.onTap,
-    this.role = 'all',
-  });
-}
 
 class QuickActionsGrid extends StatelessWidget {
   final String userRole;
@@ -47,216 +30,141 @@ class QuickActionsGrid extends StatelessWidget {
     required this.onProfile,
   });
 
-
   @override
   Widget build(BuildContext context) {
-    final allActions = [
-      QuickAction(
-        label: 'Đặt khám',
-        icon: Icons.add_task_rounded,
-        color: AppColors.primary,
-        onTap: onBookAppointment,
-        role: 'patient',
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.95), // Slightly translucent white like glass
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0D62A2).withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, -6),
+          ),
+        ],
       ),
-      QuickAction(
-        label: 'Lịch hẹn',
-        icon: Icons.event_available_rounded,
-        color: AppColors.success,
-        onTap: onViewAppointments,
-        role: 'patient',
-      ),
-      QuickAction(
-        label: 'Lịch sử GD',
-        icon: Icons.history_rounded,
-        color: AppColors.primary,
-        onTap: onPricing,
-        role: 'patient',
-      ),
-      QuickAction(
-        label: 'Khảo sát',
-        icon: Icons.poll_rounded,
-        color: AppColors.warning,
-        onTap: onSurveys,
-        role: 'patient',
-      ),
-      QuickAction(
-        label: 'Đơn thuốc',
-        icon: Icons.medication_rounded,
-        color: AppColors.warning,
-        onTap: onPrescriptions,
-        role: 'patient',
-      ),
-      QuickAction(
-        label: 'Nhập viện',
-        icon: Icons.hotel_rounded,
-        color: Colors.orange,
-        onTap: onInpatientAdmission,
-        role: 'patient',
-      ),
-      QuickAction(
-        label: 'Thông báo',
-        icon: Icons.notifications_active_rounded,
-        color: AppColors.primary,
-        onTap: onNotificationSettings,
-      ),
-      QuickAction(
-        label: 'Bệnh nhân',
-        icon: Icons.people_alt_rounded,
-        color: AppColors.primaryDark,
-        onTap: () {},
-        role: 'doctor',
-      ),
-      QuickAction(
-        label: 'Lịch trực',
-        icon: Icons.event_note_rounded,
-        color: const Color(0xFF009688), // Teal
-        onTap: () {},
-        role: 'doctor',
-      ),
-      QuickAction(
-        label: 'Hồ sơ y tế',
-        icon: Icons.folder_shared_rounded,
-        color: const Color(0xFF9C27B0), // Purple
-        onTap: onMedicalRecords,
-      ),
-      QuickAction(
-        label: 'Hỗ trợ',
-        icon: Icons.headset_mic_rounded,
-        color: AppColors.textSecondary,
-        onTap: onContactSupport,
-      ),
-      QuickAction(
-        label: 'AI Chat',
-        icon: Icons.smart_toy_rounded,
-        color: AppColors.primary,
-        onTap: onVoiceAssistant,
-      ),
-      QuickAction(
-        label: 'Tài khoản',
-        icon: Icons.manage_accounts_rounded,
-        color: AppColors.secondary,
-        onTap: onProfile,
-        role: 'patient',
-      ),
-    ];
-
-
-    final filteredActions = allActions.where((a) => a.role == 'all' || a.role == userRole).toList();
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: Colors.white, width: 2),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.shadow.withOpacity(0.05),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Chức năng',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primaryDark,
-                  ),
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+      child: Column(
+        children: [
+          // Header: Chức năng + Actions
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Chức năng',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF0D62A2),
                 ),
-                Row(
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.grey.shade300, width: 1),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                child: Row(
                   children: [
+                    const Icon(Icons.tune_rounded, color: Color(0xFF0D62A2), size: 20),
                     Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                        color: AppColors.primarySurface,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.tune_rounded, size: 18, color: AppColors.primaryDark),
+                      margin: const EdgeInsets.symmetric(horizontal: 12),
+                      width: 1,
+                      height: 18,
+                      color: Colors.grey.shade300,
                     ),
-                    const SizedBox(width: 10),
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                        color: AppColors.primarySurface,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.search_rounded, size: 18, color: AppColors.primaryDark),
-                    ),
+                    const Icon(Icons.search_rounded, color: Color(0xFF0D62A2), size: 20),
                   ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 20,
-                childAspectRatio: 0.85,
               ),
-              itemCount: filteredActions.length,
-              itemBuilder: (context, index) {
-                return _QuickActionTile(action: filteredActions[index]);
-              },
-            ),
-          ],
-        ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          // 4-column Grid
+          GridView.count(
+            crossAxisCount: 4,
+            shrinkWrap: true,
+            padding: EdgeInsets.zero,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 20,
+            crossAxisSpacing: 12,
+            childAspectRatio: 0.72,
+            children: [
+              _ActionItem(icon: Icons.stethoscope, label: 'Đặt khám', onTap: onBookAppointment),
+              _ActionItem(icon: Icons.folder_shared_outlined, label: 'Lịch sử đặt\nkhám', onTap: onViewAppointments),
+              _ActionItem(icon: Icons.payment_rounded, label: 'Thanh toán\nviện phí', onTap: onPricing),
+              _ActionItem(icon: Icons.receipt_long_outlined, label: 'Hoá đơn', onTap: onPrescriptions),
+              _ActionItem(icon: Icons.medical_information_outlined, label: 'Hồ sơ sức\nkhoẻ', onTap: onMedicalRecords),
+              _ActionItem(icon: Icons.biotech_outlined, label: 'Kết quả cận\nlâm sàng', onTap: onSurveys),
+              _ActionItem(icon: Icons.bed_rounded, label: 'Đăng ký\nnhập viện', onTap: onInpatientAdmission),
+              _ActionItem(icon: Icons.headset_mic_outlined, label: 'Lắng nghe\nkhách hàng', onTap: onContactSupport),
+              _ActionItem(icon: Icons.supervised_user_circle_outlined, label: 'Hướng dẫn', onTap: () {}),
+              _ActionItem(icon: Icons.home_work_outlined, label: 'Theo dõi sức\nkhoẻ tại nhà', onTap: () {}),
+              _ActionItem(icon: Icons.vaccines_outlined, label: 'Tiêm chủng', onTap: () {}),
+              _ActionItem(icon: Icons.smart_toy_outlined, label: 'Hỏi - đáp\n(Chatbot)', onTap: onVoiceAssistant),
+            ],
+          ),
+        ],
       ),
     );
   }
 }
 
-class _QuickActionTile extends StatelessWidget {
-  final QuickAction action;
+class _ActionItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
 
-  const _QuickActionTile({required this.action});
+  const _ActionItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: action.onTap,
+      onTap: onTap,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Container(
             width: 60,
             height: 60,
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: AppColors.primarySurface, width: 1.2),
-              boxShadow: [
-                BoxShadow(
-                  color: action.color.withOpacity(0.1),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                ),
-              ],
+               color: Colors.white,
+               borderRadius: BorderRadius.circular(16),
+               border: Border.all(color: Colors.grey.shade200, width: 1.5),
+               boxShadow: [
+                 BoxShadow(
+                   color: Colors.black.withOpacity(0.02),
+                   blurRadius: 4,
+                   offset: const Offset(0, 2),
+                 ),
+               ],
             ),
-            child: Icon(action.icon, color: action.color, size: 28),
+            child: Icon(
+              icon,
+              color: const Color(0xFF0288D1),
+              size: 28,
+            ),
           ),
-          const SizedBox(height: 10),
-          Text(
-            action.label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-              letterSpacing: -0.2,
+          const SizedBox(height: 8),
+          Expanded(
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              style: const TextStyle(
+                fontSize: 11,
+                height: 1.2,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF0D62A2),
+              ),
             ),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

@@ -1,12 +1,12 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
+import 'dart:io';
 import 'dart:ui';
 import 'dart:typed_data';
-import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:gal/gal.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:smart_clinic_booking/core/extensions/context_extension.dart';
 import 'package:smart_clinic_booking/core/widgets/app_button.dart';
@@ -48,70 +48,22 @@ class _AccountQrScreenState extends State<AccountQrScreen> {
 
   Future<void> _saveQrToGallery(BuildContext context) async {
     try {
-      PermissionStatus status;
-      
-      if (Platform.isIOS) {
-        status = await Permission.photosAddOnly.request();
-      } else {
-        // Android logic
-        final deviceInfo = DeviceInfoPlugin();
-        final androidInfo = await deviceInfo.androidInfo;
-        final sdkInt = androidInfo.version.sdkInt;
-
-        if (sdkInt >= 33) {
-          status = await Permission.photos.request();
-        } else {
-          status = await Permission.storage.request();
+      // Kiểm tra quyền truy cập thư viện ảnh
+      final hasAccess = await Gal.hasAccess(toAlbum: true);
+      if (!hasAccess) {
+        final granted = await Gal.requestAccess(toAlbum: true);
+        if (!granted) {
+          if (context.mounted) _showSettingsDialog(context);
+          return;
         }
       }
 
-      if (status.isPermanentlyDenied) {
-        if (context.mounted) {
-          _showSettingsDialog(context);
-        }
-        return;
-      }
-
-      if (!status.isGranted) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                _tr(
-                  context,
-                  'Bạn cần cấp quyền truy cập ảnh để lưu mã QR.',
-                  'You need to grant photo access to save the QR code.',
-                  'QRコードを保存するには写真へのアクセス権限が必要です。',
-                  'QR 코드를 저장하려면 사진 접근 권한이 필요합니다.',
-                  '您需要授予照片访问权限才能保存二维码。',
-                ),
-              ),
-              action: SnackBarAction(
-                label: _tr(context, 'Cài đặt', 'Settings', '設定', '설정', '设置'),
-                onPressed: () => openAppSettings(),
-              ),
-            ),
-          );
-        }
-        return;
-      }
-
+      // Render QR widget thành ảnh PNG
       final boundary = _qrBoundaryKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (boundary == null) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                _tr(
-                  context,
-                  'Không thể tạo ảnh QR. Vui lòng thử lại.',
-                  'Cannot create QR image. Please try again.',
-                  'QR画像を作成できません。再試行してください。',
-                  'QR 이미지를 생성할 수 없습니다. 다시 시도하세요.',
-                  '无法生成二维码图片，请重试。',
-                ),
-              ),
-            ),
+            SnackBar(content: Text(_tr(context, 'Không thể tạo ảnh QR. Vui lòng thử lại.', 'Cannot generate QR image.', 'QR画像を作成できません。', 'QR 이미지 생성 실패.', '无法生成二维码。'))),
           );
         }
         return;
@@ -119,90 +71,44 @@ class _AccountQrScreenState extends State<AccountQrScreen> {
 
       final image = await boundary.toImage(pixelRatio: 3.0);
       final byteData = await image.toByteData(format: ImageByteFormat.png);
-      
-      if (byteData == null) {
-        throw Exception('Could not convert QR boundary to byte data');
-      }
+      if (byteData == null) throw Exception('Không thể chuyển đổi ảnh QR.');
 
-      // CRITICAL FIX: Use offset and length to get the exact bytes for the image
-      final bytes = byteData.buffer.asUint8List(
-        byteData.offsetInBytes,
-        byteData.lengthInBytes,
-      );
+      final bytes = byteData.buffer.asUint8List(byteData.offsetInBytes, byteData.lengthInBytes);
 
-      debugPrint('[AUTH] Attempting to save QR image. Bytes length: ${bytes.length}');
+      // Lưu vào thư mục tạm rồi đưa vào thư viện ảnh
+      final dir = await getTemporaryDirectory();
+      final filePath = '${dir.path}/icare_qr_${DateTime.now().millisecondsSinceEpoch}.png';
+      final file = await _writeBytes(filePath, bytes);
+      await Gal.putImage(file.path, album: 'ICare');
 
-      Future<void> saveImage(Uint8List bytes) async {
-        final directory = await getApplicationDocumentsDirectory();
-        final file = File('${directory.path}/qr_code.png');
-        await file.writeAsBytes(bytes);
-      }
-
-      debugPrint('[AUTH] Image saved successfully');
-
-      bool isSuccess = false;
-
-      try {
-        await saveImage(bytes); // hàm bạn tự viết
-        isSuccess = true;
-      } catch (e) {
-        debugPrint('[AUTH] Save image error: $e');
-        isSuccess = false;
-      }
-
-      if (!context.mounted) return;
-      
-      if (!isSuccess) {
-        debugPrint('[AUTH] Gallery saving failed');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _tr(
-                context,
-                'Lưu mã QR thất bại. Vui lòng thử lại sau.',
-                'Failed to save QR code. Please try again later.',
-                'QRコードの保存に失敗しました。',
-                'QR 코드 저장에 실패했습니다.',
-                '保存二维码失败。',
-              ),
-            ),
-          ),
-        );
-        return;
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _tr(
-              context,
-              'Đã lưu mã QR về máy thành công.',
-              'QR code saved successfully.',
-              'QRコードを保存しました。',
-              'QR 코드가 저장되었습니다.',
-              '二维码保存成功。',
-            ),
-          ),
-        ),
-      );
-    } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              _tr(
-                context,
-                'Có lỗi khi lưu ảnh QR.',
-                'Error while saving QR image.',
-                'QR画像の保存中にエラーが発生しました。',
-                'QR 이미지 저장 중 오류가 발생했습니다.',
-                '保存二维码图片时发生错误。',
-              ),
-            ),
+            content: Text(_tr(context, 'Đã lưu mã QR vào thư viện ảnh.', 'QR code saved to gallery.', 'QRコードをギャラリーに保存しました。', 'QR 코드가 갤러리에 저장되었습니다.', '二维码已保存到相册。')),
+            backgroundColor: Colors.green,
           ),
         );
       }
+    } on GalException catch (e) {
+      if (context.mounted) {
+        final msg = e.type == GalExceptionType.accessDenied
+            ? _tr(context, 'Bị từ chối quyền truy cập ảnh.', 'Photo access denied.', '写真アクセスが拒否されました。', '사진 접근이 거부되었습니다.', '照片访问被拒绝。')
+            : _tr(context, 'Lưu ảnh thất bại: ${e.type.message}', 'Save failed: ${e.type.message}', '保存失敗: ${e.type.message}', '저장 실패: ${e.type.message}', '保存失败: ${e.type.message}');
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_tr(context, 'Có lỗi khi lưu ảnh QR: $e', 'Error saving QR: $e', 'エラー: $e', '오류: $e', '错误: $e'))),
+        );
+      }
     }
+  }
+
+  Future<File> _writeBytes(String path, Uint8List bytes) async {
+    final file = File(path);
+    await file.writeAsBytes(bytes);
+    return file;
   }
 
   void _showSettingsDialog(BuildContext context) {

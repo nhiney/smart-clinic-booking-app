@@ -55,31 +55,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     final l10n = AppLocalizations.of(context)!;
     final authController = context.read<AuthController>();
-    
+
     final normalizedPhone = AuthController.normalizePhone(selectedCountryCode, phoneController.text);
-    final virtualEmail = "$normalizedPhone@icare.patient";
+    final virtualEmail = '$normalizedPhone@icare.patient';
     final password = passwordController.text.trim();
 
-    // Compare with local registration if available
-    final isLocalMatch = await authController.verifyAgainstLocalRegistration(normalizedPhone, password);
-    if (!isLocalMatch) {
-      _showError(_tr(
-        'Mật khẩu không khớp với thông tin đã đăng ký trên thiết bị này.',
-        'Password does not match the registration info on this device.',
-        'パスワードがこのデバイスの登録情報と一致しません。',
-        '비밀번호가 이 기기의 등록 정보와 일치하지 않습니다.',
-        '密码与此设备上的注册信息不匹配。'
-      ));
-      return;
-    }
-
-    final success = await authController.login(
-      virtualEmail,
-      password,
-    );
+    final success = await authController.login(virtualEmail, password);
 
     if (!mounted) return;
 

@@ -1,243 +1,68 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/colors/app_colors.dart';
-import '../../../../core/widgets/icare_logo.dart';
 
 class HomeHeader extends StatelessWidget {
-  final String userName;
-  final String role;
-  final int unreadNotifications;
-  final VoidCallback onNotificationTap;
-  final VoidCallback onProfileTap;
-  final VoidCallback onVoiceTap;
-  final Function(String) onSearchSubmit;
-
-  const HomeHeader({
-    super.key,
-    required this.userName,
-    required this.role,
-    required this.unreadNotifications,
-    required this.onNotificationTap,
-    required this.onProfileTap,
-    required this.onVoiceTap,
-    required this.onSearchSubmit,
-  });
+  const HomeHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final greeting = _getGreeting();
-    final roleLabel = role == 'doctor' ? 'Bác sĩ' : 'Bạn';
-
     return Container(
-      padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 10, 20, 10),
-      decoration: const BoxDecoration(
-        gradient: AppColors.backgroundGradient,
-      ),
+      color: Colors.transparent, // transparent to let the blue background show
+      padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 16, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Top row: Logo and Hospital Name
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Row(
-                children: [
-                  const ICareLogo(
-                    size: 60,
-                    showText: false,
-                  ),
-                  const SizedBox(width: 14),
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'ICARE',
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.primaryDark,
-                          letterSpacing: 1.0,
-                          height: 1.1,
-                        ),
-                      ),
-                      Text(
-                        'Healthcare Excellence',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                alignment: Alignment.center,
+                // A placeholder for the UMC logo
+                child: const Icon(Icons.health_and_safety_outlined, color: Color(0xFF0D62A2), size: 30),
               ),
-              Row(
-                children: [
-                  _HeaderIconButton(
-                    icon: Icons.notifications_none_rounded,
-                    onTap: onNotificationTap,
-                    badgeCount: unreadNotifications,
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Bệnh viện Đại học Y Dược TP. Hồ Chí Minh',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF0D62A2),
                   ),
-                  const SizedBox(width: 12),
-                  GestureDetector(
-                    onTap: onProfileTap,
-                    child: Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.shadow,
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: const CircleAvatar(
-                        backgroundColor: AppColors.primarySurface,
-                        child: Icon(Icons.person, color: AppColors.primary, size: 24),
-                      ),
-                    ),
-                  ),
-                ],
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          Padding(
-            padding: const EdgeInsets.only(left: 2),
-            child: Text(
-              '$greeting, $roleLabel $userName'.trim(),
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
-              ),
+          const SizedBox(height: 16),
+          // Title
+          const Text(
+            'UMC Care',
+            style: TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF0D62A2),
+              letterSpacing: 1.0,
             ),
           ),
-          const SizedBox(height: 18),
-          // Search Bar
-          Hero(
-            tag: 'home_search_bar',
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withOpacity(0.08),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: TextField(
-                  onSubmitted: onSearchSubmit,
-                  textInputAction: TextInputAction.search,
-                  decoration: InputDecoration(
-                    hintText: 'Tìm bác sĩ, chuyên khoa...',
-                    hintStyle: TextStyle(
-                      color: AppColors.textHint.withOpacity(0.6),
-                      fontSize: 15,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search_rounded,
-                      color: AppColors.primary,
-                    ),
-                    suffixIcon: Container(
-                      margin: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.primarySurface,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: IconButton(
-                        icon: const Icon(
-                          Icons.tune_rounded,
-                          color: AppColors.primary,
-                          size: 18,
-                        ),
-                        onPressed: () => onSearchSubmit(''),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 15),
-                  ),
-                ),
-              ),
+          const SizedBox(height: 6),
+          Text(
+            'Ứng dụng dành cho Người bệnh',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF0D62A2).withOpacity(0.8),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 32),
         ],
       ),
-    );
-  }
-
-  String _getGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Chào buổi sáng';
-    if (hour < 18) return 'Chào buổi chiều';
-    return 'Chào buổi tối';
-  }
-}
-
-class _HeaderIconButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  final int badgeCount;
-
-  const _HeaderIconButton({
-    required this.icon,
-    required this.onTap,
-    this.badgeCount = 0,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-              ),
-            ],
-          ),
-          child: IconButton(
-            icon: Icon(icon, color: AppColors.primary, size: 24),
-            onPressed: onTap,
-          ),
-        ),
-        if (badgeCount > 0)
-          Positioned(
-            right: 0,
-            top: 0,
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: const BoxDecoration(
-                color: AppColors.error,
-                shape: BoxShape.circle,
-              ),
-              constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-              child: Text(
-                badgeCount > 9 ? '9+' : '$badgeCount',
-                style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ),
-      ],
     );
   }
 }

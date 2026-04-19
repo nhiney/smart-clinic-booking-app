@@ -80,6 +80,19 @@ service cloud.firestore {
       allow create: if isSignedIn();
     }
 
+    // Registered phones — public read for duplicate-check before login, auth write
+    match /registered_phones/{phone} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    // QR login tokens — public read so scanner can verify token before login
+    match /qr_tokens/{token} {
+      allow read: if true;
+      allow write: if isSignedIn();
+      allow delete: if isSignedIn();
+    }
+
     // Default Deny
     match /{document=**} {
       allow read: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());

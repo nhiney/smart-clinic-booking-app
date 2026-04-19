@@ -37,16 +37,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  void _goToOtp() {
+  Future<void> _goToOtp() async {
     final l10n = AppLocalizations.of(context)!;
     if (!_formKey.currentState!.validate()) return;
 
     String phone = phoneController.text.trim();
-
     if (selectedCountryCode == "+84" && phone.startsWith('0')) {
       phone = phone.substring(1);
     }
-
     final fullPhone = "$selectedCountryCode$phone";
 
     if (!isChecked) {
@@ -58,8 +56,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final authController = context.read<AuthController>();
 
-    // NOTE: We must not query other users' /users documents here due to Firestore rules.
-    // Duplicate phone is enforced later when linking virtual email during password setup.
+    // Kiểm tra số điện thoại đã đăng ký chưa
+    final isRegistered = await authController.checkPhoneRegistered(fullPhone);
+    if (!mounted) return;
+    if (isRegistered) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            Localizations.localeOf(context).languageCode == 'vi'
+                ? 'Số điện thoại này đã được đăng ký. Vui lòng đăng nhập.'
+                : 'This phone number is already registered. Please log in.',
+          ),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+      return;
+    }
+
     authController.verifyPhone(
       fullPhone,
       onCodeSent: () {

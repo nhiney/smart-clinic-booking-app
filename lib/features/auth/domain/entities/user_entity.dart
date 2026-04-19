@@ -16,6 +16,7 @@ class UserEntity {
   final String avatarUrl;
   final String? idCardUrl;
   final String? medicalCertUrl;
+  final String? password;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -37,6 +38,7 @@ class UserEntity {
     this.avatarUrl = '',
     this.idCardUrl,
     this.medicalCertUrl,
+    this.password,
     this.createdAt,
     this.updatedAt,
   });

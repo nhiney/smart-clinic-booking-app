@@ -20,6 +20,7 @@ class UserModel extends UserEntity {
     super.avatarUrl,
     super.idCardUrl,
     super.medicalCertUrl,
+    super.password,
     super.createdAt,
     super.updatedAt,
   });
@@ -43,6 +44,7 @@ class UserModel extends UserEntity {
       avatarUrl: json['avatarUrl'] ?? '',
       idCardUrl: json['idCardUrl'],
       medicalCertUrl: json['medicalCertUrl'],
+      password: json['password'],
       createdAt: json['created_at'] != null
           ? (json['created_at'] as Timestamp).toDate()
           : (json['createdAt'] != null ? (json['createdAt'] as Timestamp).toDate() : null),
@@ -69,7 +71,8 @@ class UserModel extends UserEntity {
       'status': status,
       'avatarUrl': avatarUrl,
       'idCardUrl': idCardUrl,
-      'medicalCertUrl': medicalCertUrl,
+      'medical_cert_url': medicalCertUrl,
+      'password': password,
       'created_at': createdAt != null
           ? Timestamp.fromDate(createdAt!)
           : FieldValue.serverTimestamp(),
@@ -98,6 +101,7 @@ class UserModel extends UserEntity {
       avatarUrl: entity.avatarUrl,
       idCardUrl: entity.idCardUrl,
       medicalCertUrl: entity.medicalCertUrl,
+      password: entity.password,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     );
@@ -142,6 +146,7 @@ class UserModel extends UserEntity {
       avatarUrl: avatarUrl ?? this.avatarUrl,
       idCardUrl: idCardUrl ?? this.idCardUrl,
       medicalCertUrl: medicalCertUrl ?? this.medicalCertUrl,
+      password: password ?? this.password,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
