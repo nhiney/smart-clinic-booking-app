@@ -290,7 +290,10 @@ class AuthRemoteDatasource {
   Future<bool> isPhoneRegistered(String phone) async {
     try {
       final normalized = _normalizePhone(phone);
-      final doc = await _firestore.collection('registered_phones').doc(normalized).get();
+      final doc = await _firestore.collection('registered_phones')
+          .doc(normalized)
+          .get(const GetOptions(source: Source.serverAndCache))
+          .timeout(const Duration(seconds: 5));
       return doc.exists;
     } catch (e) {
       debugPrint('[AUTH] isPhoneRegistered error: $e');
@@ -535,7 +538,13 @@ class AuthRemoteDatasource {
     required void Function(String error) onError,
   }) async {
     try {
+      debugPrint('[AUTH] Bắt đầu xác thực số điện thoại Firebase: $phone');
       bool hasReplied = false;
+
+      // Bỏ qua reCAPTCHA nếu có thể
+      if (kDebugMode) {
+        await _firebaseAuth.setSettings(appVerificationDisabledForTesting: true);
+      }
 
       String formatted = phone.trim();
       if (!formatted.startsWith('+')) {
@@ -548,6 +557,32 @@ class AuthRemoteDatasource {
         }
       }
 
+      debugPrint('[AUTH] Dữ liệu số điện thoại gửi đi: $formatted');
+
+      // --- MOCK MÔI TRƯỜNG DEV (GIẢI QUYẾT TREO UI) ---
+      // Khi chạy trên Simulator, Firebase PhoneAuth thường bị treo (silent hang) vì thiếu APNs/reCAPTCHA bị lỗi.
+      // Chúng ta sẽ giả lập thành công để bạn có thể code tiếp UI của màng nhập OTP.
+      if (kDebugMode && (formatted == '+84326583876' || formatted == '+84000000000')) {
+        debugPrint('[AUTH] Đang dùng Mock OTP cho số test: $formatted');
+        Future.delayed(const Duration(seconds: 1), () {
+          if (!hasReplied) {
+            hasReplied = true;
+            onCodeSent('mock_vid_${formatted.replaceAll("+", "")}');
+          }
+        });
+        return; // Dừng, không gọi tới Firebase thật nữa để tránh treo
+      }
+
+      // --- TIMEOUT AN TOÀN ---
+      // Nếu Firebase không kích hoạt bất kỳ callback nào (lỗi silent), ta ngắt sau 15s để nhả UI.
+      Future.delayed(const Duration(seconds: 15), () {
+        if (!hasReplied) {
+          hasReplied = true;
+          onError('Lỗi từ Firebase: Quá thời gian phản hồi. Nếu dùng Simulator, hãy thêm số diện thoại vào phần "Thử nghiệm" (Testing) trên console Firebase.');
+        }
+      });
+
+      // API chính của Firebase
       await _firebaseAuth.verifyPhoneNumber(
         phoneNumber: formatted,
         timeout: const Duration(seconds: 60),
@@ -585,7 +620,9 @@ class AuthRemoteDatasource {
           hasReplied = true;
           onCodeSent(verificationId);
         },
-        codeAutoRetrievalTimeout: (_) {},
+        codeAutoRetrievalTimeout: (_) {
+          // Bắt buộc theo SDK nhưng không ảnh hưởng flow popup mã
+        },
       );
     } catch (e) {
       onError('Lỗi hệ thống khi gửi OTP: $e');
@@ -599,6 +636,37 @@ class AuthRemoteDatasource {
     String? displayName,
   }) async {
     try {
+      // --- MOCK MÔI TRƯỜNG DEV ---
+      if (kDebugMode && verificationId.startsWith('mock_vid_')) {
+        debugPrint('[AUTH] Đang xác thực OTP Mock cho $verificationId');
+        await Future.delayed(const Duration(seconds: 1)); // giả lập network
+        if (smsCode == '123456') { // OTP mặc định cho mock
+          final fakePhone = '+${verificationId.replaceAll("mock_vid_", "")}';
+          final fakeUid = 'MOCK_USER_${verificationId}';
+          
+          final newUser = UserModel(
+            id: fakeUid,
+            email: '$fakePhone@icare.patient',
+            name: displayName ?? 'Người dùng thử nghiệm',
+            phone: fakePhone,
+            authProvider: 'phone',
+            role: 'patient',
+            status: 'active',
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          );
+          
+          // Tuy là Mock nhưng vẫn lưu vào Local FireStore Cache để có thể hoạt động nhẹ
+          try {
+            await _firestore.collection('users').doc(fakeUid).set(newUser.toJson());
+          } catch (_) {}
+          
+          return newUser;
+        } else {
+          throw Exception('Mã OTP không chính xác (Mock OTP là 123456).');
+        }
+      }
+
       final credential = PhoneAuthProvider.credential(
         verificationId: verificationId,
         smsCode: smsCode,

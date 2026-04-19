@@ -33,18 +33,7 @@ class QuickActionsGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.95), // Slightly translucent white like glass
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0D62A2).withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, -6),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       child: Column(
         children: [
           // Header: Chức năng + Actions
@@ -68,29 +57,29 @@ class QuickActionsGrid extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 child: Row(
                   children: [
-                    const Icon(Icons.tune_rounded, color: Color(0xFF0D62A2), size: 20),
+                    const Icon(Icons.tune_rounded, color: Color(0xFF0D62A2), size: 18),
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 12),
                       width: 1,
-                      height: 18,
+                      height: 16,
                       color: Colors.grey.shade300,
                     ),
-                    const Icon(Icons.search_rounded, color: Color(0xFF0D62A2), size: 20),
+                    const Icon(Icons.search_rounded, color: Color(0xFF0D62A2), size: 18),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           // 4-column Grid
           GridView.count(
             crossAxisCount: 4,
             shrinkWrap: true,
             padding: EdgeInsets.zero,
             physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 20,
-            crossAxisSpacing: 12,
-            childAspectRatio: 0.72,
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 8,
+            childAspectRatio: 0.85,
             children: [
               _ActionItem(icon: Icons.stethoscope, label: 'Đặt khám', onTap: onBookAppointment),
               _ActionItem(icon: Icons.folder_shared_outlined, label: 'Lịch sử đặt\nkhám', onTap: onViewAppointments),
@@ -111,6 +100,7 @@ class QuickActionsGrid extends StatelessWidget {
     );
   }
 }
+
 
 class _ActionItem extends StatelessWidget {
   final IconData icon;

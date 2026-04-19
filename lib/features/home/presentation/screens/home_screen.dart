@@ -175,34 +175,42 @@ class _HomeDashboardState extends State<_HomeDashboard> {
             final userId = authController.currentUser?.id ?? '';
             context.read<HomeBlocHandler>().add(HomeRefreshRequested(userId: userId));
           },
-          child: Stack(
-            children: [
-              // Blue Gradient Background spanning the top section
-              Container(
-                height: 380,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Color(0xFFD4EFFF), // light blue top
-                      Color(0xFFEAF6FF),
-                      Colors.white,
-                    ],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                ),
+          child: Container(
+            // Toàn bộ màn hình có nền gradient phía sau
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFFD4EFFF), // xanh dương nhạt nhất ở trên cùng
+                  Color(0xFFEAF6FF),
+                  Colors.white,
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: [0.0, 0.3, 0.6],
               ),
-              // Optional Geometric Shapes could be drawn here using CustomPaint
-              
-              CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                slivers: [
-                  const SliverToBoxAdapter(
-                    child: HomeHeader(),
-                  ),
-                  SliverToBoxAdapter(
+            ),
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+              slivers: [
+                const SliverToBoxAdapter(
+                  child: HomeHeader(), // header đã được bỏ margin thừa
+                ),
+                SliverToBoxAdapter(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 10,
+                          offset: const Offset(0, -4),
+                        ),
+                      ],
+                    ),
                     child: Column(
                       children: [
+                        const SizedBox(height: 4), // Khoảng trống nhỏ trên đầu lưới
                         QuickActionsGrid(
                           userRole: currentRole,
                           onBookAppointment: () => context.push('/maps'),
@@ -219,12 +227,12 @@ class _HomeDashboardState extends State<_HomeDashboard> {
                         ),
                         // The big hospital banner image
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(12),
                             child: Image.network(
                               'https://images.sampletemplates.com/wp-content/uploads/2016/03/Patient-Logo-Template.jpg',
-                              height: 180,
+                              height: 140,
                               width: double.infinity,
                               fit: BoxFit.cover,
                             ),
@@ -234,38 +242,12 @@ class _HomeDashboardState extends State<_HomeDashboard> {
                       ],
                     ),
                   ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         );
       },
-    );
-  }
-}
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Đăng xuất'),
-        content: const Text('Bạn có chắc chắn muốn đăng xuất không?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Hủy'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await context.read<AuthController>().logout();
-              if (context.mounted) {
-                context.go('/login');
-              }
-            },
-            child: const Text('Đăng xuất', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
     );
   }
 }
