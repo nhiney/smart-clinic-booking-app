@@ -7,9 +7,13 @@ import '../../data/datasources/medical_record_local_datasource.dart';
 import '../../data/datasources/medical_record_remote_datasource.dart';
 import '../../../../core/database/sqlite_helper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 final medicalRecordRemoteDataSourceProvider = Provider<MedicalRecordRemoteDataSource>((ref) {
-  return MedicalRecordRemoteDataSourceImpl(FirebaseFirestore.instance);
+  return MedicalRecordRemoteDataSourceImpl(
+    firestore: FirebaseFirestore.instance,
+    storage: FirebaseStorage.instance,
+  );
 });
 
 final medicalRecordLocalDataSourceProvider = Provider<MedicalRecordLocalDataSource>((ref) {
