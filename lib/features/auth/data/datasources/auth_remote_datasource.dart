@@ -10,6 +10,7 @@ import 'package:local_auth/local_auth.dart';
 import 'package:uuid/uuid.dart';
 import '../../domain/entities/user_entity.dart';
 import '../models/user_model.dart';
+import '../../../../core/services/local_account_store.dart';
 
 @lazySingleton
 class AuthRemoteDatasource {
@@ -226,6 +227,40 @@ class AuthRemoteDatasource {
     final user = _firebaseAuth.currentUser;
     debugPrint('[AUTH] Register called. UID: ${user?.uid ?? 'NULL'}');
 
+    // In debug mode the mock OTP flow never creates a real Firebase user.
+    // Build the user from the predictable mock UID and save to Firestore directly.
+    if (user == null && kDebugMode) {
+      final normalized = _normalizePhone(phone);
+      final mockUid = 'MOCK_USER_mock_vid_$normalized';
+      final mockModel = UserModel(
+        id: mockUid,
+        email: email ?? '$normalized@icare.patient',
+        name: name,
+        phone: phone,
+        authProvider: 'phone',
+        role: role,
+        tenantId: tenantId,
+        isVerified: role == 'patient',
+        status: 'active',
+        password: password,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+      try {
+        final data = mockModel.toJson();
+        data['uid'] = mockUid;
+        await _firestore.collection('users').doc(mockUid).set(data, SetOptions(merge: true));
+        await _firestore.collection('registered_phones').doc(normalized).set({
+          'uid': mockUid,
+          'created_at': FieldValue.serverTimestamp(),
+        });
+        debugPrint('[AUTH] Mock register saved. UID: $mockUid');
+      } catch (e) {
+        debugPrint('[AUTH] Mock register Firestore error (non-fatal): $e');
+      }
+      return mockModel;
+    }
+
     if (user == null) {
       throw Exception('Chưa xác thực Firebase. Vui lòng thử lại từ đầu.');
     }
@@ -286,25 +321,28 @@ class AuthRemoteDatasource {
   }
 
   /// CHECK IF PHONE IS ALREADY REGISTERED
-  /// Uses a public-readable `registered_phones` collection (see firestore.rules)
+  /// Ưu tiên LocalAccountStore (SharedPreferences) — hoạt động offline,
+  /// fallback về Firestore nếu không tìm thấy ở local.
   Future<bool> isPhoneRegistered(String phone) async {
+    // 1. Kiểm tra local trước — nhanh, không cần mạng
+    final localFound = await LocalAccountStore.instance.isPhoneRegistered(phone);
+    if (localFound) return true;
+
+    // 2. Fallback Firestore (production mode)
+    if (kDebugMode) return false; // Trong debug chỉ dùng local
     try {
       final normalized = _normalizePhone(phone);
       final ref = _firestore.collection('registered_phones').doc(normalized);
-
-      // Check cache first — instant, no network cost
       try {
         final cached = await ref.get(const GetOptions(source: Source.cache));
         if (cached.exists) return true;
-      } catch (_) {} // cache miss is expected for new users
-
-      // Fallback to server with shorter timeout
+      } catch (_) {}
       final doc = await ref
           .get(const GetOptions(source: Source.server))
           .timeout(const Duration(seconds: 3));
       return doc.exists;
     } catch (e) {
-      debugPrint('[AUTH] isPhoneRegistered error: $e');
+      debugPrint('[AUTH] isPhoneRegistered Firestore error: $e');
       return false;
     }
   }
@@ -315,6 +353,17 @@ class AuthRemoteDatasource {
     String? targetUid,
   }) async {
     final user = _firebaseAuth.currentUser;
+
+    // Mock fallback: debug mode với mock user (Firebase currentUser == null)
+    if (user == null && kDebugMode) {
+      debugPrint('[AUTH] createQrLoginToken — mock mode, trả về token giả');
+      final mockToken = 'mock_qr_${DateTime.now().millisecondsSinceEpoch}';
+      final expiresAt = persistent
+          ? DateTime.now().add(const Duration(days: 3650))
+          : DateTime.now().add(const Duration(days: 30));
+      return {'token': mockToken, 'expiresAt': expiresAt.toIso8601String()};
+    }
+
     if (user == null) throw Exception('Bạn cần đăng nhập trên thiết bị tạo QR.');
 
     final uid = targetUid ?? user.uid;
@@ -549,11 +598,6 @@ class AuthRemoteDatasource {
       debugPrint('[AUTH] Bắt đầu xác thực số điện thoại Firebase: $phone');
       bool hasReplied = false;
 
-      // Bỏ qua reCAPTCHA nếu có thể
-      if (kDebugMode) {
-        await _firebaseAuth.setSettings(appVerificationDisabledForTesting: true);
-      }
-
       String formatted = phone.trim();
       if (!formatted.startsWith('+')) {
         if (formatted.startsWith('0')) {
@@ -567,29 +611,15 @@ class AuthRemoteDatasource {
 
       debugPrint('[AUTH] Dữ liệu số điện thoại gửi đi: $formatted');
 
-      // --- MOCK MÔI TRƯỜNG DEV ---
-      // Simulator không hỗ trợ APNs nên Firebase PhoneAuth bị treo (silent hang).
-      // Trong debug mode, mock toàn bộ số điện thoại — OTP mặc định là 123456.
-      if (kDebugMode) {
-        debugPrint('[AUTH] DEBUG MODE — Mock OTP cho: $formatted (dùng mã 123456)');
-        Future.microtask(() {
-          if (!hasReplied) {
-            hasReplied = true;
-            onCodeSent('mock_vid_${formatted.replaceAll("+", "")}');
-          }
-        });
-        return;
-      }
-
-      // --- TIMEOUT AN TOÀN (production) ---
-      Future.delayed(const Duration(seconds: 12), () {
+      // Safety timeout: if Firebase does not respond within 30s, surface an error.
+      Future.delayed(const Duration(seconds: 30), () {
         if (!hasReplied) {
           hasReplied = true;
-          onError('Quá thời gian phản hồi. Kiểm tra kết nối mạng hoặc thêm số điện thoại vào Firebase Console > Authentication > Testing.');
+          onError('Quá thời gian phản hồi. Kiểm tra kết nối mạng.');
         }
       });
 
-      // API chính của Firebase
+      // --- GỌI FIREBASE PHONE AUTH THẬT ---
       await _firebaseAuth.verifyPhoneNumber(
         phoneNumber: formatted,
         timeout: const Duration(seconds: 60),
@@ -625,11 +655,10 @@ class AuthRemoteDatasource {
         codeSent: (String verificationId, int? resendToken) {
           if (hasReplied) return;
           hasReplied = true;
+          debugPrint('[AUTH] OTP đã gửi. verificationId: $verificationId');
           onCodeSent(verificationId);
         },
-        codeAutoRetrievalTimeout: (_) {
-          // Bắt buộc theo SDK nhưng không ảnh hưởng flow popup mã
-        },
+        codeAutoRetrievalTimeout: (_) {},
       );
     } catch (e) {
       onError('Lỗi hệ thống khi gửi OTP: $e');
@@ -643,37 +672,6 @@ class AuthRemoteDatasource {
     String? displayName,
   }) async {
     try {
-      // --- MOCK MÔI TRƯỜNG DEV ---
-      if (kDebugMode && verificationId.startsWith('mock_vid_')) {
-        debugPrint('[AUTH] Đang xác thực OTP Mock cho $verificationId');
-        await Future.delayed(const Duration(seconds: 1)); // giả lập network
-        if (smsCode == '123456') { // OTP mặc định cho mock
-          final fakePhone = '+${verificationId.replaceAll("mock_vid_", "")}';
-          final fakeUid = 'MOCK_USER_${verificationId}';
-          
-          final newUser = UserModel(
-            id: fakeUid,
-            email: '$fakePhone@icare.patient',
-            name: displayName ?? 'Người dùng thử nghiệm',
-            phone: fakePhone,
-            authProvider: 'phone',
-            role: 'patient',
-            status: 'active',
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-          );
-          
-          // Tuy là Mock nhưng vẫn lưu vào Local FireStore Cache để có thể hoạt động nhẹ
-          try {
-            await _firestore.collection('users').doc(fakeUid).set(newUser.toJson());
-          } catch (_) {}
-          
-          return newUser;
-        } else {
-          throw Exception('Mã OTP không chính xác (Mock OTP là 123456).');
-        }
-      }
-
       final credential = PhoneAuthProvider.credential(
         verificationId: verificationId,
         smsCode: smsCode,

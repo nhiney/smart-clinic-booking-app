@@ -7,6 +7,7 @@ import 'package:smart_clinic_booking/core/widgets/app_button.dart';
 import 'package:smart_clinic_booking/core/widgets/app_text_field.dart';
 import 'package:smart_clinic_booking/core/widgets/auth_header.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/services/local_account_store.dart';
 import '../controllers/auth_controller.dart';
 import '../utils/auth_error_localizer.dart';
 
@@ -132,24 +133,47 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
     if (_isLoading) return;
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      
+
       final authController = context.read<AuthController>();
       final password = _passwordController.text.trim();
+      final name = widget.name ?? 'Bệnh nhân';
+
+      // Kiểm tra số điện thoại đã đăng ký trong local store chưa
+      final alreadyRegistered = await LocalAccountStore.instance.isPhoneRegistered(widget.phoneNumber);
+      if (!mounted) return;
+      if (alreadyRegistered) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Số điện thoại này đã được đăng ký. Vui lòng đăng nhập.'),
+            backgroundColor: context.colors.error,
+          ),
+        );
+        context.go('/login');
+        return;
+      }
+
+      // Lưu vào LocalAccountStore trước — đảm bảo login hoạt động ngay
+      await LocalAccountStore.instance.saveAccount(
+        phone: widget.phoneNumber,
+        password: password,
+        name: name,
+      );
+
       final success = await authController.register(
-        name: widget.name ?? 'Người dùng Patient',
+        name: name,
         phone: widget.phoneNumber,
         password: password,
         role: 'patient',
       );
-      
+
       if (success) {
-        // Save registration info locally for comparison at login as requested
+        // Lưu registration info để session restore
         await authController.saveRegistrationLocally(widget.phoneNumber, password);
-        
+
         final qrData = await authController.createQrLoginToken(persistent: true);
         if (!mounted) return;
         if (qrData != null && (qrData['token'] as String?)?.isNotEmpty == true) {
-          // Sign out so the user is forced to see QR then login manually as requested
           await authController.logout();
           if (!mounted) return;
           context.go('/account-qr', extra: qrData);

@@ -9,6 +9,7 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/branded_app_bar.dart';
 import '../../../../core/widgets/auth_header.dart';
+import '../../../../core/services/local_account_store.dart';
 import '../controllers/auth_controller.dart';
 import '../navigation/role_navigation.dart';
 import '../utils/auth_error_localizer.dart';
@@ -59,11 +60,49 @@ class _LoginScreenState extends State<LoginScreen> {
     final l10n = AppLocalizations.of(context)!;
     final authController = context.read<AuthController>();
 
-    final normalizedPhone = AuthController.normalizePhone(selectedCountryCode, phoneController.text);
-    final virtualEmail = '$normalizedPhone@icare.patient';
+    final rawPhone = phoneController.text.trim();
+    final normalizedPhone = AuthController.normalizePhone(selectedCountryCode, rawPhone);
+
+    // Kiểm tra định dạng số điện thoại
+    if (!_isValidPhoneFormat(rawPhone)) {
+      _showError(selectedCountryCode == '+84'
+          ? 'Số điện thoại Việt Nam không hợp lệ (VD: 0912345678)'
+          : 'Số điện thoại không hợp lệ');
+      return;
+    }
+
     final password = passwordController.text.trim();
 
-    final success = await authController.login(virtualEmail, password);
+    // ---- LOCAL AUTHENTICATION (SharedPreferences) ----
+    // Ưu tiên kiểm tra trong LocalAccountStore trước
+    final localAccount = await LocalAccountStore.instance.verifyLogin(
+      phone: normalizedPhone,
+      password: password,
+    );
+    if (!mounted) return;
+
+    if (localAccount != null) {
+      // Đăng nhập local thành công
+      debugPrint('[LOGIN] Local login success for $normalizedPhone');
+      final virtualEmail = '$normalizedPhone@icare.patient';
+      // Thử đăng nhập Firebase (non-blocking) để sync session
+      authController.login(virtualEmail, password).ignore();
+      // Navigate ngay không chờ Firebase
+      navigateByRole(context, 'patient');
+      return;
+    }
+
+    // ---- Kiểm tra phone đã đăng ký chưa (fallback Firestore/server) ----
+    final isRegistered = await authController.checkPhoneRegistered(normalizedPhone);
+    if (!mounted) return;
+    if (!isRegistered) {
+      _showError('Số điện thoại chưa được đăng ký. Vui lòng đăng ký trước.');
+      return;
+    }
+
+    // ---- Firebase Auth Login (production) ----
+    final virtualEmail2 = '$normalizedPhone@icare.patient';
+    final success = await authController.login(virtualEmail2, password);
 
     if (!mounted) return;
 
@@ -72,6 +111,14 @@ class _LoginScreenState extends State<LoginScreen> {
     } else {
       _showError(localizeAuthError(context, authController.errorMessage, fallback: l10n.error_login_failed));
     }
+  }
+
+  bool _isValidPhoneFormat(String phone) {
+    final clean = phone.replaceAll(RegExp(r'\s'), '');
+    if (selectedCountryCode == '+84') {
+      return RegExp(r'^(0?[3|5|7|8|9][0-9]{8})$').hasMatch(clean);
+    }
+    return RegExp(r'^[0-9]{7,12}$').hasMatch(clean);
   }
 
   void _showError(String message) {
