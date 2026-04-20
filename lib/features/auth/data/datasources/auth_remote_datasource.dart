@@ -290,10 +290,18 @@ class AuthRemoteDatasource {
   Future<bool> isPhoneRegistered(String phone) async {
     try {
       final normalized = _normalizePhone(phone);
-      final doc = await _firestore.collection('registered_phones')
-          .doc(normalized)
-          .get(const GetOptions(source: Source.serverAndCache))
-          .timeout(const Duration(seconds: 5));
+      final ref = _firestore.collection('registered_phones').doc(normalized);
+
+      // Check cache first — instant, no network cost
+      try {
+        final cached = await ref.get(const GetOptions(source: Source.cache));
+        if (cached.exists) return true;
+      } catch (_) {} // cache miss is expected for new users
+
+      // Fallback to server with shorter timeout
+      final doc = await ref
+          .get(const GetOptions(source: Source.server))
+          .timeout(const Duration(seconds: 3));
       return doc.exists;
     } catch (e) {
       debugPrint('[AUTH] isPhoneRegistered error: $e');
