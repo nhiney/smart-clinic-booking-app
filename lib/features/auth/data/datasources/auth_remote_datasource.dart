@@ -559,26 +559,25 @@ class AuthRemoteDatasource {
 
       debugPrint('[AUTH] Dữ liệu số điện thoại gửi đi: $formatted');
 
-      // --- MOCK MÔI TRƯỜNG DEV (GIẢI QUYẾT TREO UI) ---
-      // Khi chạy trên Simulator, Firebase PhoneAuth thường bị treo (silent hang) vì thiếu APNs/reCAPTCHA bị lỗi.
-      // Chúng ta sẽ giả lập thành công để bạn có thể code tiếp UI của màng nhập OTP.
-      if (kDebugMode && (formatted == '+84326583876' || formatted == '+84000000000')) {
-        debugPrint('[AUTH] Đang dùng Mock OTP cho số test: $formatted');
-        Future.delayed(const Duration(seconds: 1), () {
+      // --- MOCK MÔI TRƯỜNG DEV ---
+      // Simulator không hỗ trợ APNs nên Firebase PhoneAuth bị treo (silent hang).
+      // Trong debug mode, mock toàn bộ số điện thoại — OTP mặc định là 123456.
+      if (kDebugMode) {
+        debugPrint('[AUTH] DEBUG MODE — Mock OTP cho: $formatted (dùng mã 123456)');
+        Future.delayed(const Duration(milliseconds: 800), () {
           if (!hasReplied) {
             hasReplied = true;
             onCodeSent('mock_vid_${formatted.replaceAll("+", "")}');
           }
         });
-        return; // Dừng, không gọi tới Firebase thật nữa để tránh treo
+        return;
       }
 
-      // --- TIMEOUT AN TOÀN ---
-      // Nếu Firebase không kích hoạt bất kỳ callback nào (lỗi silent), ta ngắt sau 15s để nhả UI.
-      Future.delayed(const Duration(seconds: 15), () {
+      // --- TIMEOUT AN TOÀN (production) ---
+      Future.delayed(const Duration(seconds: 12), () {
         if (!hasReplied) {
           hasReplied = true;
-          onError('Lỗi từ Firebase: Quá thời gian phản hồi. Nếu dùng Simulator, hãy thêm số diện thoại vào phần "Thử nghiệm" (Testing) trên console Firebase.');
+          onError('Quá thời gian phản hồi. Kiểm tra kết nối mạng hoặc thêm số điện thoại vào Firebase Console > Authentication > Testing.');
         }
       });
 
