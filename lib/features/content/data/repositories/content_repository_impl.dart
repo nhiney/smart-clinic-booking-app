@@ -101,6 +101,69 @@ class ContentRepositoryImpl implements ContentRepository {
     }
   }
 
+  // ─── HEALTH LIBRARY ────────────────────────────────────────────────────────
+
+  @override
+  Future<Either<Failure, List<HealthLibraryArticle>>> getLibraryArticles({
+    String? category,
+    String? searchQuery,
+  }) async {
+    try {
+      var query = _firestore.collection('health_library').orderBy('publishedAt', descending: true).limit(30);
+      if (category != null && category.isNotEmpty) {
+        query = query.where('category', isEqualTo: category);
+      }
+      final snapshots = await query.get();
+      var articles = snapshots.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return HealthLibraryArticle.fromJson(data);
+      }).toList();
+
+      if (searchQuery != null && searchQuery.isNotEmpty) {
+        final q = searchQuery.toLowerCase();
+        articles = articles.where((a) => a.title.toLowerCase().contains(q) || a.content.toLowerCase().contains(q) || a.tags.any((t) => t.toLowerCase().contains(q))).toList();
+      }
+      return Right(articles);
+    } catch (e) {
+      return Left(ServerFailure(message: 'Failed to load health library: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> bookmarkArticle(String userId, String articleId) async {
+    try {
+      await _firestore.collection('users').doc(userId).collection('bookmarks').doc(articleId).set({
+        'articleId': articleId,
+        'savedAt': FieldValue.serverTimestamp(),
+        'collection': 'health_library',
+      });
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(message: 'Failed to bookmark: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> removeBookmark(String userId, String articleId) async {
+    try {
+      await _firestore.collection('users').doc(userId).collection('bookmarks').doc(articleId).delete();
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(message: 'Failed to remove bookmark: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<String>>> getBookmarkedIds(String userId) async {
+    try {
+      final snapshot = await _firestore.collection('users').doc(userId).collection('bookmarks').get();
+      return Right(snapshot.docs.map((d) => d.id).toList());
+    } catch (e) {
+      return Left(ServerFailure(message: 'Failed to load bookmarks: $e'));
+    }
+  }
+
   // --- Caching Helpers ---
 
   Future<void> _cacheNews(List<HealthArticle> articles) async {
