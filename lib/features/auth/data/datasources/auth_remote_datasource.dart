@@ -226,6 +226,40 @@ class AuthRemoteDatasource {
     final user = _firebaseAuth.currentUser;
     debugPrint('[AUTH] Register called. UID: ${user?.uid ?? 'NULL'}');
 
+    // In debug mode the mock OTP flow never creates a real Firebase user.
+    // Build the user from the predictable mock UID and save to Firestore directly.
+    if (user == null && kDebugMode) {
+      final normalized = _normalizePhone(phone);
+      final mockUid = 'MOCK_USER_mock_vid_$normalized';
+      final mockModel = UserModel(
+        id: mockUid,
+        email: email ?? '$normalized@icare.patient',
+        name: name,
+        phone: phone,
+        authProvider: 'phone',
+        role: role,
+        tenantId: tenantId,
+        isVerified: role == 'patient',
+        status: 'active',
+        password: password,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+      try {
+        final data = mockModel.toJson();
+        data['uid'] = mockUid;
+        await _firestore.collection('users').doc(mockUid).set(data, SetOptions(merge: true));
+        await _firestore.collection('registered_phones').doc(normalized).set({
+          'uid': mockUid,
+          'created_at': FieldValue.serverTimestamp(),
+        });
+        debugPrint('[AUTH] Mock register saved. UID: $mockUid');
+      } catch (e) {
+        debugPrint('[AUTH] Mock register Firestore error (non-fatal): $e');
+      }
+      return mockModel;
+    }
+
     if (user == null) {
       throw Exception('Chưa xác thực Firebase. Vui lòng thử lại từ đầu.');
     }
