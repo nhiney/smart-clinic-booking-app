@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'dart:convert';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -24,6 +25,9 @@ class AuthRemoteDatasource {
   static const String _sessionTokenKey = 'session_token';
   static const String _registrationPhoneKey = 'reg_phone';
   static const String _registrationPasswordKey = 'reg_password';
+  static const String _deviceIdKey = 'device_id_v1';
+
+  final DeviceInfoPlugin _deviceInfoPlugin = DeviceInfoPlugin();
 
   String _normalizePhone(String phone) {
     String clean = phone.replaceAll(RegExp(r'\D'), '');
@@ -96,6 +100,7 @@ class AuthRemoteDatasource {
       }
 
       await _logSession(user.uid);
+      await bindDevice(user.uid);
       return userModel;
     } on FirebaseAuthException catch (e) {
       // Bootstrap seeded staff accounts on first run
@@ -405,12 +410,17 @@ class AuthRemoteDatasource {
     }
   }
 
-  /// LOG SESSION
+  /// LOG SESSION (includes device info for session management)
   Future<void> _logSession(String uid) async {
     try {
+      final deviceId = await _getOrCreateDeviceId();
+      final deviceInfo = await _getDeviceInfo();
       await _firestore.collection('sessions').add({
         'user_id': uid,
-        'device': kIsWeb ? 'Web' : (defaultTargetPlatform == TargetPlatform.iOS ? 'iOS' : 'Android'),
+        'device_id': deviceId,
+        'platform': deviceInfo['platform'],
+        'model': deviceInfo['model'],
+        'os_version': deviceInfo['os_version'],
         'created_at': FieldValue.serverTimestamp(),
         'expires_at': Timestamp.fromDate(DateTime.now().add(const Duration(days: 7))),
       });
@@ -418,6 +428,45 @@ class AuthRemoteDatasource {
     } catch (e) {
       debugPrint('[AUTH] Log session error: $e');
     }
+  }
+
+  Future<String> _getOrCreateDeviceId() async {
+    try {
+      final stored = await _secureStorage.read(key: _deviceIdKey);
+      if (stored != null && stored.isNotEmpty) return stored;
+      final newId = _uuid.v4();
+      await _secureStorage.write(key: _deviceIdKey, value: newId);
+      return newId;
+    } catch (_) {
+      return _uuid.v4();
+    }
+  }
+
+  Future<Map<String, String>> _getDeviceInfo() async {
+    try {
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+        final info = await _deviceInfoPlugin.iosInfo;
+        return {
+          'platform': 'iOS',
+          'model': info.model,
+          'os_version': info.systemVersion,
+        };
+      } else if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+        final info = await _deviceInfoPlugin.androidInfo;
+        return {
+          'platform': 'Android',
+          'model': '${info.manufacturer} ${info.model}',
+          'os_version': 'Android ${info.version.release}',
+        };
+      }
+    } catch (e) {
+      debugPrint('[AUTH] Get device info error: $e');
+    }
+    return {
+      'platform': kIsWeb ? 'Web' : 'Unknown',
+      'model': 'Unknown',
+      'os_version': 'Unknown',
+    };
   }
 
   Future<void> _logAudit(String uid, String action, String details) async {
@@ -682,6 +731,7 @@ class AuthRemoteDatasource {
           throw Exception('Tài khoản đã bị tạm khóa.');
         }
         await _logSession(firebaseUser.uid);
+        await bindDevice(firebaseUser.uid);
         return profile;
       }
 
@@ -698,11 +748,111 @@ class AuthRemoteDatasource {
       );
       await _firestore.collection('users').doc(firebaseUser.uid).set(newUser.toJson());
       await _logSession(firebaseUser.uid);
+      await bindDevice(firebaseUser.uid);
       return newUser;
     } on FirebaseAuthException catch (e) {
       throw Exception(_handleAuthError(e.code));
     } catch (e) {
       throw Exception('Xác thực OTP thất bại: $e');
+    }
+  }
+
+  // ── Password Reset via OTP ───────────────────────────────────────────────────
+
+  /// Resets the authenticated user's password after OTP sign-in verification.
+  /// The caller must ensure the user is already signed in via phone OTP before calling this.
+  Future<void> resetPasswordAfterOtp(String newPassword) async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) {
+      throw Exception('Session expired. Please verify OTP again.');
+    }
+    try {
+      await user.updatePassword(newPassword);
+      await _firestore.collection('users').doc(user.uid).update({
+        'password': newPassword,
+        'updated_at': FieldValue.serverTimestamp(),
+      });
+      await _logAudit(user.uid, 'PASSWORD_RESET', 'Password reset via OTP');
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        throw Exception('Session expired. Please re-verify your phone number.');
+      }
+      throw Exception(_handleAuthError(e.code));
+    }
+  }
+
+  // ── Device Binding ───────────────────────────────────────────────────────────
+
+  /// Stores current device information under the user's Firestore document.
+  Future<void> bindDevice(String uid) async {
+    try {
+      final deviceId = await _getOrCreateDeviceId();
+      final deviceInfo = await _getDeviceInfo();
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('devices')
+          .doc(deviceId)
+          .set({
+        'device_id': deviceId,
+        'platform': deviceInfo['platform'],
+        'model': deviceInfo['model'],
+        'os_version': deviceInfo['os_version'],
+        'last_seen': FieldValue.serverTimestamp(),
+        'is_trusted': true,
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('[AUTH] Device binding error: $e');
+    }
+  }
+
+  Future<String?> getCurrentDeviceId() async {
+    return _secureStorage.read(key: _deviceIdKey);
+  }
+
+  // ── Session Management ───────────────────────────────────────────────────────
+
+  /// Returns active (non-expired) sessions for a given user from Firestore.
+  Future<List<Map<String, dynamic>>> getActiveSessions(String uid) async {
+    try {
+      final snapshot = await _firestore
+          .collection('sessions')
+          .where('user_id', isEqualTo: uid)
+          .where('expires_at', isGreaterThan: Timestamp.now())
+          .orderBy('expires_at', descending: true)
+          .limit(20)
+          .get();
+      return snapshot.docs
+          .map((doc) => <String, dynamic>{'id': doc.id, ...doc.data()})
+          .toList();
+    } catch (e) {
+      debugPrint('[AUTH] Get active sessions error: $e');
+      return [];
+    }
+  }
+
+  /// Deletes a specific session document to revoke it.
+  Future<void> revokeSession(String sessionId) async {
+    try {
+      await _firestore.collection('sessions').doc(sessionId).delete();
+    } catch (e) {
+      debugPrint('[AUTH] Revoke session error: $e');
+    }
+  }
+
+  // ── Token Refresh ────────────────────────────────────────────────────────────
+
+  /// Forces a Firebase ID token refresh and caches the new token securely.
+  Future<String?> refreshIdToken() async {
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user == null) return null;
+      final token = await user.getIdToken(true);
+      await _secureStorage.write(key: _sessionTokenKey, value: token ?? '');
+      return token;
+    } catch (e) {
+      debugPrint('[AUTH] Refresh ID token error: $e');
+      return null;
     }
   }
 

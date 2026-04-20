@@ -30,6 +30,8 @@ import 'package:smart_clinic_booking/features/auth/presentation/screens/otp_veri
 import 'package:smart_clinic_booking/features/auth/presentation/screens/create_password_screen.dart';
 import 'package:smart_clinic_booking/features/auth/presentation/screens/account_qr_screen.dart';
 import 'package:smart_clinic_booking/features/auth/presentation/screens/qr_login_scanner_screen.dart';
+import 'package:smart_clinic_booking/features/auth/presentation/screens/forgot_password_screen.dart';
+import 'package:smart_clinic_booking/features/auth/presentation/screens/reset_password_screen.dart';
 import 'package:smart_clinic_booking/features/support/domain/entities/support_entities.dart';
 
 import 'package:smart_clinic_booking/features/payment/presentation/screens/payment_screen.dart';
@@ -81,15 +83,17 @@ class AppRouter {
       final bool isMockAuthenticated = mockAuthNotifier.value;
       final path = state.uri.path;
       
-      final bool isPublicRoute = path == '/' || 
-                                path == '/login' || 
+      final bool isPublicRoute = path == '/' ||
+                                path == '/login' ||
                                 path == '/staff-login' ||
                                 path == '/sign-up' ||
                                 path == '/register' ||
                                 path == '/verify-otp' ||
                                 path == '/create-password' ||
                                 path == '/qr-login' ||
-                                path == '/account-qr';
+                                path == '/account-qr' ||
+                                path == '/forgot-password' ||
+                                path == '/reset-password';
 
       // 1. Unauthenticated Block
       if (user == null && !isMockAuthenticated) {
@@ -139,9 +143,11 @@ class AppRouter {
       // 3. User is Active but trying to view Onboarding / Login / Pending screens
       final bool isRegistrationFlow = path == '/register' ||
                                      path == '/sign-up' ||
-                                     path == '/verify-otp' || 
-                                     path == '/create-password' || 
-                                     path == '/account-qr';
+                                     path == '/verify-otp' ||
+                                     path == '/create-password' ||
+                                     path == '/account-qr' ||
+                                     path == '/forgot-password' ||
+                                     path == '/reset-password';
 
       if ((isPublicRoute || path == '/pending-approval') && !isRegistrationFlow && path != '/') {
          debugPrint('[ROUTER] Redirecting authenticated user away from public route to home/dashboard');
@@ -208,6 +214,19 @@ class AppRouter {
       GoRoute(
         path: '/qr-login',
         builder: (context, state) => const QrLoginScannerScreen(),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/reset-password',
+        builder: (context, state) {
+          final extras = state.extra as Map<String, dynamic>? ?? {};
+          return ResetPasswordScreen(
+            phoneNumber: extras['phone'] as String? ?? '',
+          );
+        },
       ),
       GoRoute(
         path: '/account-qr',

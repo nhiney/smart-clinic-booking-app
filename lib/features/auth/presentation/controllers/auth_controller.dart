@@ -422,4 +422,113 @@ class AuthController extends ChangeNotifier {
     errorMessage = null;
     notifyListeners();
   }
+
+  // ── Password Reset ───────────────────────────────────────────────────────────
+
+  /// Sends OTP to a registered phone for password reset.
+  /// Returns false if the phone is not registered.
+  Future<bool> sendOtpForPasswordReset(
+    String phone, {
+    required void Function() onCodeSent,
+    required void Function(String error) onError,
+  }) async {
+    try {
+      isLoading = true;
+      errorMessage = null;
+      notifyListeners();
+
+      final isRegistered = await authRepository.isPhoneRegistered(phone);
+      if (!isRegistered) {
+        errorMessage = 'This phone number is not registered.';
+        onError(errorMessage!);
+        return false;
+      }
+
+      await verifyPhoneUseCase(
+        phone,
+        onCodeSent: (id) {
+          verificationId = id;
+          isLoading = false;
+          startOtpTimer();
+          notifyListeners();
+          onCodeSent();
+        },
+        onAutoVerified: () {
+          isLoading = false;
+          notifyListeners();
+          onCodeSent();
+        },
+        onError: (err) {
+          errorMessage = err;
+          isLoading = false;
+          notifyListeners();
+          onError(err);
+        },
+      );
+      return true;
+    } catch (e) {
+      errorMessage = e.toString().replaceAll('Exception: ', '');
+      isLoading = false;
+      notifyListeners();
+      onError(errorMessage!);
+      return false;
+    }
+  }
+
+  /// Verifies OTP for password reset (signs in the user without going through registration).
+  Future<bool> verifyOtpForPasswordReset(String smsCode) async {
+    if (verificationId == null) {
+      errorMessage = 'Verification session expired. Please request a new OTP.';
+      notifyListeners();
+      return false;
+    }
+    try {
+      isLoading = true;
+      errorMessage = null;
+      notifyListeners();
+      currentUser = await signInWithPhoneUseCase(verificationId!, smsCode);
+      return true;
+    } catch (e) {
+      errorMessage = e.toString().replaceAll('Exception: ', '');
+      return false;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Updates password after OTP verification. Must be called while user is signed in.
+  Future<bool> resetPasswordAfterOtp(String newPassword) async {
+    try {
+      isLoading = true;
+      errorMessage = null;
+      notifyListeners();
+      await authRepository.resetPasswordAfterOtp(newPassword);
+      return true;
+    } catch (e) {
+      errorMessage = e.toString().replaceAll('Exception: ', '');
+      return false;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // ── Session Management ───────────────────────────────────────────────────────
+
+  Future<List<Map<String, dynamic>>> getActiveSessions() async {
+    final uid = currentUser?.id ?? authRepository.getCurrentUser()?.id ?? '';
+    if (uid.isEmpty) return [];
+    return authRepository.getActiveSessions(uid);
+  }
+
+  Future<void> revokeSession(String sessionId) async {
+    await authRepository.revokeSession(sessionId);
+  }
+
+  // ── Token Refresh ─────────────────────────────────────────────────────────
+
+  Future<String?> refreshToken() async {
+    return authRepository.refreshIdToken();
+  }
 }

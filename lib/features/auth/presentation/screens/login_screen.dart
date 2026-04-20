@@ -219,7 +219,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () => context.push('/forgot-password'),
                   child: Text(
                     l10n.forgot_password,
                     style: context.textStyles.bodyBold.copyWith(color: context.colors.primary, fontSize: 13),

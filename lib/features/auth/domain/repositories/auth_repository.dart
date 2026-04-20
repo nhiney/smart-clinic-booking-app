@@ -48,4 +48,18 @@ abstract class AuthRepository {
     String? password,
     String? tenantId,
   });
+
+  // Password reset after OTP verification
+  Future<void> resetPasswordAfterOtp(String newPassword);
+
+  // Device binding
+  Future<void> bindDevice(String uid);
+  Future<String?> getCurrentDeviceId();
+
+  // Session management
+  Future<List<Map<String, dynamic>>> getActiveSessions(String uid);
+  Future<void> revokeSession(String sessionId);
+
+  // Token refresh
+  Future<String?> refreshIdToken();
 }

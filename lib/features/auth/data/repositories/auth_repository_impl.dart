@@ -175,4 +175,34 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Map<String, String>?> getLocalRegistrationInfo() async {
     return await remoteDatasource.getLocalRegistrationInfo();
   }
+
+  @override
+  Future<void> resetPasswordAfterOtp(String newPassword) async {
+    await remoteDatasource.resetPasswordAfterOtp(newPassword);
+  }
+
+  @override
+  Future<void> bindDevice(String uid) async {
+    await remoteDatasource.bindDevice(uid);
+  }
+
+  @override
+  Future<String?> getCurrentDeviceId() async {
+    return await remoteDatasource.getCurrentDeviceId();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getActiveSessions(String uid) async {
+    return await remoteDatasource.getActiveSessions(uid);
+  }
+
+  @override
+  Future<void> revokeSession(String sessionId) async {
+    await remoteDatasource.revokeSession(sessionId);
+  }
+
+  @override
+  Future<String?> refreshIdToken() async {
+    return await remoteDatasource.refreshIdToken();
+  }
 }
