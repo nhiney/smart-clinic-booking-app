@@ -38,6 +38,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   void _onOtpChanged(int index, String value) {
     if (value.isNotEmpty && index < 5) {
       _focusNodes[index + 1].requestFocus();
+    } else if (value.isNotEmpty && index == 5) {
+      // Nhập xong ô cuối → ẩn bàn phím
+      FocusScope.of(context).unfocus();
     } else if (value.isEmpty && index > 0) {
       _focusNodes[index - 1].requestFocus();
     }
@@ -103,22 +106,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                             Icon(Icons.bug_report, color: Colors.orange[700], size: 18),
                             const SizedBox(width: 8),
                             Expanded(
-                              child: Text.rich(
-                                TextSpan(
-                                  text: 'DEBUG MODE — OTP mặc định: ',
-                                  style: TextStyle(color: Colors.orange[800], fontSize: 13),
-                                  children: [
-                                    TextSpan(
-                                      text: '123456',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 15,
-                                        color: Colors.orange[900],
-                                        letterSpacing: 2,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                              child: Text(
+                                'DEBUG MODE — Nhập mã OTP đã cấu hình trong Firebase Console (Test phone numbers).',
+                                style: TextStyle(color: Colors.orange[800], fontSize: 13),
                               ),
                             ),
                           ],
