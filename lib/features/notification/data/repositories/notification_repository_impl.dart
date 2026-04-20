@@ -10,43 +10,76 @@ class NotificationRepositoryImpl implements NotificationRepository {
   NotificationRepositoryImpl(this.remoteDatasource);
 
   @override
-  Future<List<NotificationEntity>> getNotifications(String userId) async {
-    return await remoteDatasource.getNotifications(userId);
+  Future<List<NotificationEntity>> getNotifications(String userId) {
+    return remoteDatasource.getNotifications(userId);
   }
 
   @override
-  Future<List<NotificationLogEntity>> getNotificationLogs(String userId) async {
-    return await remoteDatasource.getNotificationLogs(userId);
+  Stream<List<NotificationEntity>> watchNotifications(String userId) {
+    return remoteDatasource.watchNotifications(userId);
   }
 
   @override
-  Future<UserBehaviorEntity?> getUserBehavior(String userId) async {
-    return await remoteDatasource.getUserBehavior(userId);
+  Future<int> getUnreadCount(String userId) {
+    return remoteDatasource.getUnreadCount(userId);
   }
 
   @override
-  Future<void> updateUserBehavior(UserBehaviorEntity behavior) async {
-    final model = UserBehaviorModel(
-      userId: behavior.userId,
-      missedAppointmentsCount: behavior.missedAppointmentsCount,
-      urgencyMultiplier: behavior.urgencyMultiplier,
-      lastUpdated: behavior.lastUpdated,
+  Future<NotificationEntity> createNotification({
+    required String userId,
+    required String title,
+    required String body,
+    required String type,
+    Map<String, dynamic>? data,
+  }) {
+    return remoteDatasource.createNotification(
+      userId: userId,
+      title: title,
+      body: body,
+      type: type,
+      data: data,
     );
-    await remoteDatasource.updateUserBehavior(model);
   }
 
   @override
-  Future<void> markAsRead(String id) async {
-    await remoteDatasource.markAsRead(id);
+  Future<List<NotificationLogEntity>> getNotificationLogs(String userId) {
+    return remoteDatasource.getNotificationLogs(userId);
   }
 
   @override
-  Future<void> markAllAsRead(String userId) async {
-    await remoteDatasource.markAllAsRead(userId);
+  Future<UserBehaviorEntity?> getUserBehavior(String userId) {
+    return remoteDatasource.getUserBehavior(userId);
   }
 
   @override
-  Future<void> deleteNotification(String id) async {
-    await remoteDatasource.deleteNotification(id);
+  Future<void> updateUserBehavior(UserBehaviorEntity behavior) {
+    return remoteDatasource.updateUserBehavior(
+      UserBehaviorModel(
+        userId: behavior.userId,
+        missedAppointmentsCount: behavior.missedAppointmentsCount,
+        urgencyMultiplier: behavior.urgencyMultiplier,
+        lastUpdated: behavior.lastUpdated,
+      ),
+    );
+  }
+
+  @override
+  Future<void> recordBehavioralEvent({required String userId, required String eventType}) {
+    return remoteDatasource.recordBehavioralEvent(userId: userId, eventType: eventType);
+  }
+
+  @override
+  Future<void> markAsRead(String id) {
+    return remoteDatasource.markAsRead(id);
+  }
+
+  @override
+  Future<void> markAllAsRead(String userId) {
+    return remoteDatasource.markAllAsRead(userId);
+  }
+
+  @override
+  Future<void> deleteNotification(String id) {
+    return remoteDatasource.deleteNotification(id);
   }
 }
