@@ -59,7 +59,25 @@ class _LoginScreenState extends State<LoginScreen> {
     final l10n = AppLocalizations.of(context)!;
     final authController = context.read<AuthController>();
 
-    final normalizedPhone = AuthController.normalizePhone(selectedCountryCode, phoneController.text);
+    final rawPhone = phoneController.text.trim();
+    final normalizedPhone = AuthController.normalizePhone(selectedCountryCode, rawPhone);
+
+    // Kiểm tra định dạng số điện thoại
+    if (!_isValidPhoneFormat(rawPhone)) {
+      _showError(selectedCountryCode == '+84'
+          ? 'Số điện thoại Việt Nam không hợp lệ (VD: 0912345678)'
+          : 'Số điện thoại không hợp lệ');
+      return;
+    }
+
+    // Kiểm tra số đã đăng ký chưa (ngầm, không hiển thị loading riêng)
+    final isRegistered = await authController.checkPhoneRegistered(normalizedPhone);
+    if (!mounted) return;
+    if (!isRegistered) {
+      _showError('Số điện thoại chưa được đăng ký. Vui lòng đăng ký trước.');
+      return;
+    }
+
     final virtualEmail = '$normalizedPhone@icare.patient';
     final password = passwordController.text.trim();
 
@@ -72,6 +90,14 @@ class _LoginScreenState extends State<LoginScreen> {
     } else {
       _showError(localizeAuthError(context, authController.errorMessage, fallback: l10n.error_login_failed));
     }
+  }
+
+  bool _isValidPhoneFormat(String phone) {
+    final clean = phone.replaceAll(RegExp(r'\s'), '');
+    if (selectedCountryCode == '+84') {
+      return RegExp(r'^(0?[3|5|7|8|9][0-9]{8})$').hasMatch(clean);
+    }
+    return RegExp(r'^[0-9]{7,12}$').hasMatch(clean);
   }
 
   void _showError(String message) {

@@ -349,6 +349,17 @@ class AuthRemoteDatasource {
     String? targetUid,
   }) async {
     final user = _firebaseAuth.currentUser;
+
+    // Mock fallback: debug mode với mock user (Firebase currentUser == null)
+    if (user == null && kDebugMode) {
+      debugPrint('[AUTH] createQrLoginToken — mock mode, trả về token giả');
+      final mockToken = 'mock_qr_${DateTime.now().millisecondsSinceEpoch}';
+      final expiresAt = persistent
+          ? DateTime.now().add(const Duration(days: 3650))
+          : DateTime.now().add(const Duration(days: 30));
+      return {'token': mockToken, 'expiresAt': expiresAt.toIso8601String()};
+    }
+
     if (user == null) throw Exception('Bạn cần đăng nhập trên thiết bị tạo QR.');
 
     final uid = targetUid ?? user.uid;
@@ -583,7 +594,8 @@ class AuthRemoteDatasource {
       debugPrint('[AUTH] Bắt đầu xác thực số điện thoại Firebase: $phone');
       bool hasReplied = false;
 
-      // Bỏ qua reCAPTCHA nếu có thể
+      // Bỏ qua app verification (APNs/reCAPTCHA) trong debug
+      // để Firebase Console test numbers hoạt động trên simulator
       if (kDebugMode) {
         await _firebaseAuth.setSettings(appVerificationDisabledForTesting: true);
       }
@@ -601,29 +613,23 @@ class AuthRemoteDatasource {
 
       debugPrint('[AUTH] Dữ liệu số điện thoại gửi đi: $formatted');
 
-      // --- MOCK MÔI TRƯỜNG DEV ---
-      // Simulator không hỗ trợ APNs nên Firebase PhoneAuth bị treo (silent hang).
-      // Trong debug mode, mock toàn bộ số điện thoại — OTP mặc định là 123456.
-      if (kDebugMode) {
-        debugPrint('[AUTH] DEBUG MODE — Mock OTP cho: $formatted (dùng mã 123456)');
-        Future.microtask(() {
-          if (!hasReplied) {
-            hasReplied = true;
-            onCodeSent('mock_vid_${formatted.replaceAll("+", "")}');
-          }
-        });
-        return;
-      }
-
-      // --- TIMEOUT AN TOÀN (production) ---
-      Future.delayed(const Duration(seconds: 12), () {
+      // --- TIMEOUT AN TOÀN ---
+      // Nếu Firebase không phản hồi trong 15s:
+      //   - debug: fallback sang local mock để không bị treo UI
+      //   - production: hiển thị lỗi kết nối
+      Future.delayed(const Duration(seconds: 15), () {
         if (!hasReplied) {
           hasReplied = true;
-          onError('Quá thời gian phản hồi. Kiểm tra kết nối mạng hoặc thêm số điện thoại vào Firebase Console > Authentication > Testing.');
+          if (kDebugMode) {
+            debugPrint('[AUTH] Firebase timeout — dùng mock fallback cho: $formatted');
+            onCodeSent('mock_vid_${formatted.replaceAll("+", "")}');
+          } else {
+            onError('Quá thời gian phản hồi. Kiểm tra kết nối mạng hoặc thêm số vào Firebase Console > Authentication > Sign-in method > Phone > Test phone numbers.');
+          }
         }
       });
 
-      // API chính của Firebase
+      // --- GỌI FIREBASE PHONE AUTH THẬT ---
       await _firebaseAuth.verifyPhoneNumber(
         phoneNumber: formatted,
         timeout: const Duration(seconds: 60),
@@ -659,11 +665,10 @@ class AuthRemoteDatasource {
         codeSent: (String verificationId, int? resendToken) {
           if (hasReplied) return;
           hasReplied = true;
+          debugPrint('[AUTH] OTP đã gửi. verificationId: $verificationId');
           onCodeSent(verificationId);
         },
-        codeAutoRetrievalTimeout: (_) {
-          // Bắt buộc theo SDK nhưng không ảnh hưởng flow popup mã
-        },
+        codeAutoRetrievalTimeout: (_) {},
       );
     } catch (e) {
       onError('Lỗi hệ thống khi gửi OTP: $e');
