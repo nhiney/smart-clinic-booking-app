@@ -33,7 +33,10 @@ class TicketModel extends SupportTicket {
     required super.userId,
     required super.subject,
     required super.status,
+    super.priority = TicketPriority.medium,
     required super.createdAt,
+    super.closedAt,
+    super.rating,
   });
 
   factory TicketModel.fromFirestore(Map<String, dynamic> json, String id) {
@@ -41,19 +44,23 @@ class TicketModel extends SupportTicket {
       id: id,
       userId: json['userId'] as String,
       subject: json['subject'] as String,
-      status: TicketStatus.values.byName(json['status'] as String),
+      status: TicketStatus.values.byName(json['status'] as String? ?? 'open'),
+      priority: TicketPriority.values.byName(json['priority'] as String? ?? 'medium'),
       createdAt: (json['createdAt'] as dynamic).toDate(),
+      closedAt: json['closedAt'] != null ? (json['closedAt'] as dynamic).toDate() : null,
+      rating: json['rating'] as int?,
     );
   }
 
-  Map<String, dynamic> toFirestore() {
-    return {
-      'userId': userId,
-      'subject': subject,
-      'status': status.name,
-      'createdAt': createdAt,
-    };
-  }
+  Map<String, dynamic> toFirestore() => {
+        'userId': userId,
+        'subject': subject,
+        'status': status.name,
+        'priority': priority.name,
+        'createdAt': createdAt,
+        'closedAt': closedAt,
+        'rating': rating,
+      };
 }
 
 class MessageModel extends SupportMessage {

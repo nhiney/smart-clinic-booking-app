@@ -70,19 +70,30 @@ class TicketNotifier extends StateNotifier<TicketState> {
     );
   }
 
-  Future<String?> createTicket(String subject) async {
+  Future<String?> createTicket(String subject, {TicketPriority priority = TicketPriority.medium}) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return null;
 
-    final result = await repository.createTicket(user.uid, subject);
+    final result = await repository.createTicket(user.uid, subject, priority: priority);
     return result.fold(
       (failure) {
         state = TicketState(error: failure.message, tickets: state.tickets);
         return null;
       },
       (ticketId) {
-        loadTickets(); // Refresh list
+        loadTickets();
         return ticketId;
+      },
+    );
+  }
+
+  Future<bool> closeTicket(String ticketId, {int? rating}) async {
+    final result = await repository.closeTicket(ticketId, rating: rating);
+    return result.fold(
+      (_) => false,
+      (_) {
+        loadTickets();
+        return true;
       },
     );
   }
