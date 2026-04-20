@@ -94,3 +94,70 @@ final contactFormSubmitProvider = Provider((ref) {
   final repo = ref.watch(contentRepositoryProvider);
   return (String email, String message) => repo.submitContactForm(email, message);
 });
+
+// --- Health Library Provider ---
+
+class LibraryState {
+  final List<HealthLibraryArticle> articles;
+  final Set<String> bookmarkedIds;
+  final bool isLoading;
+  final String? error;
+
+  const LibraryState({
+    this.articles = const [],
+    this.bookmarkedIds = const {},
+    this.isLoading = false,
+    this.error,
+  });
+}
+
+class LibraryNotifier extends StateNotifier<LibraryState> {
+  final ContentRepository repository;
+  LibraryNotifier(this.repository) : super(const LibraryState());
+
+  Future<void> loadArticles({String? category, String? searchQuery}) async {
+    state = LibraryState(isLoading: true, bookmarkedIds: state.bookmarkedIds);
+    final result = await repository.getLibraryArticles(category: category, searchQuery: searchQuery);
+    result.fold(
+      (f) => state = LibraryState(error: f.message, bookmarkedIds: state.bookmarkedIds),
+      (articles) => state = LibraryState(
+        articles: articles.map((a) => a.copyWith(isBookmarked: state.bookmarkedIds.contains(a.id))).toList(),
+        bookmarkedIds: state.bookmarkedIds,
+      ),
+    );
+  }
+
+  Future<void> loadBookmarks(String userId) async {
+    final result = await repository.getBookmarkedIds(userId);
+    result.fold((_) {}, (ids) {
+      final idSet = ids.toSet();
+      state = LibraryState(
+        articles: state.articles.map((a) => a.copyWith(isBookmarked: idSet.contains(a.id))).toList(),
+        bookmarkedIds: idSet,
+      );
+    });
+  }
+
+  Future<void> toggleBookmark(String userId, String articleId) async {
+    final isBookmarked = state.bookmarkedIds.contains(articleId);
+    if (isBookmarked) {
+      await repository.removeBookmark(userId, articleId);
+      final newIds = {...state.bookmarkedIds}..remove(articleId);
+      state = LibraryState(
+        articles: state.articles.map((a) => a.id == articleId ? a.copyWith(isBookmarked: false) : a).toList(),
+        bookmarkedIds: newIds,
+      );
+    } else {
+      await repository.bookmarkArticle(userId, articleId);
+      final newIds = {...state.bookmarkedIds, articleId};
+      state = LibraryState(
+        articles: state.articles.map((a) => a.id == articleId ? a.copyWith(isBookmarked: true) : a).toList(),
+        bookmarkedIds: newIds,
+      );
+    }
+  }
+}
+
+final healthLibraryProvider = StateNotifierProvider<LibraryNotifier, LibraryState>((ref) {
+  return LibraryNotifier(ref.watch(contentRepositoryProvider));
+});
