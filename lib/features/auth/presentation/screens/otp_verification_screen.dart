@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -88,6 +89,41 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     const SizedBox(height: 10),
                     AuthHeader(),
                     const SizedBox(height: 32),
+                    if (kDebugMode)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.orange[50],
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.orange[300]!),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.bug_report, color: Colors.orange[700], size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text.rich(
+                                TextSpan(
+                                  text: 'DEBUG MODE — OTP mặc định: ',
+                                  style: TextStyle(color: Colors.orange[800], fontSize: 13),
+                                  children: [
+                                    TextSpan(
+                                      text: '123456',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15,
+                                        color: Colors.orange[900],
+                                        letterSpacing: 2,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     Text(
                       l10n.otp_title,
                       style: context.textStyles.heading2.copyWith(
