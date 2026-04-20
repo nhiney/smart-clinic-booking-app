@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/medication_entity.dart';
+import '../../domain/entities/medication_intake.dart';
 import '../../domain/repositories/medication_repository.dart';
 import '../../data/models/medication_model.dart';
+import '../../data/services/medication_notification_service.dart';
 
 class MedicationController extends ChangeNotifier {
   final MedicationRepository repository;
@@ -9,6 +11,7 @@ class MedicationController extends ChangeNotifier {
   MedicationController({required this.repository});
 
   List<MedicationEntity> medications = [];
+  Map<String, double> adherenceRates = {};
   bool isLoading = false;
   String? errorMessage;
 
@@ -19,8 +22,16 @@ class MedicationController extends ChangeNotifier {
       notifyListeners();
 
       medications = await repository.getMedicationsByPatient(patientId);
+
+      // Load adherence rates in background
+      for (final med in medications) {
+        repository.getAdherenceRate(med.id).then((rate) {
+          adherenceRates[med.id] = rate;
+          notifyListeners();
+        });
+      }
     } catch (e) {
-      errorMessage = 'Không thể tải danh sách thuốc';
+      errorMessage = 'Failed to load medications';
     } finally {
       isLoading = false;
       notifyListeners();
@@ -35,9 +46,14 @@ class MedicationController extends ChangeNotifier {
 
       final created = await repository.addMedication(medication);
       medications.add(created);
+
+      // Schedule local reminder
+      if (created.isActive) {
+        await MedicationNotificationService.scheduleMedicationReminder(created);
+      }
       return true;
     } catch (e) {
-      errorMessage = 'Không thể thêm thuốc';
+      errorMessage = 'Failed to add medication';
       return false;
     } finally {
       isLoading = false;
@@ -48,11 +64,13 @@ class MedicationController extends ChangeNotifier {
   Future<bool> deleteMedication(String id) async {
     try {
       await repository.deleteMedication(id);
+      await MedicationNotificationService.cancelMedicationReminders(id);
       medications.removeWhere((m) => m.id == id);
+      adherenceRates.remove(id);
       notifyListeners();
       return true;
     } catch (e) {
-      errorMessage = 'Không thể xóa thuốc';
+      errorMessage = 'Failed to delete medication';
       notifyListeners();
       return false;
     }
@@ -64,7 +82,7 @@ class MedicationController extends ChangeNotifier {
       final index = medications.indexWhere((m) => m.id == id);
       if (index != -1) {
         final old = medications[index];
-        medications[index] = MedicationEntity(
+        final updated = MedicationEntity(
           id: old.id,
           patientId: old.patientId,
           name: old.name,
@@ -76,11 +94,48 @@ class MedicationController extends ChangeNotifier {
           isActive: isActive,
           notes: old.notes,
         );
+        medications[index] = updated;
+
+        if (isActive) {
+          await MedicationNotificationService.scheduleMedicationReminder(updated);
+        } else {
+          await MedicationNotificationService.cancelMedicationReminders(id);
+        }
       }
       notifyListeners();
     } catch (e) {
-      errorMessage = 'Không thể cập nhật trạng thái';
+      errorMessage = 'Failed to update status';
       notifyListeners();
     }
   }
+
+  Future<bool> recordIntake({
+    required String medicationId,
+    required String patientId,
+    required bool wasTaken,
+  }) async {
+    try {
+      await repository.recordIntake(
+        medicationId: medicationId,
+        patientId: patientId,
+        scheduledAt: DateTime.now(),
+        wasTaken: wasTaken,
+      );
+      // Refresh adherence
+      final rate = await repository.getAdherenceRate(medicationId);
+      adherenceRates[medicationId] = rate;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<List<MedicationIntake>> getIntakesForPeriod(String medicationId, {int days = 7}) async {
+    final to = DateTime.now();
+    final from = to.subtract(Duration(days: days));
+    return repository.getIntakes(medicationId: medicationId, from: from, to: to);
+  }
+
+  double adherenceFor(String medicationId) => adherenceRates[medicationId] ?? 0;
 }
