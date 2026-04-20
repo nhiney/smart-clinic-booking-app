@@ -9,6 +9,7 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/branded_app_bar.dart';
 import '../../../../core/widgets/auth_header.dart';
+import '../../../../core/services/local_account_store.dart';
 import '../controllers/auth_controller.dart';
 import '../navigation/role_navigation.dart';
 import '../utils/auth_error_localizer.dart';
@@ -70,7 +71,28 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // Kiểm tra số đã đăng ký chưa (ngầm, không hiển thị loading riêng)
+    final password = passwordController.text.trim();
+
+    // ---- LOCAL AUTHENTICATION (SharedPreferences) ----
+    // Ưu tiên kiểm tra trong LocalAccountStore trước
+    final localAccount = await LocalAccountStore.instance.verifyLogin(
+      phone: normalizedPhone,
+      password: password,
+    );
+    if (!mounted) return;
+
+    if (localAccount != null) {
+      // Đăng nhập local thành công
+      debugPrint('[LOGIN] Local login success for $normalizedPhone');
+      final virtualEmail = '$normalizedPhone@icare.patient';
+      // Thử đăng nhập Firebase (non-blocking) để sync session
+      authController.login(virtualEmail, password).ignore();
+      // Navigate ngay không chờ Firebase
+      navigateByRole(context, 'patient');
+      return;
+    }
+
+    // ---- Kiểm tra phone đã đăng ký chưa (fallback Firestore/server) ----
     final isRegistered = await authController.checkPhoneRegistered(normalizedPhone);
     if (!mounted) return;
     if (!isRegistered) {
@@ -78,10 +100,9 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    final virtualEmail = '$normalizedPhone@icare.patient';
-    final password = passwordController.text.trim();
-
-    final success = await authController.login(virtualEmail, password);
+    // ---- Firebase Auth Login (production) ----
+    final virtualEmail2 = '$normalizedPhone@icare.patient';
+    final success = await authController.login(virtualEmail2, password);
 
     if (!mounted) return;
 

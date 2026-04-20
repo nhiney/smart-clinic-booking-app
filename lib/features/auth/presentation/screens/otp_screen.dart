@@ -157,6 +157,7 @@ class _OtpScreenState extends State<OtpScreen> {
                           onChanged: (val) {
                             setState(() {});
                             if (val.length == 6) {
+                              FocusScope.of(context).unfocus();
                               _verifyOtp();
                             }
                           },
