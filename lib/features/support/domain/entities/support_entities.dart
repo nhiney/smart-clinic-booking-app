@@ -18,24 +18,31 @@ class FAQ extends Equatable {
 }
 
 enum TicketStatus { open, inProgress, closed }
+enum TicketPriority { low, medium, high }
 
 class SupportTicket extends Equatable {
   final String id;
   final String userId;
   final String subject;
   final TicketStatus status;
+  final TicketPriority priority;
   final DateTime createdAt;
+  final DateTime? closedAt;
+  final int? rating;
 
   const SupportTicket({
     required this.id,
     required this.userId,
     required this.subject,
     required this.status,
+    this.priority = TicketPriority.medium,
     required this.createdAt,
+    this.closedAt,
+    this.rating,
   });
 
   @override
-  List<Object?> get props => [id, userId, subject, status, createdAt];
+  List<Object?> get props => [id, userId, subject, status, priority, createdAt];
 }
 
 class SupportMessage extends Equatable {
