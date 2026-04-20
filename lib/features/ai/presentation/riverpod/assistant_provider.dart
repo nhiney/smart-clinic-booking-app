@@ -4,12 +4,14 @@ import '../../../../app/di/injection.dart';
 import '../../../../core/services/voice_service.dart';
 import '../../domain/services/intent_parser.dart';
 import '../../domain/services/ai_service.dart';
-import '../../data/services/mock_ai_service.dart';
+import '../../data/services/gemini_ai_service.dart';
 import '../../../appointment/domain/usecases/create_appointment_usecase.dart';
 import '../../../appointment/domain/usecases/cancel_appointment_usecase.dart';
 import 'assistant_state.dart';
 
-final aiServiceProvider = Provider<AiService>((ref) => MockAiService());
+// Uses GeminiAiService (free tier: gemini-2.0-flash, 1500 req/day).
+// Pass API key via --dart-define=GEMINI_API_KEY=<key>
+final aiServiceProvider = Provider<AiService>((ref) => GeminiAiService());
 
 final assistantProvider = StateNotifierProvider<AssistantNotifier, AssistantState>((ref) {
   return AssistantNotifier(
