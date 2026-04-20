@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../controllers/auth_controller.dart';
 
@@ -27,17 +28,38 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
   Future<void> _onVerifyPhone(VerifyPhoneEvent event, Emitter<SignUpState> emit) async {
     emit(state.copyWith(isLoading: true, error: null, isCodeSent: false));
     try {
-      // 1. Check if registered
       final isRegistered = await authController.checkPhoneRegistered(event.phoneNumber);
       if (isRegistered) {
         emit(state.copyWith(isLoading: false, error: "Số điện thoại này đã được đăng ký."));
         return;
       }
 
-      // 2. Start Verification
-      await authController.verifyPhone(
+      // Use Completer so the handler stays alive until the async callback fires
+      final completer = Completer<_VerifyResult>();
+
+      authController.verifyPhone(
         event.phoneNumber,
         onCodeSent: () {
+          if (!completer.isCompleted) {
+            completer.complete(_VerifyResult.codeSent);
+          }
+        },
+        onAutoVerified: () {
+          if (!completer.isCompleted) {
+            completer.complete(_VerifyResult.autoVerified);
+          }
+        },
+        onError: (err) {
+          if (!completer.isCompleted) {
+            completer.completeError(err);
+          }
+        },
+      );
+
+      final result = await completer.future;
+
+      if (!emit.isDone) {
+        if (result == _VerifyResult.codeSent) {
           emit(state.copyWith(
             isLoading: false,
             isCodeSent: true,
@@ -45,17 +67,14 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
             fullName: event.fullName,
             verificationId: authController.verificationId,
           ));
-        },
-        onAutoVerified: () {
-          // Auto-verification handled by AuthController, but we can emit a success state if needed
+        } else {
           emit(state.copyWith(isLoading: false, isSuccess: true));
-        },
-        onError: (err) {
-          emit(state.copyWith(isLoading: false, error: err));
-        },
-      );
+        }
+      }
     } catch (e) {
-      emit(state.copyWith(isLoading: false, error: e.toString()));
+      if (!emit.isDone) {
+        emit(state.copyWith(isLoading: false, error: e.toString()));
+      }
     }
   }
 
@@ -130,3 +149,5 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
     }
   }
 }
+
+enum _VerifyResult { codeSent, autoVerified }
