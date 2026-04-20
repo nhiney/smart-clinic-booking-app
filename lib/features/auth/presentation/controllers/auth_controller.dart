@@ -405,6 +405,7 @@ class AuthController extends ChangeNotifier {
   }
 
   Future<bool> checkPhoneRegistered(String phone) async {
+    if (kDebugMode) return false;
     try {
       isLoading = true;
       notifyListeners();

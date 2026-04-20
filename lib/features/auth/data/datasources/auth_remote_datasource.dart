@@ -564,7 +564,7 @@ class AuthRemoteDatasource {
       // Trong debug mode, mock toàn bộ số điện thoại — OTP mặc định là 123456.
       if (kDebugMode) {
         debugPrint('[AUTH] DEBUG MODE — Mock OTP cho: $formatted (dùng mã 123456)');
-        Future.delayed(const Duration(milliseconds: 800), () {
+        Future.microtask(() {
           if (!hasReplied) {
             hasReplied = true;
             onCodeSent('mock_vid_${formatted.replaceAll("+", "")}');
