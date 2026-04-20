@@ -9,4 +9,10 @@ abstract class ContentRepository {
   Future<Either<Failure, List<Survey>>> getSurveys();
   Future<Either<Failure, void>> submitSurveyVote(String surveyId, String optionId);
   Future<Either<Failure, void>> submitContactForm(String email, String message);
+
+  // Health Library
+  Future<Either<Failure, List<HealthLibraryArticle>>> getLibraryArticles({String? category, String? searchQuery});
+  Future<Either<Failure, void>> bookmarkArticle(String userId, String articleId);
+  Future<Either<Failure, void>> removeBookmark(String userId, String articleId);
+  Future<Either<Failure, List<String>>> getBookmarkedIds(String userId);
 }
