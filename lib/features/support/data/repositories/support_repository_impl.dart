@@ -6,6 +6,7 @@ import 'package:smart_clinic_booking/core/database/sqlite_helper.dart';
 import 'package:smart_clinic_booking/features/support/domain/entities/support_entities.dart';
 import 'package:smart_clinic_booking/features/support/domain/repositories/support_repository.dart';
 import 'package:smart_clinic_booking/features/support/data/models/support_models.dart';
+import 'package:smart_clinic_booking/features/ai/data/services/gemini_ai_service.dart';
 
 class SupportRepositoryImpl implements SupportRepository {
   final FirebaseFirestore _firestore;
@@ -62,17 +63,51 @@ class SupportRepositoryImpl implements SupportRepository {
   }
 
   @override
-  Future<Either<Failure, String>> createTicket(String userId, String subject) async {
+  Future<Either<Failure, String>> createTicket(
+    String userId,
+    String subject, {
+    TicketPriority priority = TicketPriority.medium,
+  }) async {
     try {
       final docRef = await _firestore.collection('support_tickets').add({
         'userId': userId,
         'subject': subject,
         'status': 'open',
+        'priority': priority.name,
         'createdAt': FieldValue.serverTimestamp(),
       });
       return Right(docRef.id);
     } catch (e) {
-      return Left(ServerFailure(message: 'Không thể tạo ticket: $e'));
+      return Left(ServerFailure(message: 'Failed to create ticket: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> closeTicket(String ticketId, {int? rating}) async {
+    try {
+      await _firestore.collection('support_tickets').doc(ticketId).update({
+        'status': 'closed',
+        'closedAt': FieldValue.serverTimestamp(),
+        if (rating != null) 'rating': rating,
+      });
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(message: 'Failed to close ticket: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, String>> getAiFaqAnswer(String question) async {
+    try {
+      final gemini = GeminiAiService();
+      final response = await gemini.generateResponse(
+        message: 'Answer this clinic support question concisely (under 100 words): $question',
+        history: [],
+        userContext: 'Patient support chatbot for ICare clinic',
+      );
+      return Right(response.content);
+    } catch (e) {
+      return Left(ServerFailure(message: 'AI answer unavailable: $e'));
     }
   }
 
