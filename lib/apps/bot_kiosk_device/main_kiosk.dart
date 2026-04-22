@@ -5,6 +5,7 @@ import 'package:smart_clinic_booking/core/config/firebase_options.dart';
 import 'package:smart_clinic_booking/apps/bot_kiosk_device/presentation/pages/slot_selection_page.dart';
 import 'package:smart_clinic_booking/core/utils/idle_session_manager.dart';
 import 'package:smart_clinic_booking/core/utils/network_listener.dart';
+import 'package:smart_clinic_booking/core/utils/seed_kiosk_data.dart';
 
 final networkListenerProvider = ChangeNotifierProvider((ref) => NetworkListener());
 
@@ -14,6 +15,9 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Tạm thời tạo dữ liệu mẫu để kiểm tra giao diện Kiosk
+  await seedKioskData();
 
   runApp(
     const ProviderScope(

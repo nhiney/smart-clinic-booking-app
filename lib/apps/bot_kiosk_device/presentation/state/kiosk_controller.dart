@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_clinic_booking/apps/bot_kiosk_device/data/datasources/kiosk_remote_datasource.dart';
 import 'package:smart_clinic_booking/apps/bot_kiosk_device/data/repositories/kiosk_repository_impl.dart';
+import 'package:smart_clinic_booking/apps/bot_kiosk_device/domain/entities/slot_entity.dart';
 import 'package:smart_clinic_booking/apps/bot_kiosk_device/domain/repositories/kiosk_repository.dart';
 import 'package:smart_clinic_booking/apps/bot_kiosk_device/domain/usecases/reserve_slot_usecase.dart';
 import 'kiosk_state.dart';
@@ -29,12 +30,9 @@ class KioskController extends StateNotifier<KioskState> {
   KioskController(this._reserveSlotUseCase, this._repository) : super(const KioskIdle());
 
   Future<void> selectSlot(String slotId) async {
-    // Trong thực tế, chúng ta sẽ fetch slot chi tiết
-    // Ở đây giả lập trạng thái đã chọn
-    state = KioskLoading();
+    state = const KioskLoading();
     try {
-      // Giả lập lấy danh sách và chọn (sẽ tích hợp vào UI)
-      state = KioskIdle(); // Reset để UI handle chọn
+      state = const KioskIdle(); 
     } catch (e) {
       state = KioskError(e.toString());
     }
@@ -43,7 +41,6 @@ class KioskController extends StateNotifier<KioskState> {
   Future<void> confirmBooking(String slotId, String patientName, String phone) async {
     state = const KioskLoading();
     try {
-      // Trong thực tế sẽ tạo patientId từ phone/name
       final patientId = 'kiosk_patient_${DateTime.now().millisecondsSinceEpoch}';
       await _reserveSlotUseCase(slotId, patientId);
       state = KioskBookingSuccess('BK-${DateTime.now().millisecondsSinceEpoch}');
@@ -64,8 +61,8 @@ final kioskControllerProvider = StateNotifierProvider<KioskController, KioskStat
   );
 });
 
-// Provider để lấy danh sách Slot
-final availableSlotsProvider = FutureProvider.family<List, String>((ref, doctorId) async {
+// Provider để lấy danh sách Slot (Fixed with type safety)
+final availableSlotsProvider = FutureProvider.family<List<SlotEntity>, String>((ref, doctorId) async {
   final repository = ref.watch(kioskRepositoryProvider);
   return await repository.getAvailableSlots(doctorId, DateTime.now());
 });
