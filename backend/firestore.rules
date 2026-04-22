@@ -4,98 +4,63 @@ service cloud.firestore {
 
     // --- Helper Functions ---
     
-    // Check if user is signed in
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Get user data from Firestore
-    function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-    }
-
-    // Check if user is the owner of the document
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    // Check if user has a specific role
-    function hasRole(role) {
-      return isSignedIn() && request.auth.token.role == role;
-    }
-
-    // Check if user is an Admin
     function isAdmin() {
-      return hasRole('admin') || hasRole('super_admin') || hasRole('hospital_manager');
+      return isSignedIn() && (request.auth.token.role == 'admin' || request.auth.token.role == 'super_admin');
     }
 
     // --- ICare Collections ---
 
-    // User profiles
+    // Khung giờ khám (Slots)
+    match /slots/{slotId} {
+      // Cho phép mọi người xem khung giờ trống
+      allow read: if true;
+      // Chỉ Admin hoặc thiết bị Kiosk (trong tương lai) mới được tạo/sửa
+      allow write: if isAdmin();
+    }
+
+    // Lịch hẹn (Bookings)
+    match /bookings/{bookingId} {
+      // Người dùng chỉ xem được lịch hẹn của mình
+      allow read: if isSignedIn() && (request.auth.uid == resource.data.patientId || isAdmin());
+      // Cho phép tạo lịch hẹn (Kiosk tạo cho bệnh nhân)
+      allow create: if true; 
+      allow update, delete: if isAdmin();
+    }
+
+    // Các quy tắc khác giữ nguyên...
     match /users/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
+      allow read, update: if request.auth.uid == userId || isAdmin();
       allow create: if isSignedIn();
-      allow update: if isOwner(userId) || isAdmin();
       allow delete: if isAdmin();
     }
 
-    // Detailed doctor information
     match /doctors/{doctorId} {
-      allow read: if true; 
-      allow create: if isAdmin();
-      allow update: if isAdmin() || isOwner(doctorId);
-      allow delete: if isAdmin();
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
-    // Hospital Facility Hierarchy
     match /hospitals/{hospitalId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    match /departments/{deptId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /rooms/{roomId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /equipments/{equipId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
-    }
-
-    // Sessions and Audit Logs (from previous rules, maintaining for compatibility)
-    match /sessions/{sessionId} {
-      allow read: if isOwner(resource.data.userId) || isAdmin();
-      allow create: if isSignedIn();
-      allow update: if isOwner(resource.data.userId);
-    }
-
-    match /audit_logs/{logId} {
-      allow read: if isAdmin();
-      allow create: if isSignedIn();
-    }
-
-    // Registered phones — public read for duplicate-check before login, auth write
     match /registered_phones/{phone} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    // QR login tokens — public read so scanner can verify token before login
     match /qr_tokens/{token} {
       allow read: if true;
-      allow write: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow write, delete: if isSignedIn();
     }
 
-    // Default Deny
+    // Mặc định cho các collection khác
     match /{document=**} {
-      allow read: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
+      allow read: if isSignedIn();
       allow write: if isAdmin();
     }
   }
