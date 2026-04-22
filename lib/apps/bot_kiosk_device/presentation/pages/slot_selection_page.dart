@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+<<<<<<< HEAD
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:smart_clinic_booking/apps/bot_kiosk_device/presentation/state/kiosk_controller.dart';
@@ -121,6 +122,39 @@ extension on KioskLargeButton {
         child: Text(
           label,
           style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+=======
+
+class SlotSelectionPage extends StatelessWidget {
+  const SlotSelectionPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('CHỌN GIỜ KHÁM', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+        toolbarHeight: 100,
+        centerTitle: true,
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.touch_app, size: 100, color: Colors.blue),
+            const SizedBox(height: 40),
+            const Text(
+              'Hệ thống đang khởi tạo...',
+              style: TextStyle(fontSize: 24),
+            ),
+            const SizedBox(height: 40),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
+              ),
+              onPressed: () {},
+              child: const Text('BẮT ĐẦU', style: TextStyle(fontSize: 24)),
+            ),
+          ],
+>>>>>>> 2e564c4 (chore(backend): install function dependencies version 2)
         ),
       ),
     );

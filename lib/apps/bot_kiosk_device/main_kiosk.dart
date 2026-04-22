@@ -3,11 +3,14 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_clinic_booking/core/config/firebase_options.dart';
 import 'package:smart_clinic_booking/apps/bot_kiosk_device/presentation/pages/slot_selection_page.dart';
+<<<<<<< HEAD
 import 'package:smart_clinic_booking/core/utils/idle_session_manager.dart';
 import 'package:smart_clinic_booking/core/utils/network_listener.dart';
 
 // Provider cho Network Listener
 final networkListenerProvider = ChangeNotifierProvider((ref) => NetworkListener());
+=======
+>>>>>>> 2e564c4 (chore(backend): install function dependencies version 2)
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +26,7 @@ void main() async {
   );
 }
 
+<<<<<<< HEAD
 class ICareKioskBotApp extends ConsumerWidget {
   const ICareKioskBotApp({super.key});
 
@@ -77,6 +81,21 @@ class ICareKioskBotApp extends ConsumerWidget {
         },
         home: const SlotSelectionPage(),
       ),
+=======
+class ICareKioskBotApp extends StatelessWidget {
+  const ICareKioskBotApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'ICare Smart Kiosk Bot',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        useMaterial3: true,
+      ),
+      home: const SlotSelectionPage(),
+>>>>>>> 2e564c4 (chore(backend): install function dependencies version 2)
     );
   }
 }
