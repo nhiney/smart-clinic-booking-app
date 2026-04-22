@@ -9,6 +9,7 @@ class SlotModel extends SlotEntity {
     required super.endTime,
     required super.status,
     super.price,
+    super.patientId,
   });
 
   factory SlotModel.fromFirestore(DocumentSnapshot doc) {
@@ -20,13 +21,12 @@ class SlotModel extends SlotEntity {
       endTime: (data['endTime'] as Timestamp).toDate(),
       status: _parseStatus(data['status']),
       price: (data['price'] as num?)?.toDouble(),
+      patientId: data['patientId'],
     );
   }
 
   static SlotStatus _parseStatus(String? status) {
     switch (status) {
-      case 'available':
-        return SlotStatus.available;
       case 'reserved':
         return SlotStatus.reserved;
       case 'booked':
@@ -43,6 +43,7 @@ class SlotModel extends SlotEntity {
       'endTime': Timestamp.fromDate(endTime),
       'status': status.name,
       if (price != null) 'price': price,
+      if (patientId != null) 'patientId': patientId,
     };
   }
 }

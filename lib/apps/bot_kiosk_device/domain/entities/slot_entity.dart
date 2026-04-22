@@ -1,24 +1,27 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// Trạng thái của một khung giờ khám
 enum SlotStatus {
   available,
-  pending,
-  confirmed,
+  reserved,
+  booked,
 }
 
 class SlotEntity {
   final String id;
-  final bool isAvailable;
+  final String doctorId;
+  final DateTime startTime;
+  final DateTime endTime;
   final SlotStatus status;
-  final DateTime? lockedAt;
+  final double? price;
   final String? patientId;
 
   SlotEntity({
     required this.id,
-    required this.isAvailable,
+    required this.doctorId,
+    required this.startTime,
+    required this.endTime,
     required this.status,
-    this.lockedAt,
+    this.price,
     this.patientId,
   });
 
@@ -26,32 +29,23 @@ class SlotEntity {
     final data = doc.data() as Map<String, dynamic>;
     return SlotEntity(
       id: doc.id,
-      isAvailable: data['isAvailable'] ?? false,
+      doctorId: data['doctorId'] ?? '',
+      startTime: (data['startTime'] as Timestamp).toDate(),
+      endTime: (data['endTime'] as Timestamp).toDate(),
       status: _parseStatus(data['status']),
-      lockedAt: (data['lockedAt'] as Timestamp?)?.toDate(),
+      price: (data['price'] as num?)?.toDouble(),
       patientId: data['patientId'],
     );
   }
 
   static SlotStatus _parseStatus(String? status) {
     switch (status) {
-      case 'pending':
-        return SlotStatus.pending;
-      case 'confirmed':
-        return SlotStatus.confirmed;
+      case 'reserved':
+        return SlotStatus.reserved;
+      case 'booked':
+        return SlotStatus.booked;
       default:
         return SlotStatus.available;
-    }
-  }
-
-  String get statusString {
-    switch (status) {
-      case SlotStatus.pending:
-        return 'pending';
-      case SlotStatus.confirmed:
-        return 'confirmed';
-      default:
-        return 'available';
     }
   }
 }

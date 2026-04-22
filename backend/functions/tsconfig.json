@@ -6,10 +6,20 @@
     "outDir": "lib",
     "sourceMap": true,
     "strict": true,
-    "target": "es2017"
+    "target": "es2017",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "types": ["node"],
+    "lib": [
+      "es2017",
+      "esnext.asynciterable"
+    ]
   },
   "compileOnSave": true,
   "include": [
     "src"
+  ],
+  "exclude": [
+    "node_modules"
   ]
 }

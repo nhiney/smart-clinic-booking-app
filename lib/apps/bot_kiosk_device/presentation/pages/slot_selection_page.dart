@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:smart_clinic_booking/apps/bot_kiosk_device/presentation/state/kiosk_controller.dart';
@@ -12,11 +11,9 @@ class SlotSelectionPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Giả lập doctorId cho trạm Kiosk tại chi nhánh
     const doctorId = 'doctor_default_branch_a';
     final slotsAsync = ref.watch(availableSlotsProvider(doctorId));
 
-    // Lắng nghe trạng thái thành công để chuyển màn hình xác nhận
     ref.listen<KioskState>(kioskControllerProvider, (previous, next) {
       if (next is KioskBookingSuccess) {
         _showSuccessDialog(context, next.bookingId);
@@ -28,7 +25,7 @@ class SlotSelectionPage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: const Text('CHỌN GIỜ KHÁM', style: TextStyle(fontSize: 40, fontWeight: FontWeight.black)),
+        title: const Text('CHỌN GIỜ KHÁM', style: TextStyle(fontSize: 40, fontWeight: FontWeight.w900)),
         toolbarHeight: 120,
         backgroundColor: Colors.blue.shade800,
         foregroundColor: Colors.white,
@@ -48,17 +45,28 @@ class SlotSelectionPage extends ConsumerWidget {
             final slot = slots[index];
             final timeStr = DateFormat('HH:mm').format(slot.startTime);
             
-            return KioskLargeButton(
-              label: timeStr,
-              color: Colors.white,
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => VoiceRegistrationPage(selectedSlot: slot),
-                  ),
-                );
-              },
-            ).buildWithCustomStyle(context); // Custom method for white background theme
+            return SizedBox(
+              height: 120,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.blue.shade900,
+                  side: BorderSide(color: Colors.blue.shade900, width: 3),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                ),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => VoiceRegistrationPage(selectedSlot: slot),
+                    ),
+                  );
+                },
+                child: Text(
+                  timeStr,
+                  style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+                ),
+              ),
+            );
           },
         ),
         loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 8)),
@@ -80,7 +88,7 @@ class SlotSelectionPage extends ConsumerWidget {
             children: [
               const Icon(Icons.check_circle, color: Colors.green, size: 150),
               const SizedBox(height: 30),
-              const Text('ĐẶT KHÁM THÀNH CÔNG!', style: TextStyle(fontSize: 48, fontWeight: FontWeight.black)),
+              const Text('ĐẶT KHÁM THÀNH CÔNG!', style: TextStyle(fontSize: 48, fontWeight: FontWeight.w900)),
               const SizedBox(height: 20),
               Text('Mã lịch hẹn của bạn: $bookingId', style: const TextStyle(fontSize: 32)),
               const SizedBox(height: 40),
@@ -95,66 +103,10 @@ class SlotSelectionPage extends ConsumerWidget {
                 color: Colors.green,
                 onPressed: () {
                   Navigator.of(context).popUntil((route) => route.isFirst);
-                  // ref.read(kioskControllerProvider.notifier).reset();
                 },
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// Extension to add a custom white style for the slot buttons
-extension on KioskLargeButton {
-  Widget buildWithCustomStyle(BuildContext context) {
-    return SizedBox(
-      height: 120,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.blue.shade900,
-          side: BorderSide(color: Colors.blue.shade900, width: 3),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        ),
-        onPressed: onPressed,
-        child: Text(
-          label,
-          style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
-=======
-
-class SlotSelectionPage extends StatelessWidget {
-  const SlotSelectionPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('CHỌN GIỜ KHÁM', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-        toolbarHeight: 100,
-        centerTitle: true,
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.touch_app, size: 100, color: Colors.blue),
-            const SizedBox(height: 40),
-            const Text(
-              'Hệ thống đang khởi tạo...',
-              style: TextStyle(fontSize: 24),
-            ),
-            const SizedBox(height: 40),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
-              ),
-              onPressed: () {},
-              child: const Text('BẮT ĐẦU', style: TextStyle(fontSize: 24)),
-            ),
-          ],
->>>>>>> 2e564c4 (chore(backend): install function dependencies version 2)
         ),
       ),
     );

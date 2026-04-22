@@ -5,15 +5,7 @@ class ReserveSlotUseCase {
 
   ReserveSlotUseCase(this.repository);
 
-  Future<void> call({
-    required String doctorId,
-    required String slotId,
-    required String patientId,
-  }) async {
-    return await repository.reserveSlot(
-      doctorId: doctorId,
-      slotId: slotId,
-      patientId: patientId,
-    );
+  Future<void> call(String slotId, String patientId) async {
+    return await repository.reserveSlot(slotId, patientId);
   }
 }

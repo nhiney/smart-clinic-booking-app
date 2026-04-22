@@ -40,7 +40,7 @@ class KioskLargeButton extends StatelessWidget {
               label.toUpperCase(),
               style: const TextStyle(
                 fontSize: 36, // Chữ rất to
-                fontWeight: FontWeight.black,
+                fontWeight: FontWeight.w900,
                 letterSpacing: 2,
               ),
             ),
