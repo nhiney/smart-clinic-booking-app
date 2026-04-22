@@ -17,15 +17,21 @@
 build/
 **/ios/Flutter/.last_build_id
 
-# Logs
+# Logs & Local Docs
 *.log
-build_error*.log
-analysis_results.log
+docs/logs/
+docs/patches/
+docs/planning/
+docs/requirements/
+docs/tasks/
+docs/archive/
 
 # Firebase
-functions/node_modules/
-functions/lib/
-functions/.runtimeconfig.json
+backend/functions/node_modules/
+backend/functions/lib/
+backend/functions/.runtimeconfig.json
+.firebase/
+firebase-debug.log
 
 # Local Environment / Secrets
 .env
@@ -33,12 +39,24 @@ functions/.runtimeconfig.json
 local.properties
 *.jks
 *.keystore
+*.password.txt
 
-# Local Tasks and Planning (Non-project docs)
-*.md
-.metadata
+# Flutter / Dart
+build/
+.dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+architecture.g.dart
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*.DS_Store
 
 # Others
 /ios/Pods/

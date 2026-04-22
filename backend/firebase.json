@@ -5,13 +5,27 @@
   "storage": {
     "rules": "storage.rules"
   },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firestore-debug.log",
+        "pubsub-debug.log",
+        "ui-debug.log"
+      ]
+    }
+  ],
   "flutter": {
     "platforms": {
       "android": {
         "default": {
           "projectId": "smart-clinic-90c51",
           "appId": "1:231411507802:android:86f81331d8031d468f6e63",
-          "fileOutput": "android/app/google-services.json"
+          "fileOutput": "../android/app/google-services.json"
         }
       },
       "ios": {
@@ -19,11 +33,11 @@
           "projectId": "smart-clinic-90c51",
           "appId": "1:231411507802:ios:a1714fa89f35b3988f6e63",
           "uploadDebugSymbols": false,
-          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+          "fileOutput": "../ios/Runner/GoogleService-Info.plist"
         }
       },
       "dart": {
-        "lib/firebase_options.dart": {
+        "../lib/firebase_options.dart": {
           "projectId": "smart-clinic-90c51",
           "configurations": {
             "android": "1:231411507802:android:86f81331d8031d468f6e63",

@@ -671,6 +671,8 @@ class _QuickActionsGrid extends StatelessWidget {
     _Action(Icons.smart_toy_outlined, 'AI Chat', Color(0xFF6D4C41), '/ai/voice-assistant'),
     _Action(Icons.map_rounded, 'Map', Color(0xFF00897B), '/maps'),
     _Action(Icons.newspaper_rounded, 'News', Color(0xFF757575), '/news'),
+    _Action(Icons.add_circle_outline, 'Test Patient', Color(0xFFE91E63), '/patient/create-appointment'),
+    _Action(Icons.qr_code_scanner, 'Test Clinic', Color(0xFF00BFA5), '/clinic/scanner'),
   ];
 
   @override
