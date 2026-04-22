@@ -1,22 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:smart_clinic_booking/l10n/app_localizations.dart';
-import 'package:smart_clinic_booking/core/localization/app_language.dart';
-import 'package:smart_clinic_booking/core/localization/language_controller.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import 'package:smart_clinic_booking/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:smart_clinic_booking/features/notification/presentation/screens/notification_screen.dart';
+import 'package:smart_clinic_booking/features/maps/presentation/screens/hospital_map_screen.dart';
+import 'package:smart_clinic_booking/features/profile/presentation/screens/patient_profile_screen.dart';
 
-// Theme Colors for ICARE - Re-matching to the screenshot branding
-class _C {
-  static const Color teal = Color(0xFF0288D1); // Use clinical blue for ICARE
-  static const Color tealLight = Color(0xFFE1F5FE);
-  static const Color textDark = Color(0xFF263238);
-  static const Color textSub = Color(0xFF546E7A);
-  static const Color card = Colors.white;
-  static const Color rating = Color(0xFFFFB300);
+// ── Brand palette ────────────────────────────────────────────────────────────
+class _P {
+  static const Color primary = Color(0xFF0288D1);
+  static const Color primaryDark = Color(0xFF01579B);
+  static const Color accent = Color(0xFF00ACC1);
+  static const Color surface = Color(0xFFF0F7FF);
+  static const Color cardBg = Colors.white;
+  static const Color textPrimary = Color(0xFF1A2B4A);
+  static const Color textSecondary = Color(0xFF64748B);
+  static const Color textHint = Color(0xFFB0BEC5);
+  static const Color gold = Color(0xFFFFB300);
+  static const Color success = Color(0xFF26A69A);
+  static const Color warning = Color(0xFFF57C00);
+}
+
+// ── Upcoming appointment model (lightweight, no extra dependency) ─────────────
+class _UpcomingAppt {
+  final String id;
+  final String doctorName;
+  final String specialty;
+  final DateTime dateTime;
+  final String status;
+
+  const _UpcomingAppt({
+    required this.id,
+    required this.doctorName,
+    required this.specialty,
+    required this.dateTime,
+    required this.status,
+  });
 }
 
 class PatientHomeScreen extends ConsumerStatefulWidget {
@@ -30,243 +53,641 @@ class _PatientHomeScreenState extends ConsumerState<PatientHomeScreen>
     with SingleTickerProviderStateMixin {
   int _tabIndex = 0;
   int _bannerIndex = 0;
-  late AnimationController _pulseController;
-  late PageController _bannerController;
+  late AnimationController _fabPulse;
+  late PageController _bannerCtrl;
+  List<_UpcomingAppt> _upcomingAppts = [];
+  bool _loadingAppts = false;
+  int _unreadCount = 0;
 
   @override
   void initState() {
     super.initState();
-    _bannerController = PageController();
-    _pulseController = AnimationController(
+    _bannerCtrl = PageController();
+    _fabPulse = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat();
+    _loadUpcomingAppointments();
+    _loadUnreadCount();
   }
 
   @override
   void dispose() {
-    _bannerController.dispose();
-    _pulseController.dispose();
+    _bannerCtrl.dispose();
+    _fabPulse.dispose();
     super.dispose();
   }
 
-  // Navigation Helpers
-  void _openBooking(BuildContext context) => context.push('/doctor/search');
-  void _openDoctorSearch(BuildContext context) => context.push('/doctor/search');
-  
-  Future<void> _dialHotline() async {
-    final uri = Uri(scheme: 'tel', path: '1900545454');
-    if (await canLaunchUrl(uri)) await launchUrl(uri);
+  Future<void> _loadUpcomingAppointments() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    setState(() => _loadingAppts = true);
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('appointments')
+          .where('patientId', isEqualTo: uid)
+          .where('status', whereIn: ['booked', 'confirmed', 'pending_booking'])
+          .orderBy('dateTime')
+          .limit(3)
+          .get();
+      final list = snap.docs.map((d) {
+        final data = d.data();
+        DateTime dt;
+        try {
+          dt = (data['dateTime'] as Timestamp).toDate();
+        } catch (_) {
+          dt = DateTime.now();
+        }
+        return _UpcomingAppt(
+          id: d.id,
+          doctorName: data['doctorName'] as String? ?? 'Unknown doctor',
+          specialty: data['specialty'] as String? ?? '',
+          dateTime: dt,
+          status: data['status'] as String? ?? 'booked',
+        );
+      }).toList();
+      if (mounted) setState(() => _upcomingAppts = list);
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _loadingAppts = false);
+    }
   }
 
-  // Logic Helpers
-  String _getGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Chào buổi sáng';
-    if (hour < 18) return 'Chào buổi chiều';
-    return 'Chào buổi tối';
+  Future<void> _loadUnreadCount() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('notifications')
+          .where('userId', isEqualTo: uid)
+          .where('isRead', isEqualTo: false)
+          .get();
+      if (mounted) setState(() => _unreadCount = snap.docs.length);
+    } catch (_) {}
+  }
+
+  String _greeting() {
+    final h = DateTime.now().hour;
+    if (h < 12) return 'Good morning';
+    if (h < 18) return 'Good afternoon';
+    return 'Good evening';
   }
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final userName = context.watch<AuthController>().currentUser?.name ?? '';
+    final firstName = userName.isNotEmpty ? userName.split(' ').last : 'there';
+
     final pages = [
-      _buildHomeContent(context, l10n),
+      _HomeTab(
+        firstName: firstName,
+        greeting: _greeting(),
+        bannerCtrl: _bannerCtrl,
+        bannerIndex: _bannerIndex,
+        onBannerChanged: (i) => setState(() => _bannerIndex = i),
+        upcomingAppts: _upcomingAppts,
+        loadingAppts: _loadingAppts,
+        fabPulse: _fabPulse,
+        onTabSwitch: (i) => setState(() => _tabIndex = i),
+      ),
       const NotificationScreen(),
-      const Scaffold(body: Center(child: Text('Bản đồ phòng khám'))),
-      _buildLanguageSelectionPage(),
+      const HospitalMapScreen(),
+      const PatientProfileScreen(),
     ];
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: _P.surface,
       body: SafeArea(child: pages[_tabIndex]),
-      bottomNavigationBar: _buildBottomNav(l10n),
+      bottomNavigationBar: _buildBottomNav(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: _buildPulsingFab(),
     );
   }
 
-  Widget _buildHomeContent(BuildContext context, AppLocalizations l10n) {
+  Widget _buildPulsingFab() {
+    return AnimatedBuilder(
+      animation: _fabPulse,
+      builder: (context, _) {
+        return GestureDetector(
+          onTap: () => context.push('/ai/voice-assistant'),
+          child: Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                colors: [Color(0xFF7C3AED), Color(0xFF4F46E5)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF7C3AED)
+                      .withOpacity(0.35 * (1 - _fabPulse.value)),
+                  spreadRadius: 12 * _fabPulse.value,
+                  blurRadius: 20 * _fabPulse.value,
+                ),
+                const BoxShadow(
+                  color: Color(0x557C3AED),
+                  blurRadius: 12,
+                  offset: Offset(0, 6),
+                ),
+              ],
+            ),
+            child: const Icon(Icons.mic_rounded, color: Colors.white, size: 30),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBottomNav() {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x14000000),
+            blurRadius: 16,
+            offset: Offset(0, -4),
+          ),
+        ],
+      ),
+      child: BottomNavigationBar(
+        currentIndex: _tabIndex,
+        onTap: (i) => setState(() => _tabIndex = i),
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        selectedItemColor: _P.primary,
+        unselectedItemColor: _P.textHint,
+        selectedFontSize: 11,
+        unselectedFontSize: 11,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700),
+        items: [
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.home_rounded),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Icon(Icons.notifications_none_rounded),
+                if (_unreadCount > 0)
+                  Positioned(
+                    right: -4,
+                    top: -4,
+                    child: Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        _unreadCount > 9 ? '9+' : '$_unreadCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 8,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            label: 'Notifications',
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.map_rounded),
+            label: 'Map',
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.person_rounded),
+            label: 'Profile',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Home tab extracted to keep build clean ───────────────────────────────────
+class _HomeTab extends StatelessWidget {
+  final String firstName;
+  final String greeting;
+  final PageController bannerCtrl;
+  final int bannerIndex;
+  final ValueChanged<int> onBannerChanged;
+  final List<_UpcomingAppt> upcomingAppts;
+  final bool loadingAppts;
+  final AnimationController fabPulse;
+  final ValueChanged<int> onTabSwitch;
+
+  const _HomeTab({
+    required this.firstName,
+    required this.greeting,
+    required this.bannerCtrl,
+    required this.bannerIndex,
+    required this.onBannerChanged,
+    required this.upcomingAppts,
+    required this.loadingAppts,
+    required this.fabPulse,
+    required this.onTabSwitch,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTopBar(context),
-          _buildPersonalizedGreeting(l10n),
-          _buildSearchBar(l10n),
-          _buildBannerCarousel(),
-          _buildFunctionalGrid(context, l10n),
-          _buildHospitalIntro(l10n),
-          _buildFeaturedFacilities(l10n),
-          _buildCarePackages(l10n),
-          _buildFeaturedDoctors(l10n),
+          _TopBar(
+            firstName: firstName,
+            greeting: greeting,
+            onNotifTap: () => onTabSwitch(1),
+          ),
+          _SearchBar(onTap: () => context.push('/doctor/search')),
+          _BannerCarousel(
+            ctrl: bannerCtrl,
+            index: bannerIndex,
+            onChanged: onBannerChanged,
+          ),
+          _QuickActionsGrid(),
+          _UpcomingSection(
+            appointments: upcomingAppts,
+            isLoading: loadingAppts,
+          ),
+          _HealthStatsRow(),
+          _FeaturedHospitals(),
+          _FeaturedDoctors(),
           const SizedBox(height: 120),
         ],
       ),
     );
   }
+}
 
-  Widget _buildTopBar(BuildContext context) {
+// ── Top bar ──────────────────────────────────────────────────────────────────
+class _TopBar extends StatelessWidget {
+  final String firstName;
+  final String greeting;
+  final VoidCallback onNotifTap;
+
+  const _TopBar({
+    required this.firstName,
+    required this.greeting,
+    required this.onNotifTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
+          // Logo + brand
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: _P.primaryDark,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(Icons.favorite_rounded, color: Colors.white, size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$greeting, $firstName',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: _P.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const Text(
+                  'ICare Health',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: _P.primaryDark,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Notification icon
+          _IconBtn(icon: Icons.notifications_outlined, onTap: onNotifTap),
+          const SizedBox(width: 8),
+          _IconBtn(
+            icon: Icons.person_outline_rounded,
+            onTap: () => context.push('/profile/patient'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _IconBtn extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  const _IconBtn({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x12000000),
+              blurRadius: 8,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Icon(icon, color: _P.primaryDark, size: 22),
+      ),
+    );
+  }
+}
+
+// ── Search bar ───────────────────────────────────────────────────────────────
+class _SearchBar extends StatelessWidget {
+  final VoidCallback onTap;
+  const _SearchBar({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0A000000),
+                blurRadius: 10,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
             children: [
-              Image.asset(
-                'assets/images/logo.png',
-                height: 40,
-                errorBuilder: (c, e, s) => Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFFE3F2FD)),
-                  child: const Icon(Icons.favorite_rounded, color: Color(0xFF0277BD), size: 24),
+              const Icon(Icons.search_rounded, color: _P.primary, size: 22),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Search doctors, hospitals, specialties…',
+                  style: TextStyle(
+                    color: _P.textHint,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                  ),
                 ),
               ),
-              const SizedBox(width: 12),
-              Column(
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _P.surface,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.tune_rounded, color: _P.primary, size: 18),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Banner carousel ──────────────────────────────────────────────────────────
+class _BannerCarousel extends StatelessWidget {
+  final PageController ctrl;
+  final int index;
+  final ValueChanged<int> onChanged;
+
+  const _BannerCarousel({
+    required this.ctrl,
+    required this.index,
+    required this.onChanged,
+  });
+
+  static const _banners = [
+    _BannerData(
+      gradient: [Color(0xFF0277BD), Color(0xFF039BE5)],
+      icon: Icons.calendar_month_rounded,
+      title: 'Book your appointment',
+      subtitle: 'Find a doctor in seconds',
+      action: 'Book now',
+      route: '/doctor/search',
+    ),
+    _BannerData(
+      gradient: [Color(0xFF00838F), Color(0xFF26C6DA)],
+      icon: Icons.health_and_safety_rounded,
+      title: 'Your health records',
+      subtitle: 'Access anytime, anywhere',
+      action: 'View records',
+      route: '/medical-records',
+    ),
+    _BannerData(
+      gradient: [Color(0xFF6A1B9A), Color(0xFFAB47BC)],
+      icon: Icons.smart_toy_rounded,
+      title: 'AI Health Assistant',
+      subtitle: 'Ask anything about your health',
+      action: 'Try now',
+      route: '/ai/voice-assistant',
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(
+          height: 160,
+          child: PageView.builder(
+            controller: ctrl,
+            onPageChanged: onChanged,
+            itemCount: _banners.length,
+            itemBuilder: (context, i) => _BannerCard(data: _banners[i]),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            _banners.length,
+            (i) => AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              width: index == i ? 20 : 7,
+              height: 7,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                color: index == i ? _P.primary : _P.textHint,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BannerData {
+  final List<Color> gradient;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String action;
+  final String route;
+
+  const _BannerData({
+    required this.gradient,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.action,
+    required this.route,
+  });
+}
+
+class _BannerCard extends StatelessWidget {
+  final _BannerData data;
+  const _BannerCard({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push(data.route),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: data.gradient,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: data.gradient.first.withOpacity(0.3),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
                   Text(
-                    'ICARE',
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF0277BD),
-                      letterSpacing: 1.0,
+                    data.title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      height: 1.2,
                     ),
                   ),
+                  const SizedBox(height: 6),
                   Text(
-                    'Healthcare Excellence',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF039BE5),
+                    data.subtitle,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                          color: Colors.white.withOpacity(0.4)),
+                    ),
+                    child: Text(
+                      data.action,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ],
               ),
-            ],
-          ),
-          Row(
-            children: [
-              _topIconButton(Icons.notifications_none_rounded, () => setState(() => _tabIndex = 1)),
-              const SizedBox(width: 10),
-              _topIconButton(Icons.person_outline_rounded, () => context.push('/profile/patient')),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPersonalizedGreeting(AppLocalizations l10n) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Xin chào,',
-            style: TextStyle(fontSize: 16, color: _C.textSub, fontWeight: FontWeight.w500),
-          ),
-          const Text(
-            'Nhi Yến',
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
-              color: _C.textDark,
-              letterSpacing: -0.5,
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSearchBar(AppLocalizations l10n) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF5F9FD),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.blue.shade50),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.search_rounded, color: Colors.blue.shade300, size: 22),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Tìm CSYT/bác sĩ/chuyên khoa/dịch vụ',
-                style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.w500),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(20),
               ),
+              child: Icon(data.icon, color: Colors.white, size: 36),
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildBannerCarousel() {
-    return Column(
-      children: [
-        Container(
-          height: 180,
-          margin: const EdgeInsets.symmetric(vertical: 8),
-          child: PageView(
-            controller: _bannerController,
-            onPageChanged: (i) => setState(() => _bannerIndex = i),
-            children: [
-              _carouselItem('/Users/nguyenlephong/.gemini/antigravity/brain/70688c33-581e-4887-a639-0c9689e2c939/clinical_banner_1_1775891561919.png'),
-              _carouselItem('/Users/nguyenlephong/.gemini/antigravity/brain/70688c33-581e-4887-a639-0c9689e2c939/clinical_banner_1_1775891561919.png'),
-            ],
-          ),
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(2, (index) => Container(
-            margin: const EdgeInsets.symmetric(horizontal: 4),
-            width: _bannerIndex == index ? 20 : 8,
-            height: 8,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(4),
-              color: _bannerIndex == index ? _C.teal : Colors.blue.shade100,
-            ),
-          )),
-        ),
-      ],
-    );
-  }
+// ── Quick actions grid ───────────────────────────────────────────────────────
+class _QuickActionsGrid extends StatelessWidget {
+  static const _items = [
+    _Action(Icons.add_circle_outline_rounded, 'Book Visit', Color(0xFF2196F3), '/doctor/search'),
+    _Action(Icons.history_rounded, 'History', Color(0xFF7C3AED), '/appointments'),
+    _Action(Icons.receipt_long_rounded, 'Invoices', Color(0xFF00BFA5), '/invoices'),
+    _Action(Icons.medication_rounded, 'Prescription', Color(0xFFE91E63), '/prescriptions'),
+    _Action(Icons.folder_open_rounded, 'Records', Color(0xFFFF6D00), '/medical-records'),
+    _Action(Icons.local_hospital_rounded, 'Admission', Color(0xFF5C6BC0), null),
+    _Action(Icons.payments_outlined, 'Payment', Color(0xFF43A047), '/payment'),
+    _Action(Icons.poll_outlined, 'Survey', Color(0xFFFB8C00), '/surveys'),
+    _Action(Icons.headset_mic_rounded, 'Support', Color(0xFF0288D1), '/support'),
+    _Action(Icons.smart_toy_outlined, 'AI Chat', Color(0xFF6D4C41), '/ai/voice-assistant'),
+    _Action(Icons.map_rounded, 'Map', Color(0xFF00897B), '/maps'),
+    _Action(Icons.newspaper_rounded, 'News', Color(0xFF757575), '/news'),
+    _Action(Icons.add_circle_outline, 'Test Patient', Color(0xFFE91E63), '/patient/create-appointment'),
+    _Action(Icons.qr_code_scanner, 'Test Clinic', Color(0xFF00BFA5), '/clinic/scanner'),
+  ];
 
-  Widget _carouselItem(String imagePath) {
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
+      margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        image: DecorationImage(
-          image: AssetImage(imagePath),
-          fit: BoxFit.cover,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFunctionalGrid(BuildContext context, AppLocalizations l10n) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(32),
-        boxShadow: [
+        color: _P.cardBg,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: const [
           BoxShadow(
-            color: Colors.blue.withOpacity(0.05),
+            color: Color(0x08000000),
             blurRadius: 20,
-            offset: const Offset(0, 10),
+            offset: Offset(0, 8),
           ),
         ],
       ),
@@ -277,581 +698,828 @@ class _PatientHomeScreenState extends ConsumerState<PatientHomeScreen>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Chức năng',
+                'Quick Access',
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 18,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF01579B),
+                  color: _P.primaryDark,
                 ),
               ),
-              Row(
-                children: [
-                  Icon(Icons.tune_rounded, color: Colors.blue.shade300, size: 20),
-                  const SizedBox(width: 12),
-                  Icon(Icons.search_rounded, color: Colors.blue.shade300, size: 20),
-                ],
-              ),
+              Icon(Icons.apps_rounded, color: _P.primary, size: 22),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           GridView.count(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 3,
-            mainAxisSpacing: 24,
-            crossAxisSpacing: 16,
-            childAspectRatio: 1.0,
-            children: [
-              _gridItem(Icons.add_task_rounded, 'Đặt khám', const Color(0xFF2196F3), () => _openBooking(context)),
-              _gridItem(Icons.history_edu_rounded, 'Lịch sử khám', const Color(0xFF673AB7), () => context.push('/appointments')),
-              _gridItem(Icons.account_balance_wallet_outlined, 'Thanh toán', const Color(0xFF00BFA5), () => {}),
-              
-              _gridItem(Icons.poll_outlined, 'Khảo sát', const Color(0xFFFF9800), () => {}),
-              _gridItem(Icons.medication_liquid_rounded, 'Đơn thuốc', const Color(0xFFE91E63), () => context.push('/prescriptions')),
-              _gridItem(Icons.hotel_rounded, 'Nhập viện', const Color(0xFF5D4037), () => {}),
-              
-              _gridItem(Icons.settings_suggest_outlined, 'Cài đặt TB', const Color(0xFF607D8B), () => {}),
-              _gridItem(Icons.folder_shared_outlined, 'Hồ sơ', const Color(0xFF7B1FA2), () => context.push('/profile/patient')),
-              _gridItem(Icons.vaccines_rounded, 'Tiêm chủng', const Color(0xFF43A047), () => {}),
-              
-              _gridItem(Icons.headset_mic_outlined, 'Hỗ trợ', const Color(0xFF0288D1), () => context.push('/support')),
-              _gridItem(Icons.smart_toy_outlined, 'Chatbot', const Color(0xFFF4511E), () => context.push('/ai/voice-assistant')),
-              _gridItem(Icons.add_circle_outline, 'Test Patient', const Color(0xFFE91E63), () => context.push('/patient/create-appointment')),
-              _gridItem(Icons.qr_code_scanner, 'Test Clinic', const Color(0xFF00BFA5), () => context.push('/clinic/scanner')),
-            ],
+            crossAxisCount: 4,
+            mainAxisSpacing: 20,
+            crossAxisSpacing: 12,
+            childAspectRatio: 0.85,
+            children: _items
+                .map((item) => _ActionCell(item: item))
+                .toList(),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _topIconButton(IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(30),
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-          border: Border.all(color: Colors.blue.shade50, width: 1),
-        ),
-        child: Icon(icon, color: const Color(0xFF0277BD), size: 24),
-      ),
-    );
-  }
+class _Action {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final String? route;
+  const _Action(this.icon, this.label, this.color, this.route);
+}
 
-  Widget _gridItem(IconData icon, String label, Color iconColor, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+class _ActionCell extends StatelessWidget {
+  final _Action item;
+  const _ActionCell({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        if (item.route != null) {
+          if (item.route == '/admission/registration/me') {
+            final uid =
+                FirebaseAuth.instance.currentUser?.uid ?? 'me';
+            context.push('/admission/registration/$uid');
+          } else {
+            context.push(item.route!);
+          }
+        }
+      },
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FBFF),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.blue.shade50.withOpacity(0.3)),
+              color: item.color.withOpacity(0.10),
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(icon, color: iconColor, size: 28),
+            child: Icon(item.icon, color: item.color, size: 24),
           ),
-          const SizedBox(height: 8),
-          Flexible(
-            child: Text(
-              label,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF263238),
-                height: 1.2,
-              ),
+          const SizedBox(height: 6),
+          Text(
+            item.label,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: _P.textPrimary,
+              height: 1.2,
             ),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildPulsingFab() {
-    return AnimatedBuilder(
-      animation: _pulseController,
-      builder: (context, child) {
-        return Container(
-          width: 70,
-          height: 70,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: [
-                const Color(0xFF6A1B9A).withOpacity(0.8),
-                const Color(0xFF4A148C),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.purple.withOpacity(0.3 * (1 - _pulseController.value)),
-                spreadRadius: 15 * _pulseController.value,
-                blurRadius: 20 * _pulseController.value,
-              ),
-              BoxShadow(
-                color: Colors.blue.withOpacity(0.4),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => context.push('/ai/voice-assistant'),
-              customBorder: const CircleBorder(),
-              child: const Icon(Icons.mic_rounded, color: Colors.white, size: 32),
-            ),
-          ),
-        );
-      },
-    );
-  }
+// ── Upcoming appointments ────────────────────────────────────────────────────
+class _UpcomingSection extends StatelessWidget {
+  final List<_UpcomingAppt> appointments;
+  final bool isLoading;
 
-  Widget _buildBottomNav(AppLocalizations l10n) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 15,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: BottomNavigationBar(
-        currentIndex: _tabIndex,
-        onTap: (index) => setState(() => _tabIndex = index),
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        selectedItemColor: const Color(0xFF0277BD),
-        unselectedItemColor: const Color(0xFF90A4AE),
-        selectedFontSize: 11,
-        unselectedFontSize: 11,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w800),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Chào mừng'),
-          BottomNavigationBarItem(icon: Icon(Icons.notifications_none_rounded), label: 'Thông báo'),
-          BottomNavigationBarItem(icon: Icon(Icons.grid_view_rounded), label: 'Bản đồ phòng k...'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline_rounded), label: 'Ngôn ngữ'),
-        ],
-      ),
-    );
-  }
+  const _UpcomingSection({
+    required this.appointments,
+    required this.isLoading,
+  });
 
-  Widget _buildSectionHeader(String title, String? subtitle, VoidCallback? onSeeAll, AppLocalizations l10n) {
+  @override
+  Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _C.textDark),
-              ),
-              if (subtitle != null)
-                Text(
-                  subtitle,
-                  style: const TextStyle(fontSize: 14, color: _C.textSub),
-                ),
-            ],
-          ),
-          if (onSeeAll != null)
-            TextButton(
-              onPressed: onSeeAll,
-              child: Text(
-                l10n.patient_view_all,
-                style: const TextStyle(color: _C.teal, fontWeight: FontWeight.w700),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHospitalIntro(AppLocalizations l10n) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.blue.shade900, const Color(0xFF01579B)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.blue.withOpacity(0.2),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Icon(Icons.info_outline_rounded, color: Colors.white70, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                l10n.patient_hospital_intro_title,
-                style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600),
+              const Text(
+                'Upcoming Appointments',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: _P.primaryDark,
+                ),
+              ),
+              GestureDetector(
+                onTap: () => context.push('/appointments'),
+                child: const Text(
+                  'See all',
+                  style: TextStyle(
+                    color: _P.primary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            l10n.patient_hospital_intro_desc,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFF01579B),
-              elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-            child: Text(l10n.patient_see_more, style: const TextStyle(fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFeaturedFacilities(AppLocalizations l10n) {
-    return Column(
-      children: [
-        const SizedBox(height: 32),
-        _buildSectionHeader(l10n.patient_section_facilities, l10n.patient_section_facilities_sub, () {}, l10n),
-        SizedBox(
-          height: 280,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            children: [
-              _facilityCard(
-                'Bệnh viện ĐH Y Dược',
-                'Hồng Bàng, Quận 5',
-                '4.8',
-                'https://images.unsplash.com/photo-1587350859728-117699f4a13d?auto=format&fit=crop&q=80&w=400',
-                l10n,
+          if (isLoading)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: CircularProgressIndicator(strokeWidth: 2),
               ),
-              _facilityCard(
-                'Bệnh viện Hoàn Mỹ',
-                'Phú Nhuận, TP.HCM',
-                '4.7',
-                'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=400',
-                l10n,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _facilityCard(String name, String loc, String rating, String img, AppLocalizations l10n) {
-    return Container(
-      width: 240,
-      margin: const EdgeInsets.only(right: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey.shade100),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            child: CachedNetworkImage(
-              imageUrl: img,
-              height: 140,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              placeholder: (context, url) => Container(color: Colors.grey.shade100, child: const Center(child: CircularProgressIndicator())),
-              errorWidget: (context, url, error) => Container(
-                color: _C.tealLight,
-                child: const Icon(Icons.business_rounded, color: _C.teal, size: 40),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(Icons.location_on_rounded, size: 14, color: _C.teal),
-                    const SizedBox(width: 4),
-                    Text(loc, style: const TextStyle(fontSize: 12, color: _C.textSub)),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.star_rounded, size: 16, color: _C.rating),
-                        Text(rating, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                      ],
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: _C.teal,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        l10n.patient_book_now,
-                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+            )
+          else if (appointments.isEmpty)
+            _EmptyAppt()
+          else
+            ...appointments.map((a) => _ApptCard(appt: a)),
         ],
       ),
     );
   }
+}
 
-  Widget _buildCarePackages(AppLocalizations l10n) {
-    return Column(
-      children: [
-        const SizedBox(height: 32),
-        _buildSectionHeader(l10n.patient_section_care, l10n.patient_section_care_sub, () {}, l10n),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Row(
-            children: [
-              _filterChip(l10n.patient_tab_health, true),
-              _filterChip(l10n.patient_tab_test, false),
-              _filterChip(l10n.patient_tab_vaccine, false),
-            ],
-          ),
+class _EmptyAppt extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/doctor/search'),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: _P.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: _P.primary.withOpacity(0.15)),
         ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 240,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            children: [
-              _packageCard('Gói khám tổng quát', '1.200.000đ', 'https://images.unsplash.com/photo-1576091160550-217359f42f8c?auto=format&fit=crop&q=80&w=400'),
-              _packageCard('Gói khám tim mạch', '2.500.000đ', 'https://images.unsplash.com/photo-1628177142898-93e36e4e3a50?auto=format&fit=crop&q=80&w=400'),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _filterChip(String label, bool active) {
-    return Container(
-      margin: const EdgeInsets.only(right: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: active ? _C.teal : Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: active ? Colors.white : _C.textSub,
-          fontWeight: active ? FontWeight.bold : FontWeight.normal,
-          fontSize: 13,
-        ),
-      ),
-    );
-  }
-
-  Widget _packageCard(String title, String price, String img) {
-    return Container(
-      width: 180,
-      margin: const EdgeInsets.only(right: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade100),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            child: CachedNetworkImage(
-              imageUrl: img,
-              height: 110,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              placeholder: (context, url) => Container(color: Colors.grey.shade100),
-              errorWidget: (context, url, error) => Container(
-                color: _C.tealLight,
-                child: const Icon(Icons.medical_services_outlined, color: _C.teal, size: 30),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, maxLines: 2, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                const SizedBox(height: 8),
-                Text(price, style: const TextStyle(color: _C.teal, fontWeight: FontWeight.w900, fontSize: 15)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFeaturedDoctors(AppLocalizations l10n) {
-    return Column(
-      children: [
-        const SizedBox(height: 32),
-        _buildSectionHeader(l10n.patient_section_doctors, l10n.patient_section_doctors_sub, () {}, l10n),
-        SizedBox(
-          height: 120,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            children: [
-              _doctorAvatar('BS. Nguyễn Văn A', 'Khoa Nội', 'https://i.pravatar.cc/150?u=1'),
-              _doctorAvatar('BS. Trần Thị B', 'Khoa Nhi', 'https://i.pravatar.cc/150?u=2'),
-              _doctorAvatar('BS. Lê Văn C', 'Khoa Sản', 'https://i.pravatar.cc/150?u=3'),
-              _doctorAvatar('BS. Phạm Thị D', 'Khoa Mắt', 'https://i.pravatar.cc/150?u=4'),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _doctorAvatar(String name, String spec, String img) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 20),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(3),
-            decoration: const BoxDecoration(shape: BoxShape.circle, color: _C.tealLight),
-            child: CircleAvatar(radius: 30, backgroundImage: NetworkImage(img)),
-          ),
-          const SizedBox(height: 8),
-          Text(name, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-          Text(spec, style: const TextStyle(fontSize: 10, color: _C.textSub)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLanguageSelectionPage() {
-    return Consumer(builder: (context, ref, _) {
-      final lang = ref.watch(languageControllerProvider);
-      return Column(
-        children: [
-          const Padding(
-            padding: EdgeInsets.all(24.0),
-            child: Text(
-              'Chọn ngôn ngữ',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF01579B)),
-            ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: AppLanguage.values.length,
-              itemBuilder: (context, index) {
-                final e = AppLanguage.values[index];
-                final isSelected = e == lang;
-                return ListTile(
-                  leading: Text(e.flag, style: const TextStyle(fontSize: 24)),
-                  title: Text(e.languageName),
-                  trailing: isSelected ? const Icon(Icons.check_circle, color: Colors.blue) : null,
-                  tileColor: isSelected ? Colors.blue.withOpacity(0.05) : null,
-                  onTap: () => ref.read(languageControllerProvider.notifier).setLanguage(e),
-                );
-              },
-            ),
-          ),
-        ],
-      );
-    });
-  }
-
-  Widget _buildLanguageList() {
-    return Consumer(builder: (context, ref, _) {
-      final lang = ref.watch(languageControllerProvider);
-      return Container(
-        padding: const EdgeInsets.symmetric(vertical: 24),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
+            Icon(Icons.event_available_rounded,
+                color: _P.primary.withOpacity(0.5), size: 40),
+            const SizedBox(height: 12),
             const Text(
-              'Chọn ngôn ngữ',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF01579B)),
+              'No upcoming appointments',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: _P.textSecondary,
+              ),
             ),
-            const SizedBox(height: 16),
-            ...AppLanguage.values.map((e) {
-              final isSelected = e == lang;
-              return ListTile(
-                leading: Text(e.flag, style: const TextStyle(fontSize: 24)),
-                title: Text(e.languageName),
-                trailing: isSelected ? const Icon(Icons.check_circle, color: Colors.blue) : null,
-                tileColor: isSelected ? Colors.blue.withOpacity(0.05) : null,
-                onTap: () {
-                  ref.read(languageControllerProvider.notifier).setLanguage(e);
-                  Navigator.pop(context);
-                },
-              );
-            }).toList(),
+            const SizedBox(height: 6),
+            const Text(
+              'Tap to book your first appointment',
+              style: TextStyle(fontSize: 13, color: _P.textHint),
+            ),
           ],
         ),
-      );
-    });
+      ),
+    );
+  }
+}
+
+class _ApptCard extends StatelessWidget {
+  final _UpcomingAppt appt;
+  const _ApptCard({required this.appt});
+
+  Color get _statusColor {
+    switch (appt.status) {
+      case 'confirmed':
+        return _P.success;
+      case 'booked':
+        return _P.primary;
+      default:
+        return _P.warning;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final day = appt.dateTime.day.toString().padLeft(2, '0');
+    final month = _month(appt.dateTime.month);
+    final time =
+        '${appt.dateTime.hour.toString().padLeft(2, '0')}:${appt.dateTime.minute.toString().padLeft(2, '0')}';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _P.cardBg,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x08000000),
+            blurRadius: 12,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Date block
+          Container(
+            width: 52,
+            height: 56,
+            decoration: BoxDecoration(
+              color: _P.primary.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  day,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: _P.primary,
+                    height: 1,
+                  ),
+                ),
+                Text(
+                  month,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: _P.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  appt.doctorName,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    color: _P.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  appt.specialty.isEmpty ? 'General' : appt.specialty,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: _P.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                time,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                  color: _P.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: _statusColor.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  appt.status.replaceAll('_', ' '),
+                  style: TextStyle(
+                    color: _statusColor,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _month(int m) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    return months[m - 1];
+  }
+}
+
+// ── Health stats row ─────────────────────────────────────────────────────────
+class _HealthStatsRow extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Health Overview',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: _P.primaryDark,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _StatCard(
+                  icon: Icons.medication_outlined,
+                  color: const Color(0xFFE91E63),
+                  title: 'Medications',
+                  subtitle: 'Tap to view',
+                  onTap: () => context.push('/prescriptions'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _StatCard(
+                  icon: Icons.folder_shared_rounded,
+                  color: const Color(0xFF7C3AED),
+                  title: 'Records',
+                  subtitle: 'Tap to view',
+                  onTap: () => context.push('/medical-records'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _StatCard(
+                  icon: Icons.receipt_long_rounded,
+                  color: const Color(0xFF00897B),
+                  title: 'Invoices',
+                  subtitle: 'Tap to view',
+                  onTap: () => context.push('/invoices'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _StatCard({
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: _P.cardBg,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x08000000),
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.10),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: _P.textPrimary,
+              ),
+            ),
+            Text(
+              subtitle,
+              style: const TextStyle(
+                fontSize: 10,
+                color: _P.textHint,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Featured hospitals ────────────────────────────────────────────────────────
+class _FeaturedHospitals extends StatelessWidget {
+  static const _hospitals = [
+    _HospitalData(
+      name: 'ĐH Y Dược TPHCM',
+      address: 'Quận 5, TP.HCM',
+      rating: '4.8',
+      imageUrl:
+          'https://images.unsplash.com/photo-1587350859728-117699f4a13d?auto=format&fit=crop&q=80&w=400',
+    ),
+    _HospitalData(
+      name: 'Bệnh viện Hoàn Mỹ',
+      address: 'Phú Nhuận, TP.HCM',
+      rating: '4.7',
+      imageUrl:
+          'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=400',
+    ),
+    _HospitalData(
+      name: 'Bệnh viện Chợ Rẫy',
+      address: 'Quận 5, TP.HCM',
+      rating: '4.6',
+      imageUrl:
+          'https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&q=80&w=400',
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 24, 0, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Featured Hospitals',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: _P.primaryDark,
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => context.push('/maps'),
+                  child: const Text(
+                    'See all',
+                    style: TextStyle(
+                      color: _P.primary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            height: 220,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemCount: _hospitals.length,
+              itemBuilder: (context, i) =>
+                  _HospitalCard(data: _hospitals[i]),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HospitalData {
+  final String name;
+  final String address;
+  final String rating;
+  final String imageUrl;
+  const _HospitalData({
+    required this.name,
+    required this.address,
+    required this.rating,
+    required this.imageUrl,
+  });
+}
+
+class _HospitalCard extends StatelessWidget {
+  final _HospitalData data;
+  const _HospitalCard({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/doctor/search'),
+      child: Container(
+        width: 200,
+        margin: const EdgeInsets.only(right: 16),
+        decoration: BoxDecoration(
+          color: _P.cardBg,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x0A000000),
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(20)),
+              child: CachedNetworkImage(
+                imageUrl: data.imageUrl,
+                height: 120,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                placeholder: (_, __) => Container(
+                  color: _P.surface,
+                  child: const Center(
+                    child: Icon(Icons.local_hospital_rounded,
+                        color: _P.primary, size: 32),
+                  ),
+                ),
+                errorWidget: (_, __, ___) => Container(
+                  color: _P.surface,
+                  child: const Center(
+                    child: Icon(Icons.local_hospital_rounded,
+                        color: _P.primary, size: 32),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    data.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: _P.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on_rounded,
+                          size: 13, color: _P.primary),
+                      const SizedBox(width: 3),
+                      Expanded(
+                        child: Text(
+                          data.address,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: _P.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.star_rounded,
+                              size: 14, color: _P.gold),
+                          const SizedBox(width: 3),
+                          Text(
+                            data.rating,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _P.primary,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          'Book',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Featured doctors ─────────────────────────────────────────────────────────
+class _FeaturedDoctors extends StatefulWidget {
+  @override
+  State<_FeaturedDoctors> createState() => _FeaturedDoctorsState();
+}
+
+class _FeaturedDoctorsState extends State<_FeaturedDoctors> {
+  List<Map<String, dynamic>> _doctors = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDoctors();
+  }
+
+  Future<void> _loadDoctors() async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('users')
+          .where('role', isEqualTo: 'doctor')
+          .where('status', isEqualTo: 'active')
+          .limit(6)
+          .get();
+      if (mounted) {
+        setState(() {
+          _doctors = snap.docs
+              .map((d) => <String, dynamic>{
+                    'id': d.id,
+                    'name': d.data()['name'] ?? 'Doctor',
+                    'specialty': d.data()['specialty'] ?? 'General',
+                    'avatarUrl': d.data()['avatarUrl'] ?? '',
+                  })
+              .toList();
+        });
+      }
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final showFallback = _doctors.isEmpty && !_loading;
+    final fallbackDoctors = [
+      {'id': '1', 'name': 'Dr. Nguyen Van A', 'specialty': 'Cardiology', 'avatarUrl': 'https://i.pravatar.cc/150?u=d1'},
+      {'id': '2', 'name': 'Dr. Tran Thi B', 'specialty': 'Pediatrics', 'avatarUrl': 'https://i.pravatar.cc/150?u=d2'},
+      {'id': '3', 'name': 'Dr. Le Van C', 'specialty': 'Neurology', 'avatarUrl': 'https://i.pravatar.cc/150?u=d3'},
+      {'id': '4', 'name': 'Dr. Pham Thi D', 'specialty': 'Ophthalmology', 'avatarUrl': 'https://i.pravatar.cc/150?u=d4'},
+    ];
+    final list = showFallback ? fallbackDoctors : _doctors;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 24, 0, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Featured Doctors',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: _P.primaryDark,
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => context.push('/doctor/search'),
+                  child: const Text(
+                    'See all',
+                    style: TextStyle(
+                      color: _P.primary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          if (_loading)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            )
+          else
+            SizedBox(
+              height: 110,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: list.length,
+                itemBuilder: (context, i) {
+                  final doc = list[i];
+                  return GestureDetector(
+                    onTap: () => context.push(
+                        '/doctor/detail/${doc['id']}'),
+                    child: Container(
+                      width: 90,
+                      margin: const EdgeInsets.only(right: 16),
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                  color: _P.primary.withOpacity(0.3),
+                                  width: 2),
+                            ),
+                            child: CircleAvatar(
+                              radius: 28,
+                              backgroundColor: _P.surface,
+                              backgroundImage: (doc['avatarUrl'] as String).isNotEmpty
+                                  ? NetworkImage(doc['avatarUrl'] as String)
+                                  : null,
+                              child: (doc['avatarUrl'] as String).isEmpty
+                                  ? const Icon(
+                                      Icons.person_rounded,
+                                      color: _P.primary,
+                                      size: 24)
+                                  : null,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            (doc['name'] as String).split(' ').last,
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: _P.textPrimary,
+                            ),
+                          ),
+                          Text(
+                            doc['specialty'] as String,
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: _P.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }

@@ -12,6 +12,8 @@ class ReviewModel extends ReviewEntity {
     required super.createdAt,
     super.userName,
     super.userAvatar,
+    super.helpfulCount = 0,
+    super.helpfulByUserIds = const [],
   });
 
   factory ReviewModel.fromJson(Map<String, dynamic> json, String id) {
@@ -25,19 +27,21 @@ class ReviewModel extends ReviewEntity {
       createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       userName: json['userName'] as String?,
       userAvatar: json['userAvatar'] as String?,
+      helpfulCount: (json['helpfulCount'] as num?)?.toInt() ?? 0,
+      helpfulByUserIds: (json['helpfulByUserIds'] as List?)?.map((e) => e.toString()).toList() ?? [],
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'userId': userId,
-      'hospitalId': hospitalId,
-      'doctorId': doctorId,
-      'rating': rating,
-      'comment': comment,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'userName': userName,
-      'userAvatar': userAvatar,
-    };
-  }
+  Map<String, dynamic> toJson() => {
+        'userId': userId,
+        'hospitalId': hospitalId,
+        'doctorId': doctorId,
+        'rating': rating,
+        'comment': comment,
+        'createdAt': Timestamp.fromDate(createdAt),
+        'userName': userName,
+        'userAvatar': userAvatar,
+        'helpfulCount': helpfulCount,
+        'helpfulByUserIds': helpfulByUserIds,
+      };
 }

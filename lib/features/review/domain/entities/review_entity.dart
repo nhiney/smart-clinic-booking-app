@@ -11,6 +11,9 @@ class ReviewEntity extends Equatable {
   final String? userName;
   final String? userAvatar;
 
+  final int helpfulCount;
+  final List<String> helpfulByUserIds;
+
   const ReviewEntity({
     required this.id,
     required this.userId,
@@ -21,8 +24,12 @@ class ReviewEntity extends Equatable {
     required this.createdAt,
     this.userName,
     this.userAvatar,
+    this.helpfulCount = 0,
+    this.helpfulByUserIds = const [],
   });
 
+  bool isHelpfulFor(String uid) => helpfulByUserIds.contains(uid);
+
   @override
-  List<Object?> get props => [id, userId, hospitalId, doctorId, rating, comment, createdAt, userName, userAvatar];
+  List<Object?> get props => [id, userId, hospitalId, doctorId, rating, comment, createdAt];
 }
