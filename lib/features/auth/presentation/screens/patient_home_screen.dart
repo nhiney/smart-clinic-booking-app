@@ -316,6 +316,8 @@ class _PatientHomeScreenState extends ConsumerState<PatientHomeScreen>
               
               _gridItem(Icons.headset_mic_outlined, 'Hỗ trợ', const Color(0xFF0288D1), () => context.push('/support')),
               _gridItem(Icons.smart_toy_outlined, 'Chatbot', const Color(0xFFF4511E), () => context.push('/ai/voice-assistant')),
+              _gridItem(Icons.add_circle_outline, 'Test Patient', const Color(0xFFE91E63), () => context.push('/patient/create-appointment')),
+              _gridItem(Icons.qr_code_scanner, 'Test Clinic', const Color(0xFF00BFA5), () => context.push('/clinic/scanner')),
             ],
           ),
         ],

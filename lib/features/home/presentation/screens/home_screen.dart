@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:smart_clinic_booking/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+
 import '../../../../core/theme/colors/app_colors.dart';
 import '../../../../core/extensions/context_extension.dart';
 import '../../../notification/presentation/screens/notification_screen.dart';
@@ -20,24 +20,6 @@ import '../widgets/medication_reminder_section.dart';
 import '../widgets/consulting_doctors_section.dart';
 import '../widgets/medical_facilities_section.dart';
 import '../widgets/care_section.dart';
-import '../../domain/entities/medication_reminder.dart';
-import '../../domain/entities/health_article.dart';
-import '../../../appointment/domain/entities/appointment_entity.dart';
-
-import 'package:flutter/material.dart';
-import 'package:smart_clinic_booking/l10n/app_localizations.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
-import '../../../../core/theme/colors/app_colors.dart';
-import '../../../../core/extensions/context_extension.dart';
-import '../../../notification/presentation/screens/notification_screen.dart';
-import '../../../auth/presentation/controllers/auth_controller.dart';
-import '../bloc/home_bloc.dart';
-import '../bloc/home_bloc_handler.dart';
-import '../widgets/home_header.dart';
-import '../widgets/quick_actions_grid.dart';
-import '../widgets/hospital_banner.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -82,10 +64,8 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: (index) {
           if (index == 3) {
             context.push('/profile/patient');
-          } else if (index == 2) {
-             setState(() => _currentIndex = index);
           } else {
-             setState(() => _currentIndex = index);
+            setState(() => _currentIndex = index);
           }
         },
         type: BottomNavigationBarType.fixed,
@@ -102,7 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Padding(padding: EdgeInsets.only(bottom: 4), child: Icon(Icons.home_rounded, size: 28)),
             label: 'Trang chủ',
           ),
-           BottomNavigationBarItem(
+          BottomNavigationBarItem(
             icon: Padding(
               padding: const EdgeInsets.only(bottom: 4),
               child: Stack(
@@ -176,11 +156,10 @@ class _HomeDashboardState extends State<_HomeDashboard> {
             context.read<HomeBlocHandler>().add(HomeRefreshRequested(userId: userId));
           },
           child: Container(
-            // Toàn bộ màn hình có nền gradient phía sau
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Color(0xFFD4EFFF), // xanh dương nhạt nhất ở trên cùng
+                  Color(0xFFD4EFFF),
                   Color(0xFFEAF6FF),
                   Colors.white,
                 ],
@@ -192,14 +171,12 @@ class _HomeDashboardState extends State<_HomeDashboard> {
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
               slivers: [
-                const SliverToBoxAdapter(
-                  child: HomeHeader(), // header đã được bỏ margin thừa
-                ),
+                const SliverToBoxAdapter(child: HomeHeader()),
                 SliverToBoxAdapter(
                   child: Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.04),
@@ -209,8 +186,9 @@ class _HomeDashboardState extends State<_HomeDashboard> {
                       ],
                     ),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 4), // Khoảng trống nhỏ trên đầu lưới
+                        const SizedBox(height: 20),
                         QuickActionsGrid(
                           userRole: currentRole,
                           onBookAppointment: () => context.push('/maps'),
@@ -225,20 +203,82 @@ class _HomeDashboardState extends State<_HomeDashboard> {
                           onSurveys: () => context.push('/surveys'),
                           onProfile: () => context.push('/profile/patient'),
                         ),
-                        // The big hospital banner image
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.network(
-                              'https://images.sampletemplates.com/wp-content/uploads/2016/03/Patient-Logo-Template.jpg',
-                              height: 140,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
+                        const SizedBox(height: 24),
+
+                        if (state is HomeLoading)
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 40),
+                              child: CircularProgressIndicator(),
+                            ),
+                          )
+                        else if (state is HomeLoaded) ...[
+                          // Upcoming Appointment
+                          UpcomingAppointmentCard(
+                            appointments: state.upcomingAppointments,
+                            onViewAll: () => context.push('/appointments'),
+                            onBook: () => context.push('/maps'),
+                            onCancel: (appointment) {}, // Implement cancel logic
+                            onReschedule: (appointment) {}, // Implement reschedule logic
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Medication Reminders
+                          if (state.medicationReminders.isNotEmpty) ...[
+                            MedicationReminderSection(
+                              reminders: state.medicationReminders,
+                              onMarkAsTaken: (id) {
+                                context.read<HomeBlocHandler>().add(HomeMedicationMarkedTaken(reminderId: id));
+                              },
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+
+                          // Hospital Banner
+                          const HospitalBanner(),
+                          const SizedBox(height: 32),
+
+                          // Recommended Doctors
+                          RecommendedDoctorsSection(
+                            doctors: state.recommendedDoctors,
+                          ),
+                          const SizedBox(height: 32),
+
+                          // Health News
+                          HealthNewsFeed(
+                            articles: state.healthNews,
+                          ),
+                          const SizedBox(height: 32),
+
+                          // Other Care Sections
+                          const CareSection(),
+                          const SizedBox(height: 32),
+
+                          const MedicalFacilitiesSection(),
+                          const SizedBox(height: 32),
+
+                          const ConsultingDoctorsSection(),
+                          const SizedBox(height: 32),
+
+                          const FeaturedHospitalsSection(),
+                        ] else if (state is HomeError)
+                          Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(32),
+                              child: Column(
+                                children: [
+                                  const Icon(Icons.error_outline_rounded, size: 48, color: Colors.red),
+                                  const SizedBox(height: 16),
+                                  Text(state.message, textAlign: TextAlign.center),
+                                  TextButton(
+                                    onPressed: _loadData,
+                                    child: const Text('Thử lại'),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 80),
+                        const SizedBox(height: 100),
                       ],
                     ),
                   ),
@@ -251,3 +291,4 @@ class _HomeDashboardState extends State<_HomeDashboard> {
     );
   }
 }
+

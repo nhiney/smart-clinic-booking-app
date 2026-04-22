@@ -10,72 +10,72 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' hide ChangeNotifierProvi
 
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:smart_clinic_booking/l10n/app_localizations.dart';
-import 'core/localization/language_service.dart';
-import 'core/localization/language_controller.dart';
-import 'core/localization/app_language.dart';
+import 'package:smart_clinic_booking/core/localization/language_service.dart';
+import 'package:smart_clinic_booking/core/localization/language_controller.dart';
+import 'package:smart_clinic_booking/core/localization/app_language.dart';
 
-import 'firebase_options.dart';
-import 'core/theme/themes/app_theme.dart';
-import 'app/di/injection.dart';
-import 'app/router/app_router.dart';
-import 'core/services/app_config_service.dart';
-import 'features/auth/presentation/bloc/sign_up_bloc.dart';
+import 'package:smart_clinic_booking/core/config/firebase_options.dart';
+import 'package:smart_clinic_booking/core/theme/themes/app_theme.dart';
+import 'package:smart_clinic_booking/apps/shared/di/injection.dart';
+import 'package:smart_clinic_booking/apps/shared/router/app_router.dart';
+import 'package:smart_clinic_booking/core/services/app_config_service.dart';
+import 'package:smart_clinic_booking/features/auth/presentation/bloc/sign_up_bloc.dart';
 
 // Auth
-import 'features/auth/domain/usecases/login_usecase.dart';
-import 'features/auth/domain/usecases/register_usecase.dart';
-import 'features/auth/domain/usecases/verify_phone_usecase.dart';
-import 'features/auth/domain/usecases/signin_with_phone_usecase.dart';
-import 'features/auth/domain/repositories/auth_repository.dart';
-import 'features/auth/presentation/controllers/auth_controller.dart';
-import 'features/auth/data/datasources/auth_remote_datasource.dart';
+import 'package:smart_clinic_booking/features/auth/domain/usecases/login_usecase.dart';
+import 'package:smart_clinic_booking/features/auth/domain/usecases/register_usecase.dart';
+import 'package:smart_clinic_booking/features/auth/domain/usecases/verify_phone_usecase.dart';
+import 'package:smart_clinic_booking/features/auth/domain/usecases/signin_with_phone_usecase.dart';
+import 'package:smart_clinic_booking/features/auth/domain/repositories/auth_repository.dart';
+import 'package:smart_clinic_booking/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:smart_clinic_booking/features/auth/data/datasources/auth_remote_datasource.dart';
 
 // Doctor
-import 'features/doctor/domain/repositories/doctor_repository.dart';
-import 'features/doctor/data/datasources/doctor_remote_datasource.dart';
-import 'features/doctor/presentation/controllers/doctor_controller.dart';
-import 'features/doctor/presentation/controllers/doctor_search_controller.dart';
-import 'features/doctor/domain/usecases/get_catalog_doctors_usecase.dart';
-import 'core/services/file_storage_service.dart';
+import 'package:smart_clinic_booking/features/doctor/domain/repositories/doctor_repository.dart';
+import 'package:smart_clinic_booking/features/doctor/data/datasources/doctor_remote_datasource.dart';
+import 'package:smart_clinic_booking/features/doctor/presentation/controllers/doctor_controller.dart';
+import 'package:smart_clinic_booking/features/doctor/presentation/controllers/doctor_search_controller.dart';
+import 'package:smart_clinic_booking/features/doctor/domain/usecases/get_catalog_doctors_usecase.dart';
+import 'package:smart_clinic_booking/core/services/file_storage_service.dart';
 
 // Admin
-import 'features/admin/domain/repositories/facility_repository.dart';
-import 'features/admin/presentation/controllers/admin_controller.dart';
-import 'features/admin/data/repositories/firestore_facility_repository.dart';
+import 'package:smart_clinic_booking/features/admin/domain/repositories/facility_repository.dart';
+import 'package:smart_clinic_booking/features/admin/presentation/controllers/admin_controller.dart';
+import 'package:smart_clinic_booking/features/admin/data/repositories/firestore_facility_repository.dart';
 
 // Appointment
-import 'features/appointment/domain/repositories/appointment_repository.dart';
-import 'features/appointment/presentation/controllers/appointment_controller.dart';
+import 'package:smart_clinic_booking/features/appointment/domain/repositories/appointment_repository.dart';
+import 'package:smart_clinic_booking/features/appointment/presentation/controllers/appointment_controller.dart';
 
 // Medication
-import 'features/medication/domain/repositories/medication_repository.dart';
-import 'features/medication/presentation/controllers/medication_controller.dart';
+import 'package:smart_clinic_booking/features/medication/domain/repositories/medication_repository.dart';
+import 'package:smart_clinic_booking/features/medication/presentation/controllers/medication_controller.dart';
 
 // Profile
-import 'features/profile/domain/repositories/profile_repository.dart';
-import 'features/profile/domain/usecases/get_patient_profile.dart';
-import 'features/profile/domain/usecases/update_patient_profile.dart';
-import 'features/profile/presentation/controllers/profile_controller.dart';
-import 'features/profile/presentation/controllers/patient_profile_controller.dart';
+import 'package:smart_clinic_booking/features/profile/domain/repositories/profile_repository.dart';
+import 'package:smart_clinic_booking/features/profile/domain/usecases/get_patient_profile.dart';
+import 'package:smart_clinic_booking/features/profile/domain/usecases/update_patient_profile.dart';
+import 'package:smart_clinic_booking/features/profile/presentation/controllers/profile_controller.dart';
+import 'package:smart_clinic_booking/features/profile/presentation/controllers/patient_profile_controller.dart';
 
 // Maps
-import 'features/maps/domain/repositories/maps_repository.dart';
+import 'package:smart_clinic_booking/features/maps/domain/repositories/maps_repository.dart';
 
 // Notification
-import 'features/notification/domain/repositories/notification_repository.dart';
-import 'features/notification/presentation/controllers/notification_controller.dart';
+import 'package:smart_clinic_booking/features/notification/domain/repositories/notification_repository.dart';
+import 'package:smart_clinic_booking/features/notification/presentation/controllers/notification_controller.dart';
 
 // Screens
-import 'features/appointment/domain/usecases/get_appointments_usecase.dart';
-import 'features/doctor/domain/usecases/get_doctors_usecase.dart';
+import 'package:smart_clinic_booking/features/appointment/domain/usecases/get_appointments_usecase.dart';
+import 'package:smart_clinic_booking/features/doctor/domain/usecases/get_doctors_usecase.dart';
 
 // Home
-import 'features/home/presentation/bloc/home_bloc_handler.dart';
-import 'features/home/data/datasources/home_remote_datasource.dart';
-import 'features/home/data/repositories/home_repository_impl.dart';
-import 'features/home/domain/usecases/get_health_summary_usecase.dart';
-import 'features/home/domain/usecases/medication_usecases.dart';
-import 'features/home/domain/usecases/get_health_news_usecase.dart';
+import 'package:smart_clinic_booking/features/home/presentation/bloc/home_bloc_handler.dart';
+import 'package:smart_clinic_booking/features/home/data/datasources/home_remote_datasource.dart';
+import 'package:smart_clinic_booking/features/home/data/repositories/home_repository_impl.dart';
+import 'package:smart_clinic_booking/features/home/domain/usecases/get_health_summary_usecase.dart';
+import 'package:smart_clinic_booking/features/home/domain/usecases/medication_usecases.dart';
+import 'package:smart_clinic_booking/features/home/domain/usecases/get_health_news_usecase.dart';
 
 
 Future<void> main() async {

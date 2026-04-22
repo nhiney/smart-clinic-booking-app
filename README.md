@@ -403,7 +403,25 @@ firebase deploy --only firestore:rules
 
 # 6. Run the app
 flutter run
+
+# 7. Run Specific Device Modules
+# To run the Patient Device (User Device) independently:
+flutter run -t lib/main_user_device.dart
+
+# To run the Clinic Device (QR Scanner) independently:
+flutter run -t lib/main_qr_scanner_device.dart
 ```
+
+---
+
+## Multi-Device Architecture
+
+The project is structured to support different physical devices with dedicated interfaces:
+
+- **User Device (Patient Client)**: Optimized for smartphones, focusing on booking and health records.
+  - Entry point: `lib/main_user_device.dart`
+- **QR Scanner Device (Clinic Terminal)**: Optimized for tablets (Landscape), focusing on rapid check-in.
+  - Entry point: `lib/main_qr_scanner_device.dart`
 
 ---
 

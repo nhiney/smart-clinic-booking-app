@@ -31,6 +31,8 @@ import 'package:smart_clinic_booking/features/auth/presentation/screens/create_p
 import 'package:smart_clinic_booking/features/auth/presentation/screens/account_qr_screen.dart';
 import 'package:smart_clinic_booking/features/auth/presentation/screens/qr_login_scanner_screen.dart';
 import 'package:smart_clinic_booking/features/support/domain/entities/support_entities.dart';
+import 'package:smart_clinic_booking/apps/user_device/booking/presentation/screens/create_appointment_screen.dart';
+import 'package:smart_clinic_booking/apps/qr_scanner_device/scanner/presentation/screens/qr_scanner_screen.dart';
 
 import 'package:smart_clinic_booking/features/payment/presentation/screens/payment_screen.dart';
 import 'package:smart_clinic_booking/features/payment/presentation/screens/transaction_screen.dart';
@@ -380,6 +382,14 @@ class AppRouter {
             doctor: doctor,
           );
         },
+      ),
+      GoRoute(
+        path: '/patient/create-appointment',
+        builder: (context, state) => const CreateAppointmentScreen(),
+      ),
+      GoRoute(
+        path: '/clinic/scanner',
+        builder: (context, state) => const QRScannerScreen(),
       ),
     ],
   );

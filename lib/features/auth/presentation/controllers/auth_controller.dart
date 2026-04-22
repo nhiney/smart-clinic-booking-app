@@ -10,8 +10,8 @@ import '../../domain/usecases/signin_with_phone_usecase.dart';
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smart_clinic_booking/app/di/injection.dart';
-import 'package:smart_clinic_booking/app/router/app_router.dart';
+import 'package:smart_clinic_booking/apps/shared/di/injection.dart';
+import 'package:smart_clinic_booking/apps/shared/router/app_router.dart';
 
 final authControllerProvider = ChangeNotifierProvider<AuthController>((ref) {
   return AuthController(
