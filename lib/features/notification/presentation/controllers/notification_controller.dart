@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../domain/entities/notification_entity.dart';
 import '../../domain/entities/notification_data_entities.dart';
 import '../../domain/repositories/notification_repository.dart';
+import '../../data/services/fcm_service.dart';
+import '../../data/services/appointment_reminder_service.dart';
 
 class NotificationController extends ChangeNotifier {
   final NotificationRepository repository;
@@ -13,8 +16,24 @@ class NotificationController extends ChangeNotifier {
   UserBehaviorEntity? userBehavior;
   bool isLoading = false;
   String? errorMessage;
+  StreamSubscription<List<NotificationEntity>>? _watchSub;
 
   int get unreadCount => notifications.where((n) => !n.isRead).length;
+
+  /// Call once after login to register FCM token and start real-time watch.
+  Future<void> initForUser(String userId) async {
+    await FcmService.init();
+    await FcmService.registerToken(userId);
+    _startWatching(userId);
+  }
+
+  void _startWatching(String userId) {
+    _watchSub?.cancel();
+    _watchSub = repository.watchNotifications(userId).listen((list) {
+      notifications = list;
+      notifyListeners();
+    });
+  }
 
   Future<void> loadNotifications(String userId) async {
     try {
@@ -26,30 +45,73 @@ class NotificationController extends ChangeNotifier {
       notificationLogs = await repository.getNotificationLogs(userId);
       userBehavior = await repository.getUserBehavior(userId);
     } catch (e) {
-      errorMessage = 'Không thể tải thông báo';
+      errorMessage = 'Failed to load notifications';
     } finally {
       isLoading = false;
       notifyListeners();
     }
   }
 
-  // Smart Escalation Logic ($0 cost)
-  Future<void> trackMissedAppointment(String userId) async {
-    final current = await repository.getUserBehavior(userId);
-    final count = (current?.missedAppointmentsCount ?? 0) + 1;
-    final multiplier = count > 2 ? 2.0 : 1.0;
+  // ─── CREATE NOTIFICATIONS ────────────────────────────────────────────────
 
-    final updated = UserBehaviorEntity(
+  Future<void> notifyAppointmentConfirmed({
+    required String userId,
+    required String doctorName,
+    required DateTime appointmentTime,
+    required String appointmentId,
+    required String location,
+  }) async {
+    await repository.createNotification(
       userId: userId,
-      missedAppointmentsCount: count,
-      urgencyMultiplier: multiplier,
-      lastUpdated: DateTime.now(),
+      title: 'Appointment Confirmed',
+      body: 'Your appointment with Dr. $doctorName is confirmed.',
+      type: 'appointment_confirmed',
+      data: {'appointmentId': appointmentId},
     );
+    // Schedule local 24h and 1h reminders
+    await AppointmentReminderService.scheduleAppointmentReminders(
+      appointmentId: appointmentId,
+      appointmentTime: appointmentTime,
+      doctorName: doctorName,
+      location: location,
+    );
+    await AppointmentReminderService.showAppointmentConfirmation(
+      doctorName: doctorName,
+      appointmentTime: appointmentTime,
+    );
+  }
 
-    await repository.updateUserBehavior(updated);
-    userBehavior = updated;
+  Future<void> notifyAppointmentCancelled({
+    required String userId,
+    required String doctorName,
+    required DateTime appointmentTime,
+    required String appointmentId,
+  }) async {
+    await repository.createNotification(
+      userId: userId,
+      title: 'Appointment Cancelled',
+      body: 'Your appointment with Dr. $doctorName has been cancelled.',
+      type: 'appointment_cancelled',
+      data: {'appointmentId': appointmentId},
+    );
+    await AppointmentReminderService.cancelAppointmentReminders(appointmentId);
+    await AppointmentReminderService.showAppointmentCancellation(
+      doctorName: doctorName,
+      appointmentTime: appointmentTime,
+    );
+    // Track behavior
+    await repository.recordBehavioralEvent(userId: userId, eventType: 'missed_appointment');
+  }
+
+  // ─── BEHAVIORAL ──────────────────────────────────────────────────────────
+
+  Future<void> trackMissedAppointment(String userId) async {
+    await repository.recordBehavioralEvent(userId: userId, eventType: 'missed_appointment');
+    userBehavior = await repository.getUserBehavior(userId);
     notifyListeners();
   }
+
+  // ─── READ / DELETE ────────────────────────────────────────────────────────
 
   Future<void> markAsRead(String id) async {
     try {
@@ -60,7 +122,7 @@ class NotificationController extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      errorMessage = 'Không thể đánh dấu đã đọc';
+      errorMessage = 'Failed to mark as read';
       notifyListeners();
     }
   }
@@ -68,12 +130,10 @@ class NotificationController extends ChangeNotifier {
   Future<void> markAllAsRead(String userId) async {
     try {
       await repository.markAllAsRead(userId);
-      notifications = notifications
-          .map((n) => n.copyWith(isRead: true))
-          .toList();
+      notifications = notifications.map((n) => n.copyWith(isRead: true)).toList();
       notifyListeners();
     } catch (e) {
-      errorMessage = 'Không thể đánh dấu tất cả đã đọc';
+      errorMessage = 'Failed to mark all as read';
       notifyListeners();
     }
   }
@@ -84,8 +144,14 @@ class NotificationController extends ChangeNotifier {
       notifications.removeWhere((n) => n.id == id);
       notifyListeners();
     } catch (e) {
-      errorMessage = 'Không thể xóa thông báo';
+      errorMessage = 'Failed to delete notification';
       notifyListeners();
     }
+  }
+
+  @override
+  void dispose() {
+    _watchSub?.cancel();
+    super.dispose();
   }
 }
