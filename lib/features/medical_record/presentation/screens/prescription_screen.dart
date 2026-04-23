@@ -39,7 +39,10 @@ class PrescriptionScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: context.colors.background,
-      appBar: const BrandedAppBar(title: "Đơn thuốc của tôi"),
+      appBar: const BrandedAppBar(
+        title: "Đơn thuốc của tôi",
+        showBackButton: true,
+      ),
       body: prescriptions.isEmpty
           ? const EmptyStateWidget(
               title: "Bạn chưa có đơn thuốc nào.",

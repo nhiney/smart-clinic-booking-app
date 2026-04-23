@@ -9,6 +9,10 @@ import 'package:smart_clinic_booking/features/auth/presentation/controllers/auth
 import 'package:smart_clinic_booking/features/notification/presentation/screens/notification_screen.dart';
 import 'package:smart_clinic_booking/features/maps/presentation/screens/hospital_map_screen.dart';
 import 'package:smart_clinic_booking/features/profile/presentation/screens/patient_profile_screen.dart';
+import 'package:smart_clinic_booking/core/localization/language_service.dart';
+import 'package:smart_clinic_booking/core/localization/language_controller.dart';
+import 'package:smart_clinic_booking/core/localization/app_language.dart';
+import 'package:smart_clinic_booking/core/widgets/icare_logo.dart';
 
 // ── Brand palette ────────────────────────────────────────────────────────────
 class _P {
@@ -126,22 +130,23 @@ class _PatientHomeScreenState extends ConsumerState<PatientHomeScreen>
     } catch (_) {}
   }
 
-  String _greeting() {
+  String _greeting(AppLanguage currentLanguage) {
     final h = DateTime.now().hour;
-    if (h < 12) return 'Good morning';
-    if (h < 18) return 'Good afternoon';
-    return 'Good evening';
+    if (h < 12) return currentLanguage.localize('Chào buổi sáng', 'Good morning');
+    if (h < 18) return currentLanguage.localize('Chào buổi chiều', 'Good afternoon');
+    return currentLanguage.localize('Chào buổi tối', 'Good evening');
   }
 
   @override
   Widget build(BuildContext context) {
+    final currentLanguage = ref.watch(languageControllerProvider);
     final userName = context.watch<AuthController>().currentUser?.name ?? '';
-    final firstName = userName.isNotEmpty ? userName.split(' ').last : 'there';
+    final firstName = userName.isNotEmpty ? userName.split(' ').last : currentLanguage.localize('bạn', 'there');
 
     final pages = [
       _HomeTab(
         firstName: firstName,
-        greeting: _greeting(),
+        greeting: _greeting(currentLanguage),
         bannerCtrl: _bannerCtrl,
         bannerIndex: _bannerIndex,
         onBannerChanged: (i) => setState(() => _bannerIndex = i),
@@ -348,13 +353,9 @@ class _TopBar extends StatelessWidget {
       child: Row(
         children: [
           // Logo + brand
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: _P.primaryDark,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(Icons.favorite_rounded, color: Colors.white, size: 22),
+          const ICareLogo(
+            size: 40,
+            showText: false,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -384,11 +385,82 @@ class _TopBar extends StatelessWidget {
           // Notification icon
           _IconBtn(icon: Icons.notifications_outlined, onTap: onNotifTap),
           const SizedBox(width: 8),
+          // Language selector
+          const _LanguageBtn(),
+          const SizedBox(width: 8),
           _IconBtn(
             icon: Icons.person_outline_rounded,
             onTap: () => context.push('/profile/patient'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _LanguageBtn extends ConsumerWidget {
+  const _LanguageBtn();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentLanguage = ref.watch(languageControllerProvider);
+    
+    return InkWell(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          builder: (context) => Container(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Chọn ngôn ngữ / Select Language', 
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(height: 10),
+                ListTile(
+                  leading: const Text('🇻🇳', style: TextStyle(fontSize: 24)),
+                  title: const Text('Tiếng Việt'),
+                  selected: currentLanguage == AppLanguage.vi,
+                  onTap: () {
+                    ref.read(languageControllerProvider.notifier).setLanguage(AppLanguage.vi);
+                    Navigator.pop(context);
+                  },
+                ),
+                ListTile(
+                  leading: const Text('🇺🇸', style: TextStyle(fontSize: 24)),
+                  title: const Text('English'),
+                  selected: currentLanguage == AppLanguage.en,
+                  onTap: () {
+                    ref.read(languageControllerProvider.notifier).setLanguage(AppLanguage.en);
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x12000000),
+              blurRadius: 8,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Text(
+          currentLanguage == AppLanguage.vi ? '🇻🇳' : '🇺🇸',
+          style: const TextStyle(fontSize: 18),
+        ),
       ),
     );
   }
@@ -424,12 +496,13 @@ class _IconBtn extends StatelessWidget {
 }
 
 // ── Search bar ───────────────────────────────────────────────────────────────
-class _SearchBar extends StatelessWidget {
+class _SearchBar extends ConsumerWidget {
   final VoidCallback onTap;
   const _SearchBar({required this.onTap});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(languageControllerProvider);
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
       child: GestureDetector(
@@ -453,7 +526,7 @@ class _SearchBar extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Search doctors, hospitals, specialties…',
+                  lang.localize('Tìm bác sĩ, bệnh viện, chuyên khoa...', 'Search doctors, hospitals, specialties…'),
                   style: TextStyle(
                     color: _P.textHint,
                     fontSize: 14,
@@ -478,7 +551,7 @@ class _SearchBar extends StatelessWidget {
 }
 
 // ── Banner carousel ──────────────────────────────────────────────────────────
-class _BannerCarousel extends StatelessWidget {
+class _BannerCarousel extends ConsumerWidget {
   final PageController ctrl;
   final int index;
   final ValueChanged<int> onChanged;
@@ -489,35 +562,37 @@ class _BannerCarousel extends StatelessWidget {
     required this.onChanged,
   });
 
-  static const _banners = [
+  List<_BannerData> _getBanners(AppLanguage lang) => [
     _BannerData(
-      gradient: [Color(0xFF0277BD), Color(0xFF039BE5)],
+      gradient: [const Color(0xFF0277BD), const Color(0xFF039BE5)],
       icon: Icons.calendar_month_rounded,
-      title: 'Book your appointment',
-      subtitle: 'Find a doctor in seconds',
-      action: 'Book now',
+      title: lang.localize('Đặt lịch khám ngay', 'Book your appointment'),
+      subtitle: lang.localize('Tìm bác sĩ nhanh chóng', 'Find a doctor in seconds'),
+      action: lang.localize('Đặt khám', 'Book now'),
       route: '/doctor/search',
     ),
     _BannerData(
-      gradient: [Color(0xFF00838F), Color(0xFF26C6DA)],
+      gradient: [const Color(0xFF00838F), const Color(0xFF26C6DA)],
       icon: Icons.health_and_safety_rounded,
-      title: 'Your health records',
-      subtitle: 'Access anytime, anywhere',
-      action: 'View records',
+      title: lang.localize('Hồ sơ sức khỏe', 'Your health records'),
+      subtitle: lang.localize('Truy cập mọi lúc mọi nơi', 'Access anytime, anywhere'),
+      action: lang.localize('Xem hồ sơ', 'View records'),
       route: '/medical-records',
     ),
     _BannerData(
-      gradient: [Color(0xFF6A1B9A), Color(0xFFAB47BC)],
+      gradient: [const Color(0xFF6A1B9A), const Color(0xFFAB47BC)],
       icon: Icons.smart_toy_rounded,
-      title: 'AI Health Assistant',
-      subtitle: 'Ask anything about your health',
-      action: 'Try now',
+      title: lang.localize('Trợ lý AI Y tế', 'AI Health Assistant'),
+      subtitle: lang.localize('Hỏi đáp về sức khỏe của bạn', 'Ask anything about your health'),
+      action: lang.localize('Thử ngay', 'Try now'),
       route: '/ai/voice-assistant',
     ),
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(languageControllerProvider);
+    final banners = _getBanners(lang);
     return Column(
       children: [
         SizedBox(
@@ -525,15 +600,15 @@ class _BannerCarousel extends StatelessWidget {
           child: PageView.builder(
             controller: ctrl,
             onPageChanged: onChanged,
-            itemCount: _banners.length,
-            itemBuilder: (context, i) => _BannerCard(data: _banners[i]),
+            itemCount: banners.length,
+            itemBuilder: (context, i) => _BannerCard(data: banners[i]),
           ),
         ),
         const SizedBox(height: 10),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(
-            _banners.length,
+            banners.length,
             (i) => AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               margin: const EdgeInsets.symmetric(horizontal: 3),
@@ -657,26 +732,26 @@ class _BannerCard extends StatelessWidget {
 }
 
 // ── Quick actions grid ───────────────────────────────────────────────────────
-class _QuickActionsGrid extends StatelessWidget {
-  static const _items = [
-    _Action(Icons.add_circle_outline_rounded, 'Book Visit', Color(0xFF2196F3), '/doctor/search'),
-    _Action(Icons.history_rounded, 'History', Color(0xFF7C3AED), '/appointments'),
-    _Action(Icons.receipt_long_rounded, 'Invoices', Color(0xFF00BFA5), '/invoices'),
-    _Action(Icons.medication_rounded, 'Prescription', Color(0xFFE91E63), '/prescriptions'),
-    _Action(Icons.folder_open_rounded, 'Records', Color(0xFFFF6D00), '/medical-records'),
-    _Action(Icons.local_hospital_rounded, 'Admission', Color(0xFF5C6BC0), null),
-    _Action(Icons.payments_outlined, 'Payment', Color(0xFF43A047), '/payment'),
-    _Action(Icons.poll_outlined, 'Survey', Color(0xFFFB8C00), '/surveys'),
-    _Action(Icons.headset_mic_rounded, 'Support', Color(0xFF0288D1), '/support'),
-    _Action(Icons.smart_toy_outlined, 'AI Chat', Color(0xFF6D4C41), '/ai/voice-assistant'),
-    _Action(Icons.map_rounded, 'Map', Color(0xFF00897B), '/maps'),
-    _Action(Icons.newspaper_rounded, 'News', Color(0xFF757575), '/news'),
-    _Action(Icons.add_circle_outline, 'Test Patient', Color(0xFFE91E63), '/patient/create-appointment'),
-    _Action(Icons.qr_code_scanner, 'Test Clinic', Color(0xFF00BFA5), '/clinic/scanner'),
+class _QuickActionsGrid extends ConsumerWidget {
+  List<_Action> _getItems(AppLanguage lang) => [
+    _Action(Icons.add_circle_outline_rounded, lang.localize('Đặt khám', 'Book Visit'), const Color(0xFF2196F3), '/doctor/search'),
+    _Action(Icons.history_rounded, lang.localize('Lịch sử', 'History'), const Color(0xFF7C3AED), '/appointments'),
+    _Action(Icons.receipt_long_rounded, lang.localize('Hóa đơn', 'Invoices'), const Color(0xFF00BFA5), '/invoices'),
+    _Action(Icons.medication_rounded, lang.localize('Đơn thuốc', 'Prescription'), const Color(0xFFE91E63), '/prescriptions'),
+    _Action(Icons.folder_open_rounded, lang.localize('Hồ sơ', 'Records'), const Color(0xFFFF6D00), '/medical-records'),
+    _Action(Icons.local_hospital_rounded, lang.localize('Nhập viện', 'Admission'), const Color(0xFF5C6BC0), null),
+    _Action(Icons.payments_outlined, lang.localize('Thanh toán', 'Payment'), const Color(0xFF43A047), '/payment'),
+    _Action(Icons.poll_outlined, lang.localize('Khảo sát', 'Survey'), const Color(0xFFFB8C00), '/surveys'),
+    _Action(Icons.headset_mic_rounded, lang.localize('Hỗ trợ', 'Support'), const Color(0xFF0288D1), '/support'),
+    _Action(Icons.smart_toy_outlined, lang.localize('AI Chat', 'AI Chat'), const Color(0xFF6D4C41), '/ai/voice-assistant'),
+    _Action(Icons.map_rounded, lang.localize('Bản đồ', 'Map'), const Color(0xFF00897B), '/maps'),
+    _Action(Icons.newspaper_rounded, lang.localize('Tin tức', 'News'), const Color(0xFF757575), '/news'),
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(languageControllerProvider);
+    final items = _getItems(lang);
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
@@ -697,15 +772,15 @@ class _QuickActionsGrid extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Quick Access',
-                style: TextStyle(
+              Text(
+                lang.localize('Truy cập nhanh', 'Quick Access'),
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
                   color: _P.primaryDark,
                 ),
               ),
-              Icon(Icons.apps_rounded, color: _P.primary, size: 22),
+              const Icon(Icons.apps_rounded, color: _P.primary, size: 22),
             ],
           ),
           const SizedBox(height: 20),
@@ -716,7 +791,7 @@ class _QuickActionsGrid extends StatelessWidget {
             mainAxisSpacing: 20,
             crossAxisSpacing: 12,
             childAspectRatio: 0.85,
-            children: _items
+            children: items
                 .map((item) => _ActionCell(item: item))
                 .toList(),
           ),
@@ -841,9 +916,10 @@ class _UpcomingSection extends StatelessWidget {
   }
 }
 
-class _EmptyAppt extends StatelessWidget {
+class _EmptyAppt extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(languageControllerProvider);
     return GestureDetector(
       onTap: () => context.push('/doctor/search'),
       child: Container(
@@ -859,17 +935,17 @@ class _EmptyAppt extends StatelessWidget {
             Icon(Icons.event_available_rounded,
                 color: _P.primary.withOpacity(0.5), size: 40),
             const SizedBox(height: 12),
-            const Text(
-              'No upcoming appointments',
-              style: TextStyle(
+            Text(
+              lang.localize('Không có lịch khám sắp tới', 'No upcoming appointments'),
+              style: const TextStyle(
                 fontWeight: FontWeight.w600,
                 color: _P.textSecondary,
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'Tap to book your first appointment',
-              style: TextStyle(fontSize: 13, color: _P.textHint),
+            Text(
+              lang.localize('Nhấn để đặt lịch khám đầu tiên', 'Tap to book your first appointment'),
+              style: const TextStyle(fontSize: 13, color: _P.textHint),
             ),
           ],
         ),
@@ -878,7 +954,7 @@ class _EmptyAppt extends StatelessWidget {
   }
 }
 
-class _ApptCard extends StatelessWidget {
+class _ApptCard extends ConsumerWidget {
   final _UpcomingAppt appt;
   const _ApptCard({required this.appt});
 
@@ -894,9 +970,10 @@ class _ApptCard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(languageControllerProvider);
     final day = appt.dateTime.day.toString().padLeft(2, '0');
-    final month = _month(appt.dateTime.month);
+    final month = _month(appt.dateTime.month, lang);
     final time =
         '${appt.dateTime.hour.toString().padLeft(2, '0')}:${appt.dateTime.minute.toString().padLeft(2, '0')}';
 
@@ -962,7 +1039,7 @@ class _ApptCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  appt.specialty.isEmpty ? 'General' : appt.specialty,
+                  appt.specialty.isEmpty ? lang.localize('Tổng quát', 'General') : appt.specialty,
                   style: const TextStyle(
                     fontSize: 13,
                     color: _P.textSecondary,
@@ -991,7 +1068,7 @@ class _ApptCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  appt.status.replaceAll('_', ' '),
+                  _translateStatus(appt.status, lang),
                   style: TextStyle(
                     color: _statusColor,
                     fontSize: 10,
@@ -1006,7 +1083,17 @@ class _ApptCard extends StatelessWidget {
     );
   }
 
-  String _month(int m) {
+  String _translateStatus(String status, AppLanguage lang) {
+    switch (status) {
+      case 'confirmed': return lang.localize('Đã xác nhận', 'Confirmed');
+      case 'booked': return lang.localize('Đã đặt', 'Booked');
+      case 'pending': return lang.localize('Chờ duyệt', 'Pending');
+      default: return status.replaceAll('_', ' ');
+    }
+  }
+
+  String _month(int m, AppLanguage lang) {
+    if (lang == AppLanguage.vi) return 'Thg $m';
     const months = [
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
@@ -1016,17 +1103,18 @@ class _ApptCard extends StatelessWidget {
 }
 
 // ── Health stats row ─────────────────────────────────────────────────────────
-class _HealthStatsRow extends StatelessWidget {
+class _HealthStatsRow extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(languageControllerProvider);
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Health Overview',
-            style: TextStyle(
+          Text(
+            lang.localize('Tổng quan sức khỏe', 'Health Overview'),
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
               color: _P.primaryDark,
@@ -1039,8 +1127,8 @@ class _HealthStatsRow extends StatelessWidget {
                 child: _StatCard(
                   icon: Icons.medication_outlined,
                   color: const Color(0xFFE91E63),
-                  title: 'Medications',
-                  subtitle: 'Tap to view',
+                  title: lang.localize('Đơn thuốc', 'Medications'),
+                  subtitle: lang.localize('Nhấn để xem', 'Tap to view'),
                   onTap: () => context.push('/prescriptions'),
                 ),
               ),
@@ -1049,8 +1137,8 @@ class _HealthStatsRow extends StatelessWidget {
                 child: _StatCard(
                   icon: Icons.folder_shared_rounded,
                   color: const Color(0xFF7C3AED),
-                  title: 'Records',
-                  subtitle: 'Tap to view',
+                  title: lang.localize('Hồ sơ', 'Records'),
+                  subtitle: lang.localize('Nhấn để xem', 'Tap to view'),
                   onTap: () => context.push('/medical-records'),
                 ),
               ),
@@ -1059,8 +1147,8 @@ class _HealthStatsRow extends StatelessWidget {
                 child: _StatCard(
                   icon: Icons.receipt_long_rounded,
                   color: const Color(0xFF00897B),
-                  title: 'Invoices',
-                  subtitle: 'Tap to view',
+                  title: lang.localize('Hóa đơn', 'Invoices'),
+                  subtitle: lang.localize('Nhấn để xem', 'Tap to view'),
                   onTap: () => context.push('/invoices'),
                 ),
               ),
@@ -1139,7 +1227,7 @@ class _StatCard extends StatelessWidget {
 }
 
 // ── Featured hospitals ────────────────────────────────────────────────────────
-class _FeaturedHospitals extends StatelessWidget {
+class _FeaturedHospitals extends ConsumerWidget {
   static const _hospitals = [
     _HospitalData(
       name: 'ĐH Y Dược TPHCM',
@@ -1165,7 +1253,8 @@ class _FeaturedHospitals extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(languageControllerProvider);
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 24, 0, 0),
       child: Column(
@@ -1176,9 +1265,9 @@ class _FeaturedHospitals extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Featured Hospitals',
-                  style: TextStyle(
+                Text(
+                  lang.localize('Bệnh viện nổi bật', 'Featured Hospitals'),
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
                     color: _P.primaryDark,
@@ -1186,9 +1275,9 @@ class _FeaturedHospitals extends StatelessWidget {
                 ),
                 GestureDetector(
                   onTap: () => context.push('/maps'),
-                  child: const Text(
-                    'See all',
-                    style: TextStyle(
+                  child: Text(
+                    lang.localize('Xem tất cả', 'See all'),
+                    style: const TextStyle(
                       color: _P.primary,
                       fontWeight: FontWeight.w700,
                       fontSize: 13,

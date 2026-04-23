@@ -46,6 +46,7 @@ class _AppointmentHistoryScreenState extends State<AppointmentHistoryScreen>
       backgroundColor: AppColors.background,
       appBar: BrandedAppBar(
         title: "Lịch hẹn",
+        showBackButton: true,
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: AppColors.primary,

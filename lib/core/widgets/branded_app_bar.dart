@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../l10n/app_localizations.dart';
 import '../extensions/context_extension.dart';
 import 'icare_logo.dart';
@@ -14,6 +15,7 @@ class BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget? leading;
   final PreferredSizeWidget? bottom;
   final VoidCallback? onSkip;
+  final bool? showBackButton;
 
   const BrandedAppBar({
     super.key,
@@ -27,6 +29,7 @@ class BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.leading,
     this.bottom,
     this.onSkip,
+    this.showBackButton,
   });
 
   @override
@@ -47,24 +50,41 @@ class BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
       );
     }
 
+    final bool canPop = Navigator.canPop(context);
+    // Determine if we should show a back button even if we can't pop (e.g. for tabs or deep links)
+    // We avoid showing it on the root home screen tab (index 0)
+    final bool showBack = leading != null || (showBackButton ?? canPop) || onSkip != null;
+
     return AppBar(
       backgroundColor: backgroundColor ?? context.colors.background,
       elevation: elevation,
       centerTitle: centerTitle,
       titleSpacing: centerTitle ? null : 0,
-      leadingWidth: leadingWidth ?? (leading != null ? 120 : 120),
-      leading: leading ?? (Navigator.canPop(context) ? InkWell(
-        onTap: () => Navigator.maybePop(context),
+      leadingWidth: leadingWidth ?? 120,
+      leading: leading ?? (showBack ? InkWell(
+        onTap: () {
+          if (canPop) {
+            Navigator.maybePop(context);
+          } else {
+            // If we can't pop, we likely came from a tab or deep link, go to home
+            context.go('/');
+          }
+        },
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(width: 12),
-            Icon(Icons.arrow_back, color: context.colors.primary),
-            const SizedBox(width: 8),
-            Text(
-              l10n.back_button_text,
-              style: context.textStyles.bodyBold.copyWith(
-                color: context.colors.primary,
+            Icon(Icons.arrow_back_ios_new_rounded, color: context.colors.primary, size: 20),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                l10n.back_button_text,
+                style: context.textStyles.bodyBold.copyWith(
+                  color: context.colors.primary,
+                  fontSize: 14,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             ),
           ],

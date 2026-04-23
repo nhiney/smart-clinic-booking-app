@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smart_clinic_booking/core/widgets/branded_app_bar.dart';
 import 'package:smart_clinic_booking/features/support/presentation/controllers/support_controller.dart';
 import 'package:smart_clinic_booking/features/support/domain/entities/support_entities.dart';
 
@@ -15,12 +16,9 @@ class TicketListScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        title: const Text('Yêu cầu hỗ trợ', 
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
+      appBar: const BrandedAppBar(
+        title: 'Yêu cầu hỗ trợ',
+        showBackButton: true,
       ),
       body: Skeletonizer(
         enabled: state.isLoading,

@@ -150,7 +150,7 @@ class AppRouter {
                                      path == '/create-password' || 
                                      path == '/account-qr';
 
-      if ((isPublicRoute || path == '/pending-approval') && !isRegistrationFlow && path != '/') {
+      if ((isPublicRoute || path == '/pending-approval') && !isRegistrationFlow && path != '/' && path != '/login' && path != '/qr-login') {
          debugPrint('[ROUTER] Redirecting authenticated user away from public route to home/dashboard');
          if (role == 'doctor') return '/doctor/dashboard';
          if (role == 'admin' || role == 'super_admin' || role == 'hospital_manager') return '/admin/dashboard';

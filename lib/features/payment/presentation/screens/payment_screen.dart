@@ -35,7 +35,10 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
     return Scaffold(
       backgroundColor: context.colors.background,
-      appBar: const BrandedAppBar(title: "Thanh toán"),
+      appBar: const BrandedAppBar(
+        title: "Thanh toán",
+        showBackButton: true,
+      ),
       body: Column(
         children: [
           _buildAmountCard(),

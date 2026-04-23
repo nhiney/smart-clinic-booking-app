@@ -45,6 +45,7 @@ class _NotificationScreenState extends State<NotificationScreen> with SingleTick
       backgroundColor: AppColors.background,
       appBar: BrandedAppBar(
         title: "Trung tâm Thông báo",
+        showBackButton: true,
         actions: [
           Consumer<NotificationController>(
             builder: (_, controller, __) {

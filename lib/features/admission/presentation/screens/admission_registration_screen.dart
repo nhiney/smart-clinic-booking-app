@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:smart_clinic_booking/core/widgets/branded_app_bar.dart';
 import '../riverpod/admission_provider.dart';
 
 class AdmissionRegistrationScreen extends ConsumerStatefulWidget {
@@ -24,9 +25,9 @@ class _AdmissionRegistrationScreenState extends ConsumerState<AdmissionRegistrat
   bool _isSubmitting = false;
 
   static const _priorityOptions = [
-    ('normal', 'Normal', Colors.green),
-    ('urgent', 'Urgent', Colors.orange),
-    ('emergency', 'Emergency', Colors.red),
+    ('normal', 'Bình thường', Colors.green),
+    ('urgent', 'Khẩn cấp', Colors.orange),
+    ('emergency', 'Cấp cứu', Colors.red),
   ];
 
   @override
@@ -73,7 +74,7 @@ class _AdmissionRegistrationScreenState extends ConsumerState<AdmissionRegistrat
     if (id != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Admission request submitted! Our team will contact you shortly.'),
+          content: Text('Yêu cầu nhập viện đã được gửi! Đội ngũ của chúng tôi sẽ liên hệ với bạn sớm.'),
           backgroundColor: Colors.green,
         ),
       );
@@ -81,7 +82,7 @@ class _AdmissionRegistrationScreenState extends ConsumerState<AdmissionRegistrat
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Failed to submit. Please try again.'),
+          content: Text('Gửi yêu cầu thất bại. Vui lòng thử lại.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -92,11 +93,9 @@ class _AdmissionRegistrationScreenState extends ConsumerState<AdmissionRegistrat
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: const Text('Hospital Admission Request'),
-        elevation: 0,
-        backgroundColor: Colors.blue[800],
-        foregroundColor: Colors.white,
+      appBar: const BrandedAppBar(
+        title: 'Đăng ký nhập viện',
+        showBackButton: true,
       ),
       body: Form(
         key: _formKey,
@@ -108,7 +107,7 @@ class _AdmissionRegistrationScreenState extends ConsumerState<AdmissionRegistrat
               _InfoBanner(),
               const SizedBox(height: 20),
               _SectionCard(
-                title: 'Admission Details',
+                title: 'Chi tiết nhập viện',
                 children: [
                   _buildPrioritySelector(),
                   const SizedBox(height: 16),
@@ -116,11 +115,11 @@ class _AdmissionRegistrationScreenState extends ConsumerState<AdmissionRegistrat
                     controller: _reasonController,
                     maxLines: 4,
                     decoration: _inputDecoration(
-                      label: 'Reason for Admission *',
-                      hint: 'Describe symptoms, diagnosis, or scheduled procedure...',
+                      label: 'Lý do nhập viện *',
+                      hint: 'Mô tả triệu chứng, chẩn đoán hoặc thủ thuật đã lên lịch...',
                       icon: Icons.medical_services_outlined,
                     ),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Please enter the reason' : null,
+                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Vui lòng nhập lý do' : null,
                   ),
                   const SizedBox(height: 16),
                   _buildDateField(),
@@ -128,13 +127,13 @@ class _AdmissionRegistrationScreenState extends ConsumerState<AdmissionRegistrat
               ),
               const SizedBox(height: 16),
               _SectionCard(
-                title: 'Contact Information',
+                title: 'Thông tin liên hệ',
                 children: [
                   TextFormField(
                     controller: _contactPhoneController,
                     keyboardType: TextInputType.phone,
                     decoration: _inputDecoration(
-                      label: 'Contact Phone',
+                      label: 'Số điện thoại liên hệ',
                       hint: '0901234567',
                       icon: Icons.phone_outlined,
                     ),
@@ -143,8 +142,8 @@ class _AdmissionRegistrationScreenState extends ConsumerState<AdmissionRegistrat
                   TextFormField(
                     controller: _emergencyContactController,
                     decoration: _inputDecoration(
-                      label: 'Emergency Contact Name',
-                      hint: 'Next of kin name',
+                      label: 'Tên người liên hệ khẩn cấp',
+                      hint: 'Tên người thân',
                       icon: Icons.person_outline,
                     ),
                   ),
@@ -153,7 +152,7 @@ class _AdmissionRegistrationScreenState extends ConsumerState<AdmissionRegistrat
                     controller: _emergencyPhoneController,
                     keyboardType: TextInputType.phone,
                     decoration: _inputDecoration(
-                      label: 'Emergency Contact Phone',
+                      label: 'SĐT người liên hệ khẩn cấp',
                       hint: '0901234567',
                       icon: Icons.phone_in_talk_outlined,
                     ),
@@ -162,12 +161,12 @@ class _AdmissionRegistrationScreenState extends ConsumerState<AdmissionRegistrat
               ),
               const SizedBox(height: 16),
               _SectionCard(
-                title: 'Insurance',
+                title: 'Bảo hiểm',
                 children: [
                   TextFormField(
                     controller: _insuranceController,
                     decoration: _inputDecoration(
-                      label: 'Insurance / BHYT Number',
+                      label: 'Số thẻ Bảo hiểm / BHYT',
                       hint: 'DN4012345678901',
                       icon: Icons.card_membership_outlined,
                     ),
@@ -191,7 +190,7 @@ class _AdmissionRegistrationScreenState extends ConsumerState<AdmissionRegistrat
                           height: 24,
                           child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                         )
-                      : const Text('Submit Request', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      : const Text('Gửi yêu cầu', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ),
               const SizedBox(height: 24),
@@ -206,7 +205,7 @@ class _AdmissionRegistrationScreenState extends ConsumerState<AdmissionRegistrat
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Priority Level', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+        const Text('Mức độ ưu tiên', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         Row(
           children: _priorityOptions.map((opt) {
@@ -271,10 +270,10 @@ class _AdmissionRegistrationScreenState extends ConsumerState<AdmissionRegistrat
             Icon(Icons.calendar_today_outlined, color: Colors.grey[600], size: 20),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                _admissionDate != null
-                    ? 'Preferred Date: ${DateFormat('MMM dd, yyyy').format(_admissionDate!)}'
-                    : 'Preferred Admission Date (optional)',
+                child: Text(
+                  _admissionDate != null
+                      ? 'Ngày mong muốn: ${DateFormat('dd/MM/yyyy').format(_admissionDate!)}'
+                      : 'Ngày nhập viện mong muốn (tùy chọn)',
                 style: TextStyle(
                   color: _admissionDate != null ? Colors.black87 : Colors.grey[500],
                   fontSize: 14,
@@ -326,8 +325,8 @@ class _InfoBanner extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Your request will be reviewed by our admissions team within 2-4 hours. '
-              'For emergencies, please call our hotline or visit the ER directly.',
+              'Yêu cầu của bạn sẽ được đội ngũ tiếp nhận xem xét trong vòng 2-4 giờ. '
+              'Đối với các trường hợp khẩn cấp, vui lòng gọi hotline hoặc đến trực tiếp phòng cấp cứu.',
               style: TextStyle(fontSize: 13, color: Colors.blue[800]),
             ),
           ),

@@ -88,25 +88,30 @@ class _QrLoginScannerScreenState extends State<QrLoginScannerScreen> {
     await _processToken(token);
   }
 
+  void _showPermissionDialog() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(_tr(
+          'Quyền truy cập ảnh bị từ chối. Vui lòng mở Cài đặt để cấp quyền.',
+          'Photo library permission denied. Please enable it in Settings.',
+          '写真ライブラリへのアクセス権が拒否されました。設定で有効にしてください。',
+          '사진 라이브러리 권한이 거부되었습니다. 설정에서 활성화하십시오.',
+          '相册权限被拒绝。请在设置中开启。',
+        )),
+        action: SnackBarAction(label: 'Settings', onPressed: openAppSettings),
+      ),
+    );
+  }
+
   Future<void> _pickAndScanImage() async {
     mlkit.BarcodeScanner? barcodeScanner;
     try {
-      // 1. Check permissions
-      final status = await Permission.photos.request();
-      if (status.isPermanentlyDenied) {
+      // 1. ImagePicker handles basic gallery access on modern iOS/Android
+      // without needing explicit Permission.photos in many cases.
+      // We only check if it's already denied.
+      if (await Permission.photos.isPermanentlyDenied) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_tr(
-              'Quyền truy cập ảnh bị từ chối. Vui lòng mở Cài đặt để cấp quyền.',
-              'Photo library permission denied. Please enable it in Settings.',
-              '写真ライブラリへのアクセス権が拒 phí されました。設定で有効にしてください。',
-              '사진 라이브러리 권한이 거부되었습니다. 설정에서 활성화하십시오.',
-              '相册权限被拒绝。请在设置中开启。',
-            )),
-            action: SnackBarAction(label: 'Settings', onPressed: openAppSettings),
-          ),
-        );
+        _showPermissionDialog();
         return;
       }
 

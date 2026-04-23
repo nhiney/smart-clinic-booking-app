@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:smart_clinic_booking/features/content/presentation/controllers/content_controller.dart';
 import 'package:smart_clinic_booking/features/home/domain/entities/health_article.dart';
+import 'package:smart_clinic_booking/core/widgets/branded_app_bar.dart';
 
 class NewsScreen extends ConsumerStatefulWidget {
   const NewsScreen({super.key});
@@ -43,12 +44,9 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        title: const Text('Tin tức y tế', 
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
+      appBar: const BrandedAppBar(
+        title: 'Tin tức y tế',
+        showBackButton: true,
       ),
       body: RefreshIndicator(
         onRefresh: () => ref.read(newsProvider.notifier).loadNews(refresh: true, category: _selectedCategory == 'Tất cả' ? null : _selectedCategory),

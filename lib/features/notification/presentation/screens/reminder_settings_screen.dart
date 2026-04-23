@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/colors/app_colors.dart';
 import '../../../../core/theme/typography/app_text_styles.dart';
+import '../../../../core/widgets/branded_app_bar.dart';
 import '../controllers/notification_controller.dart';
 
 class ReminderSettingsScreen extends StatefulWidget {
@@ -20,11 +21,9 @@ class _ReminderSettingsScreenState extends State<ReminderSettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Cài đặt nhắc nhở'),
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+      appBar: const BrandedAppBar(
+        title: 'Cài đặt nhắc nhở',
+        showBackButton: true,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),

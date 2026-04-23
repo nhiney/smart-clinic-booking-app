@@ -41,7 +41,10 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
 
     return Scaffold(
       backgroundColor: context.colors.background,
-      appBar: const BrandedAppBar(title: "Hóa đơn của tôi"),
+      appBar: const BrandedAppBar(
+        title: "Hóa đơn của tôi",
+        showBackButton: true,
+      ),
       body: state.isLoading
           ? const LoadingWidget(itemCount: 5)
           : state.invoices.isEmpty

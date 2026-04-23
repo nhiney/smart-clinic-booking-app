@@ -206,8 +206,9 @@ class AuthController extends ChangeNotifier {
       currentUser = await authRepository.signInWithQrToken(qrToken);
       if (currentUser != null) {
         await authRepository.saveSession(currentUser!);
+        return true;
       }
-      return true;
+      return false;
     } catch (e) {
       errorMessage = e.toString().replaceAll('Exception: ', '');
       return false;

@@ -47,4 +47,9 @@ extension AppLanguageExtension on AppLanguage {
         return '🇰🇷';
     }
   }
+
+  String localize(String vi, String en) {
+    if (this == AppLanguage.vi) return vi;
+    return en;
+  }
 }

@@ -76,6 +76,7 @@ class _DoctorSearchScreenState extends State<DoctorSearchScreen> {
         title: widget.pickForBooking
             ? 'Chọn bác sĩ để đặt lịch'
             : 'Tìm kiếm & Khám bệnh',
+        showBackButton: true,
         actions: [
           IconButton(
             tooltip: 'Xóa bộ lọc',

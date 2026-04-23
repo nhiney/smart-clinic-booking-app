@@ -7,6 +7,8 @@ import 'package:intl/intl.dart';
 import '../../domain/entities/admission_entity.dart';
 import '../riverpod/admission_provider.dart';
 
+import '../../../../core/widgets/branded_app_bar.dart';
+
 class AdmissionHistoryScreen extends ConsumerWidget {
   final String patientId;
   const AdmissionHistoryScreen({super.key, required this.patientId});
@@ -17,15 +19,13 @@ class AdmissionHistoryScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: const Text('Admission History'),
-        elevation: 0,
-        backgroundColor: Colors.blue[800],
-        foregroundColor: Colors.white,
+      appBar: const BrandedAppBar(
+        title: 'Lịch sử nhập viện',
+        showBackButton: true,
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/admission/registration/$patientId'),
-        label: const Text('New Request'),
+        label: const Text('Yêu cầu mới'),
         icon: const Icon(Icons.add),
         backgroundColor: Colors.blue[800],
       ),
@@ -38,9 +38,9 @@ class AdmissionHistoryScreen extends ConsumerWidget {
                 children: [
                   Icon(Icons.local_hospital_outlined, size: 64, color: Colors.grey[400]),
                   const SizedBox(height: 16),
-                  Text('No admission records', style: TextStyle(color: Colors.grey[600], fontSize: 16)),
+                  Text('Không có hồ sơ nhập viện', style: TextStyle(color: Colors.grey[600], fontSize: 16)),
                   const SizedBox(height: 8),
-                  Text('Your admission history will appear here',
+                  Text('Lịch sử nhập viện của bạn sẽ hiển thị ở đây',
                       style: TextStyle(color: Colors.grey[400])),
                 ],
               ),

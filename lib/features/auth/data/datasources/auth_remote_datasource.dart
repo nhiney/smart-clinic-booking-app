@@ -342,8 +342,7 @@ class AuthRemoteDatasource {
     final localFound = await LocalAccountStore.instance.isPhoneRegistered(phone);
     if (localFound) return true;
 
-    // 2. Fallback Firestore (production mode)
-    if (kDebugMode) return false; // Trong debug chỉ dùng local
+    // 2. Fallback Firestore
     try {
       final normalized = _normalizePhone(phone);
       final ref = _firestore.collection('registered_phones').doc(normalized);

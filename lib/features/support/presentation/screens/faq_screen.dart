@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:smart_clinic_booking/core/widgets/branded_app_bar.dart';
 import 'package:smart_clinic_booking/features/support/presentation/controllers/support_controller.dart';
 import 'package:smart_clinic_booking/features/support/domain/entities/support_entities.dart';
 
@@ -28,12 +29,9 @@ class _FAQScreenState extends ConsumerState<FAQScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        title: const Text('Câu hỏi thường gặp', 
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
+      appBar: const BrandedAppBar(
+        title: 'Câu hỏi thường gặp',
+        showBackButton: true,
       ),
       body: Column(
         children: [

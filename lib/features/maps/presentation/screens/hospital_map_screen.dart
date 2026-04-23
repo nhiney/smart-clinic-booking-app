@@ -198,7 +198,10 @@ class _HospitalMapScreenState extends ConsumerState<HospitalMapScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const BrandedAppBar(title: "Tìm bệnh viện gần nhất"),
+      appBar: const BrandedAppBar(
+        title: "Tìm bệnh viện gần nhất",
+        showBackButton: true,
+      ),
       body: state.isLoading
           ? const LoadingWidget(itemCount: 1)
           : Stack(

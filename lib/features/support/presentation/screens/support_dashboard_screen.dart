@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smart_clinic_booking/core/widgets/branded_app_bar.dart';
 import 'package:smart_clinic_booking/features/support/presentation/screens/chatbot_screen.dart';
 import 'package:smart_clinic_booking/features/support/presentation/screens/faq_screen.dart';
 import 'package:smart_clinic_booking/features/support/presentation/screens/ticket_list_screen.dart';
@@ -13,12 +14,9 @@ class SupportDashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        title: const Text('Hỗ trợ bệnh nhân', 
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
+      appBar: const BrandedAppBar(
+        title: 'Hỗ trợ bệnh nhân',
+        showBackButton: true,
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),

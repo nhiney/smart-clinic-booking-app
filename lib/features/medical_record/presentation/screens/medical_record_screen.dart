@@ -42,12 +42,15 @@ class _MedicalRecordScreenState extends ConsumerState<MedicalRecordScreen> {
     final state = ref.watch(medicalRecordControllerProvider);
     return Scaffold(
       backgroundColor: context.colors.background,
-      appBar: const BrandedAppBar(title: 'Medical Records'),
+      appBar: const BrandedAppBar(
+        title: 'Hồ sơ y tế',
+        showBackButton: true,
+      ),
       body: state.isLoading
           ? const LoadingWidget(itemCount: 3)
           : state.records.isEmpty
               ? const EmptyStateWidget(
-                  title: 'No medical records yet.',
+                  title: 'Chưa có hồ sơ y tế.',
                   icon: Icons.medical_services_outlined,
                 )
               : RefreshIndicator(

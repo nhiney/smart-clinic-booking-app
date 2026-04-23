@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../controllers/patient_profile_controller.dart';
 import '../../domain/entities/patient_profile.dart';
+import '../../../../core/widgets/branded_app_bar.dart';
 
 class PatientProfileScreen extends StatefulWidget {
   const PatientProfileScreen({super.key, this.embeddedInTab = false});
@@ -88,21 +89,9 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        automaticallyImplyLeading: !widget.embeddedInTab,
-        leading: widget.embeddedInTab
-            ? null
-            : IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87, size: 20),
-                onPressed: () => Navigator.pop(context),
-              ),
-        title: Text(
-          widget.embeddedInTab ? "Tài khoản" : "Hồ sơ cá nhân",
-          style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w800, fontSize: 18),
-        ),
-        centerTitle: true,
+      appBar: BrandedAppBar(
+        title: widget.embeddedInTab ? "Tài khoản" : "Hồ sơ cá nhân",
+        showBackButton: true,
       ),
       body: Consumer<PatientProfileController>(
         builder: (context, controller, child) {
