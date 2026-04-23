@@ -80,9 +80,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (value == null || value.trim().isEmpty) return l10n.error_phone_required;
     final cleanPhone = value.trim();
     if (_selectedCountryCode == '+84') {
-      final vnRegex = RegExp(r'^(0)?[3|5|7|8|9][0-9]{8}$');
+      final vnRegex = RegExp(r'^(0)?[35789][0-9]{8}$');
       if (!vnRegex.hasMatch(cleanPhone)) {
-        return 'Số điện thoại Việt Nam không hợp lệ';
+        return 'Số điện thoại Việt Nam không hợp lệ (VD: 0912345678)';
       }
       return null;
     }
@@ -110,18 +110,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
           );
         }
         if (state.isCodeSent) {
+          // Chỉ chuyển sang OTP nếu chưa ở đó
           context.push('/verify-otp', extra: {
             'phone': state.phoneNumber,
             'name': state.fullName,
           });
         }
-        if (state.isSuccess) {
-          // If auto-verified
-          context.push('/create-password', extra: {
-            'phone': state.phoneNumber,
-            'name': state.fullName,
-          });
-        }
+        // GỠ BỎ: logic isSuccess ở đây vì OtpVerificationScreen sẽ đảm nhận
       },
       child: BlocBuilder<SignUpBloc, SignUpState>(
         builder: (context, state) {

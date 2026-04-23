@@ -1,16 +1,21 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'app_language.dart';
 
 class LanguageService {
   static const String _languageKey = 'selected_language';
-  static late SharedPreferences _prefs;
+  static SharedPreferences? _prefs;
 
   static Future<void> init() async {
-    _prefs = await SharedPreferences.getInstance();
+    try {
+      _prefs = await SharedPreferences.getInstance();
+    } catch (e) {
+      debugPrint('LanguageService init failed: $e');
+    }
   }
 
   static AppLanguage getSavedLanguage() {
-    final String? languageCode = _prefs.getString(_languageKey);
+    final String? languageCode = _prefs?.getString(_languageKey);
     if (languageCode == null) return AppLanguage.en;
     
     return AppLanguage.values.firstWhere(
@@ -20,6 +25,6 @@ class LanguageService {
   }
 
   static Future<void> saveLanguage(AppLanguage language) async {
-    await _prefs.setString(_languageKey, language.name);
+    await _prefs?.setString(_languageKey, language.name);
   }
 }

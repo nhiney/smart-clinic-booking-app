@@ -119,14 +119,20 @@ Future<void> main() async {
     debugPrint('Firebase initialization failed: $e');
   }
 
-  // Initialize Dependency Injection
-  await configureDependencies();
+  // Initialize remaining services
+  try {
+    // Initialize Dependency Injection
+    await configureDependencies();
 
-  // Initialize Localization
-  await LanguageService.init();
+    // Initialize Localization
+    await LanguageService.init();
 
-  // Initialize Dynamic Configuration (Firestore)
-  await getIt<AppConfigService>().initialize();
+    // Initialize Dynamic Configuration (Firestore)
+    await getIt<AppConfigService>().initialize();
+  } catch (e) {
+    debugPrint('Service initialization failed: $e');
+    // We still try to run the app, but some features might be degraded
+  }
 
   runApp(
     MultiProvider(

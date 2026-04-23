@@ -1,15 +1,26 @@
-class CheckInResultEntity {
-  final String bookingId;
+import 'package:equatable/equatable.dart';
+
+class CheckInResultEntity extends Equatable {
+  final String appointmentId;
   final String patientName;
-  final String doctorName;
-  final String queueNumber; // Số thứ tự khám (X)
+  final String patientPhone;
+  final DateTime scheduledTime;
   final DateTime checkInTime;
 
-  CheckInResultEntity({
-    required this.bookingId,
+  const CheckInResultEntity({
+    required this.appointmentId,
     required this.patientName,
-    required this.doctorName,
-    required this.queueNumber,
+    required this.patientPhone,
+    required this.scheduledTime,
     required this.checkInTime,
   });
+
+  @override
+  List<Object?> get props => [
+    appointmentId,
+    patientName,
+    patientPhone,
+    scheduledTime,
+    checkInTime,
+  ];
 }

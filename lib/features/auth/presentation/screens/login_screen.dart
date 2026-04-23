@@ -116,7 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isValidPhoneFormat(String phone) {
     final clean = phone.replaceAll(RegExp(r'\s'), '');
     if (selectedCountryCode == '+84') {
-      return RegExp(r'^(0?[3|5|7|8|9][0-9]{8})$').hasMatch(clean);
+      return RegExp(r'^(0?[35789][0-9]{8})$').hasMatch(clean);
     }
     return RegExp(r'^[0-9]{7,12}$').hasMatch(clean);
   }

@@ -67,7 +67,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           );
         }
         if (state.isSuccess) {
-          context.push('/create-password', extra: {
+          debugPrint('[OTP] Verification success, moving to password screen');
+          context.go('/create-password', extra: {
             'phone': widget.phoneNumber,
             'name': state.fullName,
           });

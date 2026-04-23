@@ -20,6 +20,8 @@ import '../widgets/medication_reminder_section.dart';
 import '../widgets/consulting_doctors_section.dart';
 import '../widgets/medical_facilities_section.dart';
 import '../widgets/care_section.dart';
+import '../widgets/health_summary_section.dart';
+import 'services_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -40,8 +42,8 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           const _HomeDashboard(),
           const NotificationScreen(),
-          Center(child: Text('Chức năng', style: context.textStyles.heading3)),
-          Center(child: Text('Cá nhân', style: context.textStyles.heading3)),
+          const ServicesScreen(),
+          const Center(child: Text('Cá nhân')), // Profile logic is handled in onTap
         ],
       ),
       bottomNavigationBar: _buildBottomNav(),
@@ -213,6 +215,12 @@ class _HomeDashboardState extends State<_HomeDashboard> {
                             ),
                           )
                         else if (state is HomeLoaded) ...[
+                          // Health Summary
+                          HealthSummarySection(
+                            summary: state.healthSummary,
+                          ),
+                          const SizedBox(height: 24),
+
                           // Upcoming Appointment
                           UpcomingAppointmentCard(
                             appointments: state.upcomingAppointments,

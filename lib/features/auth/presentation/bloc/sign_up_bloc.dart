@@ -89,7 +89,7 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
   Future<void> _onVerifyOtp(VerifyOtpEvent event, Emitter<SignUpState> emit) async {
     emit(state.copyWith(isLoading: true, error: null));
     try {
-      final success = await authController.verifyOtp(event.smsCode);
+      final success = await authController.verifyOtp(event.smsCode, name: state.fullName);
       if (success) {
         emit(state.copyWith(isLoading: false, isSuccess: true));
       } else {

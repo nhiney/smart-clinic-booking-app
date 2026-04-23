@@ -115,44 +115,57 @@ class _ActionItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Container(
-            width: 60,
-            height: 60,
+            width: 58,
+            height: 58,
             decoration: BoxDecoration(
-               color: Colors.white,
-               borderRadius: BorderRadius.circular(16),
-               border: Border.all(color: Colors.grey.shade200, width: 1.5),
-               boxShadow: [
-                 BoxShadow(
-                   color: Colors.black.withOpacity(0.02),
-                   blurRadius: 4,
-                   offset: const Offset(0, 2),
-                 ),
-               ],
+              gradient: LinearGradient(
+                colors: [
+                  Colors.white,
+                  const Color(0xFFF0F7FF),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF0D62A2).withOpacity(0.06),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+              border: Border.all(
+                color: const Color(0xFF0D62A2).withOpacity(0.08),
+                width: 1,
+              ),
             ),
             child: Icon(
               icon,
-              color: const Color(0xFF0288D1),
-              size: 28,
+              color: const Color(0xFF0D62A2),
+              size: 26,
             ),
           ),
-          const SizedBox(height: 8),
-          Expanded(
+          const SizedBox(height: 10),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Text(
               label,
               textAlign: TextAlign.center,
               maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                fontSize: 11,
-                height: 1.2,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF0D62A2),
+                fontSize: 10.5,
+                height: 1.1,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF263238),
               ),
             ),
           ),

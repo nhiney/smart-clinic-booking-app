@@ -138,28 +138,6 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
       final password = _passwordController.text.trim();
       final name = widget.name ?? 'Bệnh nhân';
 
-      // Kiểm tra số điện thoại đã đăng ký trong local store chưa
-      final alreadyRegistered = await LocalAccountStore.instance.isPhoneRegistered(widget.phoneNumber);
-      if (!mounted) return;
-      if (alreadyRegistered) {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Số điện thoại này đã được đăng ký. Vui lòng đăng nhập.'),
-            backgroundColor: context.colors.error,
-          ),
-        );
-        context.go('/login');
-        return;
-      }
-
-      // Lưu vào LocalAccountStore trước — đảm bảo login hoạt động ngay
-      await LocalAccountStore.instance.saveAccount(
-        phone: widget.phoneNumber,
-        password: password,
-        name: name,
-      );
-
       final success = await authController.register(
         name: name,
         phone: widget.phoneNumber,

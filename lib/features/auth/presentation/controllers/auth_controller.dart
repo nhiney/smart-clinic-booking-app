@@ -398,6 +398,9 @@ class AuthController extends ChangeNotifier {
       );
       if (currentUser != null) {
         await authRepository.saveSession(currentUser!);
+        if (currentUser!.id.startsWith('MOCK_USER_')) {
+          AppRouter.mockAuthNotifier.value = true;
+        }
       }
       return true;
     } catch (e) {

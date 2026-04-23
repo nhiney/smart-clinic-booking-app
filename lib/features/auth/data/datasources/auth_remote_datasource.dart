@@ -299,23 +299,37 @@ class AuthRemoteDatasource {
     );
 
     try {
+      // 0. KHÔNG CHO ĐĂNG KÝ TRÙNG SỐ ĐIỆN THOẠI
+      final normalized = _normalizePhone(phone);
+      final exists = await isPhoneRegistered(normalized);
+      if (exists) {
+        throw Exception('Số điện thoại này đã được đăng ký trên hệ thống.');
+      }
+
       final data = userModel.toJson();
       data['uid'] = user.uid;
 
-      // 1. Save user profile
+      // 1. Save user profile to Firestore
       await _firestore.collection('users').doc(user.uid).set(data, SetOptions(merge: true));
 
-      // 2. Mark phone as registered for duplicate prevention
-      final normalized = _normalizePhone(phone);
+      // 2. Mark phone as registered for duplicate prevention (Server-side)
       await _firestore.collection('registered_phones').doc(normalized).set({
         'uid': user.uid,
         'created_at': FieldValue.serverTimestamp(),
       });
 
+      // 3. SAVE LOCALLY (Persistent across app restarts)
+      await LocalAccountStore.instance.saveAccount(
+        phone: phone,
+        password: password ?? '',
+        name: name,
+      );
+
       await _logAudit(user.uid, 'REGISTER', 'Registered with role: $role');
       return userModel;
     } catch (e) {
       debugPrint('[AUTH] Register save error: $e');
+      if (e.toString().contains('đã được đăng ký')) rethrow;
       throw Exception('Lưu hồ sơ thất bại: $e');
     }
   }
@@ -611,18 +625,12 @@ class AuthRemoteDatasource {
 
       debugPrint('[AUTH] Dữ liệu số điện thoại gửi đi: $formatted');
 
-      // Safety timeout: if Firebase does not respond within 30s, surface an error.
-      Future.delayed(const Duration(seconds: 30), () {
-        if (!hasReplied) {
-          hasReplied = true;
-          onError('Quá thời gian phản hồi. Kiểm tra kết nối mạng.');
-        }
-      });
+      debugPrint('[AUTH] Đang gửi yêu cầu OTP cho: $formatted');
 
       // --- GỌI FIREBASE PHONE AUTH THẬT ---
       await _firebaseAuth.verifyPhoneNumber(
         phoneNumber: formatted,
-        timeout: const Duration(seconds: 60),
+        timeout: const Duration(seconds: 120), // Tăng timeout cho mạng yếu
         verificationCompleted: (PhoneAuthCredential credential) async {
           if (hasReplied) return;
           hasReplied = true;
@@ -650,6 +658,7 @@ class AuthRemoteDatasource {
         verificationFailed: (FirebaseAuthException e) {
           if (hasReplied) return;
           hasReplied = true;
+          debugPrint('[AUTH] Firebase Auth Error (${e.code}): ${e.message}');
           onError(_handleAuthError(e.code));
         },
         codeSent: (String verificationId, int? resendToken) {
@@ -658,9 +667,12 @@ class AuthRemoteDatasource {
           debugPrint('[AUTH] OTP đã gửi. verificationId: $verificationId');
           onCodeSent(verificationId);
         },
-        codeAutoRetrievalTimeout: (_) {},
+        codeAutoRetrievalTimeout: (String verificationId) {
+          debugPrint('[AUTH] Hết thời gian tự động lấy OTP: $verificationId');
+        },
       );
     } catch (e) {
+      debugPrint('[AUTH] Lỗi ném ra từ verifyPhoneNumber: $e');
       onError('Lỗi hệ thống khi gửi OTP: $e');
     }
   }
@@ -672,6 +684,8 @@ class AuthRemoteDatasource {
     String? displayName,
   }) async {
     try {
+      debugPrint('[AUTH] Đang xác thực OTP: $smsCode cho ID: $verificationId');
+      
       final credential = PhoneAuthProvider.credential(
         verificationId: verificationId,
         smsCode: smsCode,
