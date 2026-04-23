@@ -6,6 +6,11 @@ import '../../domain/entities/health_article.dart';
 import '../../../../core/services/app_config_service.dart';
 import "package:smart_clinic_booking/apps/shared/di/injection.dart";
 import '../../../../core/error/exceptions.dart';
+import 'package:smart_clinic_booking/core/network/dio_client.dart';
+import 'package:xml/xml.dart';
+import 'package:intl/intl.dart';
+import 'package:html/parser.dart' as html;
+import 'package:dio/dio.dart';
 import '../models/home_models.dart';
 
 abstract class HomeRemoteDatasource {
@@ -102,21 +107,112 @@ class HomeRemoteDatasourceImpl implements HomeRemoteDatasource {
 
   @override
   Future<List<HealthArticle>> getHealthNews({int limit = 5}) async {
-    if (getIt<AppConfigService>().config.useMockData) {
-      debugPrint('[HOME] Using mock health news');
-      return HealthArticleModel.mockList();
-    }
     try {
-      final snapshot = await _firestore
-          .collection(getIt<AppConfigService>().config.newsCollection)
-          .orderBy('publishedAt', descending: true)
-          .limit(limit)
-          .get();
-      return snapshot.docs
-          .map((doc) => HealthArticleModel.fromJson(doc.data(), doc.id))
-          .toList();
+      final url = 'https://news.google.com/rss/search?q=${Uri.encodeComponent("y tế sức khỏe việt nam")}&hl=vi&gl=VN&ceid=VN:vi';
+      final response = await DioClient.dio.get(url);
+      final document = XmlDocument.parse(response.data.toString());
+      final items = document.findAllElements('item');
+
+      final initialArticles = items.take(limit).map((node) {
+        final title = node.findElements('title').first.innerText;
+        final link = node.findElements('link').first.innerText;
+        final pubDateStr = node.findElements('pubDate').first.innerText;
+        final source = node.findElements('source').first.innerText;
+        final description = node.findElements('description').first.innerText;
+        
+        String? imageUrl;
+        final imgMatch = RegExp(r'<img src="([^"]+)"').firstMatch(description);
+        if (imgMatch != null) imageUrl = imgMatch.group(1);
+
+        final cleanTitle = title.split(' - ').first;
+
+        DateTime publishedAt;
+        try {
+          publishedAt = DateFormat("EEE, dd MMM yyyy HH:mm:ss Z", "en_US").parse(pubDateStr);
+        } catch (_) {
+          try {
+             publishedAt = DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", "en_US").parse(pubDateStr);
+          } catch (_) {
+             publishedAt = DateTime.now();
+          }
+        }
+
+        return HealthArticle(
+          id: link.hashCode.toString(),
+          title: cleanTitle,
+          summary: description.replaceAll(RegExp(r'<[^>]*>|&nbsp;'), ' ').trim(),
+          imageUrl: imageUrl,
+          source: source,
+          publishedAt: publishedAt,
+          articleUrl: link,
+        );
+      }).toList();
+
+      // Enhance with images from source pages
+      return await Future.wait(initialArticles.map((article) async {
+        if (article.articleUrl != null && (article.imageUrl == null || article.imageUrl!.contains('lh3.googleusercontent.com'))) {
+          final scrapedImage = await _fetchImageFromUrl(article.articleUrl!);
+          if (scrapedImage != null) {
+            return HealthArticle(
+              id: article.id,
+              title: article.title,
+              summary: article.summary,
+              imageUrl: scrapedImage,
+              source: article.source,
+              publishedAt: article.publishedAt,
+              articleUrl: article.articleUrl,
+            );
+          }
+        }
+        return article;
+      }));
     } catch (e) {
-      throw ServerException(message: 'Failed to load health news: $e');
+      if (getIt<AppConfigService>().config.useMockData) {
+        return HealthArticleModel.mockList();
+      }
+      // Fallback to Firestore
+      try {
+        final snapshot = await _firestore
+            .collection(getIt<AppConfigService>().config.newsCollection)
+            .orderBy('publishedAt', descending: true)
+            .limit(limit)
+            .get();
+        return snapshot.docs
+            .map((doc) => HealthArticleModel.fromJson(doc.data(), doc.id))
+            .toList();
+      } catch (_) {
+        throw ServerException(message: 'Failed to load health news: $e');
+      }
     }
+  }
+
+  Future<String?> _fetchImageFromUrl(String url) async {
+    try {
+      final response = await DioClient.dio.get(
+        url,
+        options: Options(
+          followRedirects: true,
+          validateStatus: (status) => status! < 500,
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1',
+          },
+          sendTimeout: const Duration(seconds: 3),
+          receiveTimeout: const Duration(seconds: 3),
+        ),
+      );
+      
+      if (response.statusCode == 200) {
+        final document = html.parse(response.data.toString());
+        final ogImage = document.querySelector('meta[property="og:image"]')?.attributes['content'] ??
+                        document.querySelector('meta[name="og:image"]')?.attributes['content'];
+        if (ogImage != null && ogImage.isNotEmpty) return ogImage;
+        
+        final twitterImage = document.querySelector('meta[name="twitter:image"]')?.attributes['content'];
+        if (twitterImage != null && twitterImage.isNotEmpty) return twitterImage;
+      }
+    } catch (e) {
+      debugPrint('Error fetching image from $url: $e');
+    }
+    return null;
   }
 }

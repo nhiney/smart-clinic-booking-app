@@ -70,24 +70,27 @@ class BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
             context.go('/');
           }
         },
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(width: 12),
-            Icon(Icons.arrow_back_ios_new_rounded, color: context.colors.primary, size: 20),
-            const SizedBox(width: 4),
-            Flexible(
-              child: Text(
-                l10n.back_button_text,
-                style: context.textStyles.bodyBold.copyWith(
-                  color: context.colors.primary,
-                  fontSize: 14,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 150),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(width: 12),
+              Icon(Icons.arrow_back_ios_new_rounded, color: context.colors.primary, size: 18),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  l10n.back_button_text,
+                  style: context.textStyles.bodyBold.copyWith(
+                    color: context.colors.primary,
+                    fontSize: 13,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ) : null),
       bottom: bottom,

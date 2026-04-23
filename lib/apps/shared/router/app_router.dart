@@ -41,6 +41,7 @@ import 'package:smart_clinic_booking/features/profile/presentation/screens/patie
 import 'package:smart_clinic_booking/features/invoice/presentation/screens/invoice_screen.dart';
 import 'package:smart_clinic_booking/features/appointment/presentation/screens/appointment_history_screen.dart';
 import 'package:smart_clinic_booking/features/medical_record/presentation/screens/prescription_screen.dart';
+import 'package:smart_clinic_booking/shared/widgets/under_development_screen.dart';
 
 // No longer need placeholders as we implemented the real screens
 class KycUploadScreen extends StatelessWidget {
@@ -404,6 +405,13 @@ class AppRouter {
           return CheckInScreen(
             appointmentId: extras['appointmentId'] as String? ?? '',
           );
+        },
+      ),
+      GoRoute(
+        path: '/under-development',
+        builder: (context, state) {
+          final title = state.uri.queryParameters['title'] ?? 'Tính năng';
+          return UnderDevelopmentScreen(title: title);
         },
       ),
     ],

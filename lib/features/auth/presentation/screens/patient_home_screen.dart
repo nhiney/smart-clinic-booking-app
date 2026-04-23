@@ -13,6 +13,9 @@ import 'package:smart_clinic_booking/core/localization/language_service.dart';
 import 'package:smart_clinic_booking/core/localization/language_controller.dart';
 import 'package:smart_clinic_booking/core/localization/app_language.dart';
 import 'package:smart_clinic_booking/core/widgets/icare_logo.dart';
+import 'package:smart_clinic_booking/features/content/presentation/controllers/content_controller.dart';
+import 'package:smart_clinic_booking/features/home/domain/entities/health_article.dart';
+import 'package:intl/intl.dart';
 
 // ── Brand palette ────────────────────────────────────────────────────────────
 class _P {
@@ -207,6 +210,7 @@ class _PatientHomeScreenState extends ConsumerState<PatientHomeScreen>
   }
 
   Widget _buildBottomNav() {
+    final lang = ref.watch(languageControllerProvider);
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -230,9 +234,9 @@ class _PatientHomeScreenState extends ConsumerState<PatientHomeScreen>
         unselectedFontSize: 11,
         selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700),
         items: [
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.home_rounded),
-            label: 'Home',
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.home_rounded),
+            label: lang.localize('Trang chủ', 'Home'),
           ),
           BottomNavigationBarItem(
             icon: Stack(
@@ -261,15 +265,15 @@ class _PatientHomeScreenState extends ConsumerState<PatientHomeScreen>
                   ),
               ],
             ),
-            label: 'Notifications',
+            label: lang.localize('Thông báo', 'Notifications'),
           ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.map_rounded),
-            label: 'Map',
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.map_rounded),
+            label: lang.localize('Bản đồ', 'Map'),
           ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.person_rounded),
-            label: 'Profile',
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.person_rounded),
+            label: lang.localize('Cá nhân', 'Profile'),
           ),
         ],
       ),
@@ -327,6 +331,7 @@ class _HomeTab extends StatelessWidget {
           _HealthStatsRow(),
           _FeaturedHospitals(),
           _FeaturedDoctors(),
+          _HealthNewsSection(),
           const SizedBox(height: 120),
         ],
       ),
@@ -417,7 +422,7 @@ class _LanguageBtn extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('Chọn ngôn ngữ / Select Language', 
+                const Text('Cài đặt ngôn ngữ', 
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 const SizedBox(height: 10),
                 ListTile(
@@ -819,12 +824,13 @@ class _ActionCell extends StatelessWidget {
       onTap: () {
         if (item.route != null) {
           if (item.route == '/admission/registration/me') {
-            final uid =
-                FirebaseAuth.instance.currentUser?.uid ?? 'me';
-            context.push('/admission/registration/$uid');
+            final uid = FirebaseAuth.instance.currentUser?.uid ?? 'me';
+            GoRouter.of(context).push('/admission/registration/$uid');
           } else {
-            context.push(item.route!);
+            GoRouter.of(context).push(item.route!);
           }
+        } else {
+          GoRouter.of(context).push('/under-development?title=${Uri.encodeComponent(item.label)}');
         }
       },
       child: Column(
@@ -858,7 +864,7 @@ class _ActionCell extends StatelessWidget {
 }
 
 // ── Upcoming appointments ────────────────────────────────────────────────────
-class _UpcomingSection extends StatelessWidget {
+class _UpcomingSection extends ConsumerWidget {
   final List<_UpcomingAppt> appointments;
   final bool isLoading;
 
@@ -868,7 +874,8 @@ class _UpcomingSection extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(languageControllerProvider);
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
       child: Column(
@@ -877,9 +884,9 @@ class _UpcomingSection extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Upcoming Appointments',
-                style: TextStyle(
+              Text(
+                lang.localize('Lịch khám sắp tới', 'Upcoming Appointments'),
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
                   color: _P.primaryDark,
@@ -887,9 +894,9 @@ class _UpcomingSection extends StatelessWidget {
               ),
               GestureDetector(
                 onTap: () => context.push('/appointments'),
-                child: const Text(
-                  'See all',
-                  style: TextStyle(
+                child: Text(
+                  lang.localize('Xem tất cả', 'See all'),
+                  style: const TextStyle(
                     color: _P.primary,
                     fontWeight: FontWeight.w700,
                     fontSize: 13,
@@ -1324,7 +1331,7 @@ class _HospitalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.push('/doctor/search'),
+      onTap: () => context.push('/under-development?title=${Uri.encodeComponent(data.name)}'),
       child: Container(
         width: 200,
         margin: const EdgeInsets.only(right: 16),
@@ -1610,5 +1617,207 @@ class _FeaturedDoctorsState extends State<_FeaturedDoctors> {
         ],
       ),
     );
+  }
+}
+
+// ── Health news section ──────────────────────────────────────────────────────
+class _HealthNewsSection extends ConsumerStatefulWidget {
+  const _HealthNewsSection();
+  @override
+  ConsumerState<_HealthNewsSection> createState() => _HealthNewsSectionState();
+}
+
+class _HealthNewsSectionState extends ConsumerState<_HealthNewsSection> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(newsProvider.notifier).loadNews();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final lang = ref.watch(languageControllerProvider);
+    final newsState = ref.watch(newsProvider);
+    final articles = newsState.articles.take(5).toList();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 24, 0, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  lang.localize('Tin tức y tế', 'Health News'),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: _P.primaryDark,
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => context.push('/news'),
+                  child: Text(
+                    lang.localize('Xem tất cả', 'See all'),
+                    style: const TextStyle(
+                      color: _P.primary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          if (newsState.isLoading && articles.isEmpty)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            )
+          else if (articles.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.grey.withOpacity(0.1)),
+                ),
+                child: Center(
+                  child: Text(
+                    lang.localize('Không có tin tức nào', 'No news available'),
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+                ),
+              ),
+            )
+          else
+            SizedBox(
+              height: 220,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: articles.length,
+                itemBuilder: (context, i) => _NewsCard(article: articles[i]),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NewsCard extends ConsumerWidget {
+  final HealthArticle article;
+  const _NewsCard({required this.article});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(languageControllerProvider);
+    return GestureDetector(
+      onTap: () {
+        context.push('/news'); 
+      },
+      child: Container(
+        width: 260,
+        margin: const EdgeInsets.only(right: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x08000000),
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              child: CachedNetworkImage(
+                imageUrl: article.imageUrl ?? '',
+                height: 120,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                placeholder: (_, __) => Container(
+                  color: const Color(0xFFF0F7FF),
+                  child: const Center(
+                    child: Icon(Icons.newspaper_rounded, color: Color(0xFF0288D1), size: 30),
+                  ),
+                ),
+                errorWidget: (_, __, ___) => Container(
+                  color: const Color(0xFFF0F7FF),
+                  child: const Center(
+                    child: Icon(Icons.newspaper_rounded, color: Color(0xFF0288D1), size: 30),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    article.source,
+                    style: const TextStyle(
+                      color: Color(0xFF0288D1),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    article.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: Color(0xFF1A2B4A),
+                      height: 1.3,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    _timeAgo(article.publishedAt, lang),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _timeAgo(DateTime dt, AppLanguage lang) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inDays > 0) {
+      return lang == AppLanguage.vi ? '${diff.inDays} ngày trước' : '${diff.inDays} days ago';
+    }
+    if (diff.inHours > 0) {
+      return lang == AppLanguage.vi ? '${diff.inHours} giờ trước' : '${diff.inHours} hours ago';
+    }
+    if (diff.inMinutes > 0) {
+      return lang == AppLanguage.vi ? '${diff.inMinutes} phút trước' : '${diff.inMinutes} mins ago';
+    }
+    return lang == AppLanguage.vi ? 'Vừa xong' : 'Just now';
   }
 }

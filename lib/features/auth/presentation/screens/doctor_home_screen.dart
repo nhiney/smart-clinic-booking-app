@@ -6,7 +6,7 @@ class DoctorHomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Doctor Dashboard')),
+      appBar: AppBar(title: const Text('Bảng điều khiển bác sĩ')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -21,7 +21,7 @@ class DoctorHomeScreen extends StatelessWidget {
                   children: [
                     Text('Thông tin bác sĩ', style: TextStyle(fontWeight: FontWeight.bold)),
                     SizedBox(height: 8),
-                    Text('Tên: Dr. Demo'),
+                    Text('Tên: BS. Demo'),
                     Text('Khoa: Nội tổng quát'),
                     Text('Bệnh viện: ICare Central'),
                   ],

@@ -13,7 +13,6 @@ class NewsScreen extends ConsumerStatefulWidget {
   @override
   ConsumerState<NewsScreen> createState() => _NewsScreenState();
 }
-
 class _NewsScreenState extends ConsumerState<NewsScreen> {
   final ScrollController _scrollController = ScrollController();
   String _selectedCategory = 'Tất cả';
@@ -41,6 +40,9 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(newsProvider);
+    final articles = state.articles;
+    final featuredArticles = articles.take(5).toList();
+    final remainingArticles = articles.skip(5).toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -49,22 +51,274 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
         showBackButton: true,
       ),
       body: RefreshIndicator(
-        onRefresh: () => ref.read(newsProvider.notifier).loadNews(refresh: true, category: _selectedCategory == 'Tất cả' ? null : _selectedCategory),
-        child: Column(
+        onRefresh: () => ref.read(newsProvider.notifier).loadNews(
+              refresh: true,
+              category: _selectedCategory == 'Tất cả' ? null : _selectedCategory,
+            ),
+        child: CustomScrollView(
+          controller: _scrollController,
+          slivers: [
+            SliverToBoxAdapter(child: _buildCategoryFilter()),
+            if (state.isLoading && articles.isEmpty)
+              SliverFillRemaining(
+                child: Skeletonizer(
+                  enabled: true,
+                  child: _buildNewsList(List.generate(5, (index) => _mockArticle(index)), false),
+                ),
+              )
+            else if (state.error != null && articles.isEmpty)
+              SliverFillRemaining(child: _buildErrorState(state.error!))
+            else ...[
+              if (featuredArticles.isNotEmpty && _selectedCategory == 'Tất cả')
+                SliverToBoxAdapter(child: _buildFeaturedSection(featuredArticles)),
+              
+              SliverPadding(
+                padding: const EdgeInsets.all(16),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      if (index == remainingArticles.length) {
+                        return state.isLoading 
+                            ? const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 24),
+                                child: Center(child: CircularProgressIndicator()),
+                              )
+                            : const SizedBox.shrink();
+                      }
+                      final article = remainingArticles[index];
+                      return _buildCompactNewsCard(article);
+                    },
+                    childCount: remainingArticles.length + 1,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  HealthArticle _mockArticle(int index) => HealthArticle(
+        id: 'mock_$index',
+        title: 'Loading interesting news title here...',
+        summary: 'This is a brief summary of the news that is currently loading...',
+        source: 'Source',
+        publishedAt: DateTime.now(),
+      );
+
+  Widget _buildFeaturedSection(List<HealthArticle> articles) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 20, 16, 12),
+          child: Text(
+            'Tin nổi bật',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1E293B),
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 280,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            itemCount: articles.length,
+            itemBuilder: (context, index) => _buildFeaturedCard(articles[index]),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFeaturedCard(HealthArticle article) {
+    return Container(
+      width: 300,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
           children: [
-            _buildCategoryFilter(),
-            Expanded(
-              child: Skeletonizer(
-                enabled: state.isLoading && state.articles.isEmpty,
-                child: state.error != null && state.articles.isEmpty
-                  ? _buildErrorState(state.error!)
-                  : _buildNewsList(state.articles, state.isLoading),
+            Positioned.fill(
+              child: article.imageUrl != null
+                  ? Image.network(article.imageUrl!, fit: BoxFit.cover)
+                  : Container(color: Colors.blueGrey[100]),
+            ),
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.1),
+                      Colors.black.withOpacity(0.8),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 20,
+              left: 20,
+              right: 20,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2563EB),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      article.source,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    article.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      height: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    _getTimeAgo(article.publishedAt),
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.8),
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildCompactNewsCard(HealthArticle article) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: () => article.articleUrl != null ? _launchURL(article.articleUrl!) : null,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              if (article.imageUrl != null)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.network(
+                    article.imageUrl!,
+                    width: 100,
+                    height: 100,
+                    fit: BoxFit.cover,
+                  ),
+                )
+              else
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(Icons.image_not_supported, color: Colors.grey),
+                ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      article.source.toUpperCase(),
+                      style: const TextStyle(
+                        color: Color(0xFF2563EB),
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      article.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        height: 1.3,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.access_time_rounded, size: 12, color: Colors.grey),
+                        const SizedBox(width: 4),
+                        Text(
+                          _getTimeAgo(article.publishedAt),
+                          style: const TextStyle(color: Colors.grey, fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getTimeAgo(DateTime date) {
+    final diff = DateTime.now().difference(date);
+    if (diff.inDays > 7) return DateFormat('dd/MM/yyyy').format(date);
+    if (diff.inDays >= 1) return '${diff.inDays} ngày trước';
+    if (diff.inHours >= 1) return '${diff.inHours} giờ trước';
+    if (diff.inMinutes >= 1) return '${diff.inMinutes} phút trước';
+    return 'Vừa xong';
   }
 
   Widget _buildCategoryFilter() {
@@ -101,93 +355,11 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
 
   Widget _buildNewsList(List<HealthArticle> articles, bool isLoading) {
     return ListView.builder(
-      controller: _scrollController,
-      padding: const EdgeInsets.all(16),
-      itemCount: articles.length + (isLoading ? 1 : 0),
-      itemBuilder: (context, index) {
-        if (index == articles.length) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16),
-            child: Center(child: CircularProgressIndicator()),
-          );
-        }
-        final article = articles[index];
-        return _buildNewsCard(article);
-      },
-    );
-  }
-
-  Widget _buildNewsCard(HealthArticle article) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.01),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: InkWell(
-        onTap: () => article.articleUrl != null ? _launchURL(article.articleUrl!) : null,
-        borderRadius: BorderRadius.circular(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (article.imageUrl != null)
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                child: Image.network(
-                  article.imageUrl!,
-                  height: 180,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    height: 180,
-                    color: Colors.grey.withOpacity(0.1),
-                    child: const Icon(Icons.image_not_supported, color: Colors.grey),
-                  ),
-                ),
-              ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2563EB).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(article.source, 
-                          style: const TextStyle(color: Color(0xFF2563EB), fontSize: 10, fontWeight: FontWeight.bold)),
-                      ),
-                      const Spacer(),
-                      Text(DateFormat('dd/MM/yyyy').format(article.publishedAt), 
-                        style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(article.title, 
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, height: 1.3)),
-                  const SizedBox(height: 8),
-                  Text(article.summary, 
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.grey, fontSize: 14, height: 1.5)),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: articles.length,
+      itemBuilder: (context, index) => _buildCompactNewsCard(articles[index]),
     );
   }
 
