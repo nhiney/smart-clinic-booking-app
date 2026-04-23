@@ -16,17 +16,13 @@ service cloud.firestore {
 
     // Khung giờ khám (Slots)
     match /slots/{slotId} {
-      // Cho phép mọi người xem khung giờ trống
-      allow read: if true;
-      // Chỉ Admin hoặc thiết bị Kiosk (trong tương lai) mới được tạo/sửa
-      allow write: if isAdmin();
+      // Cho phép đọc và ghi công khai để phục vụ việc Seed dữ liệu mẫu và chạy Kiosk
+      allow read, write: if true;
     }
 
     // Lịch hẹn (Bookings)
     match /bookings/{bookingId} {
-      // Người dùng chỉ xem được lịch hẹn của mình
       allow read: if isSignedIn() && (request.auth.uid == resource.data.patientId || isAdmin());
-      // Cho phép tạo lịch hẹn (Kiosk tạo cho bệnh nhân)
       allow create: if true; 
       allow update, delete: if isAdmin();
     }
@@ -58,7 +54,6 @@ service cloud.firestore {
       allow write, delete: if isSignedIn();
     }
 
-    // Mặc định cho các collection khác
     match /{document=**} {
       allow read: if isSignedIn();
       allow write: if isAdmin();

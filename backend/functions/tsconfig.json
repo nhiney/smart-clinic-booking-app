@@ -9,7 +9,9 @@
     "target": "es2017",
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "types": ["node"],
+    "types": [
+      "node"
+    ],
     "lib": [
       "es2017",
       "esnext.asynciterable"

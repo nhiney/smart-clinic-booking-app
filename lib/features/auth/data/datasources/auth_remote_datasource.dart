@@ -771,6 +771,7 @@ class AuthRemoteDatasource {
   // ── Error handling ───────────────────────────────────────────────────────────
 
   String _handleAuthError(String code) {
+    debugPrint('[AUTH] Firebase Auth Error Code: $code');
     switch (code) {
       case 'user-not-found':
         return 'Số điện thoại chưa được đăng ký.';

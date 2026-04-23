@@ -10,7 +10,7 @@ import '../../domain/usecases/signin_with_phone_usecase.dart';
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smart_clinic_booking/apps/shared/di/injection.dart';
+import "package:smart_clinic_booking/apps/shared/di/injection.dart";
 import 'package:smart_clinic_booking/apps/shared/router/app_router.dart';
 
 final authControllerProvider = ChangeNotifierProvider<AuthController>((ref) {
@@ -326,6 +326,10 @@ class AuthController extends ChangeNotifier {
     required void Function() onAutoVerified,
     required void Function(String error) onError,
   }) async {
+    if (isLoading) {
+      debugPrint('[AUTH] verifyPhone skipped because already loading');
+      return;
+    }
     try {
       isLoading = true;
       errorMessage = null;
@@ -346,6 +350,7 @@ class AuthController extends ChangeNotifier {
           onAutoVerified();
         },
         onError: (error) {
+          debugPrint('[AUTH] verifyPhone error: $error');
           errorMessage = error;
           isLoading = false;
           notifyListeners();
@@ -406,11 +411,15 @@ class AuthController extends ChangeNotifier {
 
   Future<bool> checkPhoneRegistered(String phone) async {
     try {
+      debugPrint('[AUTH] Checking registration for: $phone');
       isLoading = true;
       notifyListeners();
-      final isRegistered = await verifyPhoneUseCase.repository.isPhoneRegistered(phone);
+
+      final isRegistered = await authRepository.isPhoneRegistered(phone);
+      debugPrint('[AUTH] Registration check result for $phone: $isRegistered');
       return isRegistered;
     } catch (e) {
+      debugPrint('[AUTH] Registration check error: $e');
       return false;
     } finally {
       isLoading = false;

@@ -113,12 +113,8 @@ Future<void> main() async {
       cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
     );
 
-    // Enable Firebase Auth phone testing flow in debug builds.
-    if (kDebugMode) {
-      await FirebaseAuth.instance.setSettings(
-        appVerificationDisabledForTesting: true,
-      );
-    }
+    // Notice: appVerificationDisabledForTesting is removed. 
+    // This allows Firebase to fallback to reCAPTCHA on iOS when APNs is not configured.
   } catch (e) {
     debugPrint('Firebase initialization failed: $e');
   }

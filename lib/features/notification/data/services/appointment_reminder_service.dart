@@ -55,6 +55,7 @@ class AppointmentReminderService {
         tz.TZDateTime.from(oneDayBefore, tz.local),
         const NotificationDetails(android: _androidDetails, iOS: _iosDetails),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
       );
     }
 
@@ -66,6 +67,7 @@ class AppointmentReminderService {
         tz.TZDateTime.from(oneHourBefore, tz.local),
         const NotificationDetails(android: _androidDetails, iOS: _iosDetails),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
       );
     }
   }

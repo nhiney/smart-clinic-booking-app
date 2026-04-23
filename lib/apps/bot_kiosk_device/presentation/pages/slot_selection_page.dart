@@ -32,45 +32,72 @@ class SlotSelectionPage extends ConsumerWidget {
         centerTitle: true,
       ),
       body: slotsAsync.when(
-        data: (slots) => GridView.builder(
-          padding: const EdgeInsets.all(32),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 2.5,
-            crossAxisSpacing: 32,
-            mainAxisSpacing: 32,
-          ),
-          itemCount: slots.length,
-          itemBuilder: (context, index) {
-            final slot = slots[index];
-            final timeStr = DateFormat('HH:mm').format(slot.startTime);
-            
-            return SizedBox(
-              height: 120,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.blue.shade900,
-                  side: BorderSide(color: Colors.blue.shade900, width: 3),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                ),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => VoiceRegistrationPage(selectedSlot: slot),
-                    ),
-                  );
-                },
-                child: Text(
-                  timeStr,
-                  style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
-                ),
+        data: (slots) {
+          if (slots.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.event_busy, size: 100, color: Colors.grey.shade400),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'HIỆN TẠI KHÔNG CÓ GIỜ KHÁM NÀO TRỐNG',
+                    style: TextStyle(fontSize: 30, color: Colors.grey, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
             );
-          },
-        ),
+          }
+          return GridView.builder(
+            padding: const EdgeInsets.all(32),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 2.5,
+              crossAxisSpacing: 32,
+              mainAxisSpacing: 32,
+            ),
+            itemCount: slots.length,
+            itemBuilder: (context, index) {
+              final slot = slots[index];
+              final timeStr = DateFormat('HH:mm').format(slot.startTime);
+              
+              return SizedBox(
+                height: 120,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.blue.shade900,
+                    side: BorderSide(color: Colors.blue.shade900, width: 3),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => VoiceRegistrationPage(selectedSlot: slot),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    timeStr,
+                    style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              );
+            },
+          );
+        },
         loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 8)),
-        error: (err, stack) => Center(child: Text('Lỗi: $err', style: const TextStyle(fontSize: 30))),
+        error: (err, stack) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(40.0),
+            child: Text(
+              'LỖI KẾT NỐI: $err\n\nVui lòng kiểm tra lại Rules hoặc Internet.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 24, color: Colors.red, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
       ),
     );
   }

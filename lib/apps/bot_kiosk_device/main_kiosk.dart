@@ -26,28 +26,47 @@ void main() async {
   );
 }
 
-class ICareKioskBotApp extends ConsumerWidget {
+class ICareKioskBotApp extends ConsumerStatefulWidget {
   const ICareKioskBotApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final idleManager = IdleSessionManager(
-      timeout: const Duration(minutes: 2),
+  ConsumerState<ICareKioskBotApp> createState() => _ICareKioskBotAppState();
+}
+
+class _ICareKioskBotAppState extends ConsumerState<ICareKioskBotApp> {
+  late IdleSessionManager _idleManager;
+
+  @override
+  void initState() {
+    super.initState();
+    _idleManager = IdleSessionManager(
+      timeout: const Duration(minutes: 5), // Tăng lên 5 phút cho thoải mái test
       onTimeout: () {
-        debugPrint('[KIOSK] Session timeout');
+        debugPrint('[KIOSK] Session timeout - Resetting to Home');
+        // Reset ứng dụng về trang chủ nếu cần
       },
     )..start();
+  }
 
+  @override
+  void dispose() {
+    _idleManager.stop();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final isOnline = ref.watch(networkListenerProvider).isOnline;
 
     return IdleDetector(
-      manager: idleManager,
+      manager: _idleManager,
       child: MaterialApp(
         title: 'ICare Smart Kiosk Bot',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           primarySwatch: Colors.blue,
           useMaterial3: true,
+          fontFamily: 'Roboto', // Đảm bảo dùng font chuẩn
         ),
         builder: (context, child) {
           return Stack(
@@ -57,14 +76,19 @@ class ICareKioskBotApp extends ConsumerWidget {
                 Positioned(
                   top: 0, left: 0, right: 0,
                   child: Container(
-                    color: Colors.red,
-                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    color: Colors.red.withOpacity(0.9),
+                    padding: const EdgeInsets.symmetric(vertical: 30),
                     child: const SafeArea(
                       bottom: false,
                       child: Text(
                         'MẤT KẾT NỐI MẠNG - VUI LÒNG LIÊN HỆ LỄ TÂN',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: Colors.white, 
+                          fontSize: 28, 
+                          fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.none,
+                        ),
                       ),
                     ),
                   ),

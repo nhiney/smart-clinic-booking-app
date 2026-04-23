@@ -47,6 +47,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   void _onRegisterPressed() {
+    debugPrint('[SignUpScreen] Register button pressed');
     if (_formKey.currentState!.validate()) {
       if (!_termsAccepted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -59,6 +60,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       }
 
       final fullPhone = _buildFullPhoneNumber(_phoneController.text);
+      debugPrint('[SignUpScreen] Dispatching VerifyPhoneEvent for $fullPhone');
       context.read<SignUpBloc>().add(VerifyPhoneEvent(
         fullPhone,
         fullName: _nameController.text.trim(),
@@ -94,6 +96,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('[SignUpScreen] Building...');
     final l10n = AppLocalizations.of(context)!;
 
     return BlocListener<SignUpBloc, SignUpState>(

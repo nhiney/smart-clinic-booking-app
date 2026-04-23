@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../app/di/injection.dart';
+import "package:smart_clinic_booking/apps/shared/di/injection.dart";
 import '../../../../core/theme/colors/app_colors.dart';
 import '../../../../core/theme/typography/app_text_styles.dart';
 import '../../../../core/widgets/icare_logo.dart';

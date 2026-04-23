@@ -4,7 +4,7 @@ import '../../domain/entities/health_summary.dart';
 import '../../domain/entities/medication_reminder.dart';
 import '../../domain/entities/health_article.dart';
 import '../../../../core/services/app_config_service.dart';
-import '../../../../app/di/injection.dart';
+import "package:smart_clinic_booking/apps/shared/di/injection.dart";
 import '../../../../core/error/exceptions.dart';
 import '../models/home_models.dart';
 

@@ -1,4 +1,6 @@
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../controllers/auth_controller.dart';
 
@@ -9,9 +11,10 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
   final AuthController authController;
 
   SignUpBloc({required this.authController}) : super(const SignUpState()) {
+    debugPrint('[SignUpBloc] Created instance: $hashCode');
     on<ToggleRoleEvent>(_onToggleRole);
     on<ToggleLanguageEvent>(_onToggleLanguage);
-    on<VerifyPhoneEvent>(_onVerifyPhone);
+    on<VerifyPhoneEvent>(_onVerifyPhone, transformer: droppable());
     on<VerifyOtpEvent>(_onVerifyOtp);
     on<SubmitPatientRegistration>(_onSubmitPatient);
     on<SubmitDoctorRegistration>(_onSubmitDoctor);
@@ -26,6 +29,11 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
   }
 
   Future<void> _onVerifyPhone(VerifyPhoneEvent event, Emitter<SignUpState> emit) async {
+    if (state.isLoading) {
+      debugPrint('[SignUpBloc] _onVerifyPhone skipped (already loading)');
+      return;
+    }
+    debugPrint('[SignUpBloc] _onVerifyPhone for ${event.phoneNumber}');
     emit(state.copyWith(isLoading: true, error: null, isCodeSent: false));
     try {
       final isRegistered = await authController.checkPhoneRegistered(event.phoneNumber);

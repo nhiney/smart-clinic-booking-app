@@ -31,8 +31,8 @@ import 'package:smart_clinic_booking/features/auth/presentation/screens/create_p
 import 'package:smart_clinic_booking/features/auth/presentation/screens/account_qr_screen.dart';
 import 'package:smart_clinic_booking/features/auth/presentation/screens/qr_login_scanner_screen.dart';
 import 'package:smart_clinic_booking/features/support/domain/entities/support_entities.dart';
-import 'package:smart_clinic_booking/apps/user_device/booking/presentation/screens/create_appointment_screen.dart';
-import 'package:smart_clinic_booking/apps/qr_scanner_device/scanner/presentation/screens/qr_scanner_screen.dart';
+import 'package:smart_clinic_booking/features/booking/presentation/screens/booking_screen.dart';
+import 'package:smart_clinic_booking/features/checkin/presentation/screens/checkin_screen.dart';
 
 import 'package:smart_clinic_booking/features/payment/presentation/screens/payment_screen.dart';
 import 'package:smart_clinic_booking/features/payment/presentation/screens/transaction_screen.dart';
@@ -75,13 +75,18 @@ class AppRouter {
   static final GoRouter router = GoRouter(
     initialLocation: '/',
     refreshListenable: Listenable.merge([
-        GoRouterRefreshStream(authStateChanges),
+        GoRouterRefreshStream(authStateChanges.map((user) {
+           debugPrint('[ROUTER] Auth State Stream Fired: ${user?.uid ?? "NULL"}');
+           return user;
+        })),
         mockAuthNotifier,
     ]),
     redirect: (BuildContext context, GoRouterState state) async {
       final user = FirebaseAuth.instance.currentUser;
       final bool isMockAuthenticated = mockAuthNotifier.value;
       final path = state.uri.path;
+      
+      debugPrint('[ROUTER] Evaluating Redirect: $path, User: ${user?.uid ?? "NULL"}, MockAuth: $isMockAuthenticated');
       
       final bool isPublicRoute = path == '/' || 
                                 path == '/login' || 
@@ -95,8 +100,8 @@ class AppRouter {
 
       // 1. Unauthenticated Block
       if (user == null && !isMockAuthenticated) {
-        debugPrint('[ROUTER] No user found. Path: $path');
         if (isPublicRoute) return null;
+        debugPrint('[ROUTER] Kicking unauthenticated user from $path to /login');
         return '/login';
       }
 
@@ -385,11 +390,21 @@ class AppRouter {
       ),
       GoRoute(
         path: '/patient/create-appointment',
-        builder: (context, state) => const CreateAppointmentScreen(),
+        builder: (context, state) {
+          final extras = state.extra as Map<String, dynamic>? ?? {};
+          return BookingScreen(
+            doctor: extras['doctor'] as DoctorEntity?,
+          );
+        },
       ),
       GoRoute(
         path: '/clinic/scanner',
-        builder: (context, state) => const QRScannerScreen(),
+        builder: (context, state) {
+          final extras = state.extra as Map<String, dynamic>? ?? {};
+          return CheckInScreen(
+            appointmentId: extras['appointmentId'] as String? ?? '',
+          );
+        },
       ),
     ],
   );

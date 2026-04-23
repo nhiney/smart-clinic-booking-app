@@ -280,23 +280,6 @@ class _LoginScreenState extends State<LoginScreen> {
               onPressed: handleLogin,
               isLoading: controller.isLoading,
             ),
-            if (kDebugMode) ...[
-              const SizedBox(height: 12),
-              TextButton.icon(
-                onPressed: controller.isLoading
-                    ? null
-                    : () async {
-                        setState(() {
-                          selectedCountryCode = '+84';
-                          phoneController.text = DebugTestLoginConfig.patientPhoneNational;
-                          passwordController.text = DebugTestLoginConfig.patientPassword;
-                        });
-                        await handleLogin();
-                      },
-                icon: const Icon(Icons.bug_report_outlined, size: 18),
-                label: const Text('Đăng nhập test (BN) — 912345678'),
-              ),
-            ],
             const SizedBox(height: 24),
             Row(
               children: [
