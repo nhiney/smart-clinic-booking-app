@@ -162,7 +162,7 @@ class _HospitalVerticalCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () => context.push('/under-development?title=${Uri.encodeComponent('Đặt khám tại cơ sở y tế')}'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.lightBlue,
                     foregroundColor: Colors.white,

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:xml/xml.dart';
@@ -81,75 +82,86 @@ class ContentRepositoryImpl implements ContentRepository {
   Future<List<HealthArticle>> _fetchFromGoogleNews({String? category}) async {
     final query = category != null && category != 'Tất cả' 
         ? 'y tế sức khỏe $category' 
-        : 'y tế sức khỏe việt nam';
+        : 'tin tức y tế sức khỏe mới nhất việt nam';
     
-    final url = 'https://news.google.com/rss/search?q=${Uri.encodeComponent(query)}&hl=vi&gl=VN&ceid=VN:vi';
+    // Add time filter for freshness
+    final url = 'https://news.google.com/rss/search?q=${Uri.encodeComponent(query)}+when:7d&hl=vi&gl=VN&ceid=VN:vi';
     
-    final response = await DioClient.dio.get(url);
-    final document = XmlDocument.parse(response.data.toString());
-    final items = document.findAllElements('item');
+    try {
+      final response = await DioClient.dio.get(url);
+      final document = XmlDocument.parse(response.data.toString());
+      final items = document.findAllElements('item');
 
-    final initialArticles = items.map((node) {
-      final title = node.findElements('title').first.innerText;
-      final link = node.findElements('link').first.innerText;
-      final pubDateStr = node.findElements('pubDate').first.innerText;
-      final source = node.findElements('source').first.innerText;
-      final description = node.findElements('description').first.innerText;
-      
-      // Extract image URL from description if present
-      String? imageUrl;
-      final imgMatch = RegExp(r'<img src="([^"]+)"').firstMatch(description);
-      if (imgMatch != null) {
-        imageUrl = imgMatch.group(1);
-      }
-
-      // Clean title
-      final cleanTitle = title.split(' - ').first;
-
-      DateTime publishedAt;
-      try {
-        publishedAt = _parseRFC822Date(pubDateStr);
-      } catch (_) {
-        publishedAt = DateTime.now();
-      }
-
-      return HealthArticle(
-        id: link.hashCode.toString(),
-        title: cleanTitle,
-        summary: _stripHtml(description),
-        imageUrl: imageUrl,
-        source: source,
-        publishedAt: publishedAt,
-        articleUrl: link,
-      );
-    }).toList();
-
-    // Enhance top 8 articles with images from their source pages if missing or low quality
-    // We do this in parallel to keep it relatively fast
-    final enhancedArticles = await Future.wait(
-      initialArticles.asMap().entries.map((entry) async {
-        final index = entry.key;
-        final article = entry.value;
+      final initialArticles = items.map((node) {
+        final title = node.findElements('title').first.innerText;
+        final link = node.findElements('link').first.innerText;
+        final pubDateStr = node.findElements('pubDate').first.innerText;
+        final sourceNodes = node.findElements('source');
+        final source = sourceNodes.isNotEmpty 
+            ? sourceNodes.first.innerText 
+            : 'Tin tức Y tế';
+        final description = node.findElements('description').first.innerText;
         
-        if (index < 8 && article.articleUrl != null && (article.imageUrl == null || article.imageUrl!.contains('lh3.googleusercontent.com'))) {
-          final scrapedImage = await _fetchImageFromUrl(article.articleUrl!);
-          if (scrapedImage != null) {
-            return HealthArticle(
-              id: article.id,
-              title: article.title,
-              summary: article.summary,
-              imageUrl: scrapedImage,
-              source: article.source,
-              publishedAt: article.publishedAt,
-              articleUrl: article.articleUrl,
-            );
-          }
+        // Extract image URL from description if present
+        String? imageUrl;
+        final imgMatch = RegExp(r'<img src="([^"]+)"').firstMatch(description);
+        if (imgMatch != null) {
+          imageUrl = imgMatch.group(1);
+          // If it's a relative URL, it might not work
+          if (imageUrl!.startsWith('//')) imageUrl = 'https:$imageUrl';
         }
-        return article;
-      })
-    );
 
-    return enhancedArticles;
+        // Clean title - remove the source suffix usually added by Google News
+        final cleanTitle = title.contains(' - ') 
+            ? title.substring(0, title.lastIndexOf(' - ')) 
+            : title;
+
+        DateTime publishedAt;
+        try {
+          publishedAt = _parseRFC822Date(pubDateStr);
+        } catch (_) {
+          publishedAt = DateTime.now();
+        }
+
+        return HealthArticle(
+          id: link.hashCode.toString(),
+          title: cleanTitle,
+          summary: _stripHtml(description),
+          imageUrl: imageUrl,
+          source: source,
+          publishedAt: publishedAt,
+          articleUrl: link,
+        );
+      }).toList();
+
+      // Take only the most recent 15 articles to avoid heavy scraping
+      final topArticles = initialArticles.take(15).toList();
+
+      // Enhance articles with images from their source pages if missing or low quality
+      final enhancedArticles = await Future.wait(
+        topArticles.asMap().entries.map((entry) async {
+          final index = entry.key;
+          final article = entry.value;
+          
+          // Only scrape images for top 8 articles or if image is missing/low quality
+          bool needsImage = article.imageUrl == null || 
+                           article.imageUrl!.isEmpty || 
+                           article.imageUrl!.contains('lh3.googleusercontent.com');
+          
+          if (index < 10 && needsImage && article.articleUrl != null) {
+            final scrapedImage = await _fetchImageFromUrl(article.articleUrl!);
+            if (scrapedImage != null) {
+              return article.copyWith(imageUrl: scrapedImage);
+            }
+          }
+          return article;
+        })
+      );
+
+      return enhancedArticles;
+    } catch (e) {
+      return [];
+    }
   }
 
   Future<String?> _fetchImageFromUrl(String url) async {
@@ -160,32 +172,66 @@ class ContentRepositoryImpl implements ContentRepository {
           followRedirects: true,
           validateStatus: (status) => status! < 500,
           headers: {
-            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
           },
-          sendTimeout: const Duration(seconds: 3),
-          receiveTimeout: const Duration(seconds: 3),
+          sendTimeout: const Duration(seconds: 5),
+          receiveTimeout: const Duration(seconds: 5),
         ),
       );
       
       if (response.statusCode == 200) {
-        final document = html.parse(response.data.toString());
+        final content = response.data.toString();
+        final document = html.parse(content);
         
-        // Priority 1: og:image
-        final ogImage = document.querySelector('meta[property="og:image"]')?.attributes['content'] ??
-                        document.querySelector('meta[name="og:image"]')?.attributes['content'];
-        if (ogImage != null && ogImage.isNotEmpty) return ogImage;
+        // 1. og:image
+        String? imageUrl = document.querySelector('meta[property="og:image"]')?.attributes['content'] ??
+                           document.querySelector('meta[name="og:image"]')?.attributes['content'];
         
-        // Priority 2: twitter:image
-        final twitterImage = document.querySelector('meta[name="twitter:image"]')?.attributes['content'];
-        if (twitterImage != null && twitterImage.isNotEmpty) return twitterImage;
+        // 2. twitter:image
+        if (imageUrl == null || imageUrl.isEmpty) {
+          imageUrl = document.querySelector('meta[name="twitter:image"]')?.attributes['content'] ??
+                     document.querySelector('meta[property="twitter:image"]')?.attributes['content'];
+        }
         
-        // Priority 3: first large-ish image
-        final firstImg = document.querySelector('article img')?.attributes['src'] ?? 
-                         document.querySelector('main img')?.attributes['src'];
-        if (firstImg != null && firstImg.startsWith('http')) return firstImg;
+        // 3. JSON-LD
+        if (imageUrl == null || imageUrl.isEmpty) {
+          final scripts = document.querySelectorAll('script[type="application/ld+json"]');
+          for (final script in scripts) {
+            try {
+              final json = jsonDecode(script.text);
+              if (json is Map) {
+                if (json['image'] is String) {
+                  imageUrl = json['image'];
+                  break;
+                } else if (json['image'] is Map && json['image']['url'] is String) {
+                  imageUrl = json['image']['url'];
+                  break;
+                }
+              }
+            } catch (_) {}
+          }
+        }
+        
+        // 4. Fallback to main image
+        if (imageUrl == null || imageUrl.isEmpty) {
+          imageUrl = document.querySelector('article img')?.attributes['src'] ?? 
+                     document.querySelector('.main-content img')?.attributes['src'] ??
+                     document.querySelector('.article-content img')?.attributes['src'];
+        }
+
+        if (imageUrl != null) {
+          if (imageUrl.startsWith('//')) imageUrl = 'https:$imageUrl';
+          if (!imageUrl.startsWith('http')) {
+            // Handle relative paths
+            final uri = Uri.parse(url);
+            imageUrl = '${uri.scheme}://${uri.host}$imageUrl';
+          }
+          return imageUrl;
+        }
       }
     } catch (e) {
-      // Fail silently for image fetching errors
+      // Fail silently
     }
     return null;
   }
@@ -238,6 +284,34 @@ class ContentRepositoryImpl implements ContentRepository {
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(message: 'Bình chọn thất bại: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> submitSurveyResponse({
+    required String surveyId,
+    required String userId,
+    required Map<String, dynamic> answers,
+  }) async {
+    try {
+      debugPrint('[SURVEY] Submitting response for survey: $surveyId, user: $userId');
+      await _firestore.collection('survey_responses').add({
+        'surveyId': surveyId,
+        'userId': userId,
+        'answers': answers,
+        'submittedAt': FieldValue.serverTimestamp(),
+      });
+      
+      debugPrint('[SURVEY] Updating response count for survey: $surveyId');
+      await _firestore.collection('surveys').doc(surveyId).update({
+        'responseCount': FieldValue.increment(1),
+      });
+      
+      debugPrint('[SURVEY] Submission successful');
+      return const Right(null);
+    } catch (e) {
+      debugPrint('[SURVEY] Submission failed: $e');
+      return Left(ServerFailure(message: 'Gửi khảo sát thất bại: $e'));
     }
   }
 
@@ -316,6 +390,20 @@ class ContentRepositoryImpl implements ContentRepository {
       return Right(snapshot.docs.map((d) => d.id).toList());
     } catch (e) {
       return Left(ServerFailure(message: 'Failed to load bookmarks: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<String>>> getUserRespondedSurveyIds(String userId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('survey_responses')
+          .where('userId', isEqualTo: userId)
+          .get();
+      final ids = snapshot.docs.map((d) => (d.data()['surveyId'] ?? '').toString()).toSet().toList();
+      return Right(ids);
+    } catch (e) {
+      return Left(ServerFailure(message: 'Không thể tải lịch sử khảo sát: $e'));
     }
   }
 

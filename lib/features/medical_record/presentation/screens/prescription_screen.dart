@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/colors/app_colors.dart';
 import '../../../../core/theme/typography/app_text_styles.dart';
 import '../../../../core/widgets/branded_app_bar.dart';
@@ -111,7 +112,7 @@ class PrescriptionScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () {},
+                    onPressed: () => context.push('/under-development?title=${Uri.encodeComponent('Tải PDF đơn thuốc')}'),
                     icon: const Icon(Icons.download_rounded, size: 18),
                     label: const Text("Tải PDF"),
                     style: OutlinedButton.styleFrom(
@@ -124,7 +125,7 @@ class PrescriptionScreen extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () {},
+                    onPressed: () => context.push('/under-development?title=${Uri.encodeComponent('Đặt nhắc uống thuốc')}'),
                     icon: const Icon(Icons.alarm_add_rounded, size: 18),
                     label: const Text("Đặt nhắc hẹn"),
                     style: ElevatedButton.styleFrom(

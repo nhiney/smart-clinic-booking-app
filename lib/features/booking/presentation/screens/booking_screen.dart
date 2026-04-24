@@ -17,8 +17,11 @@ import '../../domain/usecases/lock_slot_usecase.dart';
 import '../../domain/usecases/release_slot_lock_usecase.dart';
 import '../../domain/usecases/reschedule_booking_usecase.dart';
 import '../controllers/booking_controller.dart';
+import 'package:smart_clinic_booking/features/checkin/presentation/screens/appointment_qr_screen.dart';
 
 /// Đặt lịch khám — Firestore `bookings` + `slots` (khóa 5 phút, transaction khi xác nhận).
+import '../../../../core/widgets/branded_app_bar.dart';
+
 class BookingScreen extends StatelessWidget {
   const BookingScreen({super.key, this.doctor});
 
@@ -118,11 +121,9 @@ class _BookingViewState extends State<_BookingView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Đặt lịch khám'),
-        backgroundColor: AppColors.background,
-        foregroundColor: AppColors.textPrimary,
-        elevation: 0,
+      appBar: const BrandedAppBar(
+        title: 'Đặt lịch khám',
+        showBackButton: true,
       ),
       body: Consumer<BookingController>(
         builder: (_, c, __) {
@@ -138,217 +139,187 @@ class _BookingViewState extends State<_BookingView> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (c.userId.isEmpty && c.errorMessage != null) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  c.errorMessage!,
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.body,
-                ),
-              ),
-            );
-          }
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (c.doctor == null) ...[
-                  Text('Chọn bác sĩ', style: AppTextStyles.heading3),
-                  const SizedBox(height: 8),
-                  OutlinedButton.icon(
-                    onPressed: _pickDoctor,
-                    icon: const Icon(Icons.person_search),
-                    label: const Text('Tìm và chọn bác sĩ'),
-                  ),
-                  const SizedBox(height: 24),
-                ] else ...[
-                  _DoctorSummaryCard(doctor: c.doctor!),
-                  const SizedBox(height: 20),
-                ],
-                Text('Loại đặt lịch', style: AppTextStyles.heading3),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  value: c.selectedType,
-                  decoration: _fieldDecoration(),
-                  items: MedicalBookingTypes.values
-                      .map(
-                        (t) => DropdownMenuItem(
-                          value: t,
-                          child: Text(_typeLabel(t)),
+          return CustomScrollView(
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.all(20),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    if (c.doctor == null) ...[
+                      Text('Chọn bác sĩ', style: AppTextStyles.heading3),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: _pickDoctor,
+                        icon: const Icon(Icons.person_search),
+                        label: const Text('Tìm và chọn bác sĩ'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                      )
-                      .toList(),
-                  onChanged: (v) {
-                    if (v != null) c.setBookingType(v);
-                  },
-                ),
-                const SizedBox(height: 16),
-                Text('Khoa khám', style: AppTextStyles.heading3),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _specialtyCtrl,
-                  onChanged: c.setSpecialty,
-                  decoration: _fieldDecoration().copyWith(
-                    hintText: 'Bắt buộc — ví dụ: Tim mạch',
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text('Ngày khám', style: AppTextStyles.heading3),
-                const SizedBox(height: 8),
-                GestureDetector(
-                  onTap: _pickDate,
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.cardBackground,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.divider),
+                      ),
+                      const SizedBox(height: 24),
+                    ] else ...[
+                      _DoctorSummaryCard(doctor: c.doctor!),
+                      const SizedBox(height: 20),
+                    ],
+                    Text('Loại đặt lịch', style: AppTextStyles.heading3),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      value: c.selectedType,
+                      decoration: _fieldDecoration(),
+                      items: MedicalBookingTypes.values
+                          .map((t) => DropdownMenuItem(value: t, child: Text(_typeLabel(t))))
+                          .toList(),
+                      onChanged: (v) => v != null ? c.setBookingType(v) : null,
                     ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.calendar_today,
-                            color: AppColors.primary),
-                        const SizedBox(width: 12),
-                        Text(
-                          DateFormat('EEEE, dd/MM/yyyy', 'vi')
-                              .format(c.selectedDate),
-                          style: AppTextStyles.subtitle,
+                    const SizedBox(height: 16),
+                    Text('Khoa khám', style: AppTextStyles.heading3),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _specialtyCtrl,
+                      onChanged: c.setSpecialty,
+                      decoration: _fieldDecoration().copyWith(
+                        hintText: 'Ví dụ: Tim mạch',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text('Ngày khám', style: AppTextStyles.heading3),
+                    const SizedBox(height: 8),
+                    GestureDetector(
+                      onTap: _pickDate,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.cardBackground,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: AppColors.divider),
                         ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.calendar_today, color: AppColors.primary, size: 20),
+                            const SizedBox(width: 12),
+                            Text(
+                              DateFormat('EEEE, dd/MM/yyyy', 'vi').format(c.selectedDate),
+                              style: AppTextStyles.subtitle,
+                            ),
+                            const Spacer(),
+                            const Icon(Icons.arrow_drop_down, color: AppColors.textHint),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Text('Khung giờ', style: AppTextStyles.heading3),
                         const Spacer(),
-                        const Icon(Icons.arrow_drop_down,
-                            color: AppColors.textHint),
+                        if (c.flowState == BookingFlowState.slotLoading)
+                          const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
                       ],
                     ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Text('Khung giờ', style: AppTextStyles.heading3),
-                    const Spacer(),
-                    if (c.flowState == BookingFlowState.slotLoading)
-                      const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                    const SizedBox(height: 8),
+                    if (c.doctor == null)
+                      Text(
+                        'Chọn bác sĩ để xem lịch trống.',
+                        style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                      )
+                    else
+                      _SlotSelectionGrid(controller: c),
+                    const SizedBox(height: 16),
+                    if (c.lockedTimeSlot != null)
+                      Text(
+                        'Đang giữ khung ${c.lockedTimeSlot} (tối đa 5 phút).',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                if (c.doctor == null)
-                  Text(
-                    'Chọn bác sĩ để xem lịch trống.',
-                    style: AppTextStyles.bodySmall
-                        .copyWith(color: AppColors.textSecondary),
-                  )
-                else
-                  _SlotSelectionGrid(controller: c),
-                const SizedBox(height: 16),
-                if (c.lockedTimeSlot != null)
-                  Text(
-                    'Đang giữ khung ${c.lockedTimeSlot} (tối đa 5 phút).',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
+                    const SizedBox(height: 16),
+                    Text('Triệu chứng / ghi chú', style: AppTextStyles.heading3),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _symptomsCtrl,
+                      onChanged: c.setSymptoms,
+                      maxLines: 3,
+                      decoration: _fieldDecoration().copyWith(
+                        hintText: 'Mô tả triệu chứng...',
+                      ),
                     ),
-                  ),
-                const SizedBox(height: 16),
-                Text('Triệu chứng / ghi chú', style: AppTextStyles.heading3),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _symptomsCtrl,
-                  onChanged: c.setSymptoms,
-                  maxLines: 3,
-                  decoration: _fieldDecoration().copyWith(
-                    hintText: 'Mô tả triệu chứng (khuyến nghị)...',
-                  ),
-                ),
-                if (c.errorMessage != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    c.errorMessage!,
-                    style: AppTextStyles.bodySmall
-                        .copyWith(color: AppColors.error),
-                  ),
-                ],
-                const SizedBox(height: 28),
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton.icon(
-                    onPressed: (c.doctor == null ||
-                            c.flowState == BookingFlowState.bookingProcessing ||
-                            c.flowState == BookingFlowState.slotLoading)
-                        ? null
-                        : () async {
-                            await c.confirmBooking();
-                            if (!context.mounted) return;
-                            final bc = context.read<BookingController>();
-                            if (bc.flowState == BookingFlowState.success) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Đặt lịch thành công!'),
-                                  backgroundColor: AppColors.success,
-                                ),
-                              );
-                              await showDialog<void>(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title: const Text('Hoàn tất'),
-                                  content: Text(
-                                    'Mã lịch: ${bc.lastBooking?.id ?? ''}\n'
-                                    'Thanh toán: ${bc.lastBooking?.paymentStatus ?? ''}\n'
-                                    'Hết hạn giữ chỗ thanh toán: ${DateFormat('dd/MM/yyyy HH:mm').format(bc.lastBooking?.expiresAt ?? DateTime.now())}',
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.of(ctx).pop(),
-                                      child: const Text('Đồng ý'),
+                    if (c.errorMessage != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        c.errorMessage!,
+                        style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
+                      ),
+                    ],
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: ElevatedButton.icon(
+                        onPressed: (c.doctor == null ||
+                                c.flowState == BookingFlowState.bookingProcessing ||
+                                c.flowState == BookingFlowState.slotLoading)
+                            ? null
+                            : () async {
+                                await c.confirmBooking();
+                                if (!context.mounted) return;
+                                final bc = context.read<BookingController>();
+                                if (bc.flowState == BookingFlowState.success) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Đặt lịch thành công! Mã QR check-in đã được tạo.'),
+                                      backgroundColor: AppColors.success,
                                     ),
-                                  ],
-                                ),
-                              );
-                              if (context.mounted) Navigator.of(context).pop();
-                            } else if (bc.flowState == BookingFlowState.error &&
-                                bc.errorMessage != null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(bc.errorMessage!),
-                                  backgroundColor: AppColors.error,
-                                ),
-                              );
-                            }
-                          },
-                    icon: c.flowState == BookingFlowState.bookingProcessing
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Icon(Icons.check_circle_outline),
-                    label: Text(
-                      c.flowState == BookingFlowState.bookingProcessing
-                          ? 'Đang xác nhận...'
-                          : 'Xác nhận đặt lịch',
+                                  );
+                                  if (context.mounted && bc.lastBooking != null) {
+                                    await Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => AppointmentQrScreen(
+                                          booking: bc.lastBooking!,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  if (context.mounted) Navigator.of(context).pop();
+                                } else if (bc.flowState == BookingFlowState.error && bc.errorMessage != null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(bc.errorMessage!), backgroundColor: AppColors.error),
+                                  );
+                                }
+                              },
+                        icon: c.flowState == BookingFlowState.bookingProcessing
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              )
+                            : const Icon(Icons.check_circle_outline),
+                        label: Text(
+                          c.flowState == BookingFlowState.bookingProcessing ? 'Đang xác nhận...' : 'Xác nhận đặt lịch',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 20),
+                  ]),
                 ),
-              ],
-            ),
+              ),
+            ],
           );
         },
       ),
     );
   }
+
 
   InputDecoration _fieldDecoration() {
     return InputDecoration(
@@ -521,7 +492,7 @@ class _SlotSelectionGrid extends StatelessWidget {
                     color: lockedSelf
                         ? AppColors.primary
                         : (booked || lockedOther)
-                            ? AppColors.divider.withValues(alpha: 0.35)
+                            ? AppColors.divider.withOpacity(0.35)
                             : AppColors.cardBackground,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(

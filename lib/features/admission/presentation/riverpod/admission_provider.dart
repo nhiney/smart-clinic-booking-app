@@ -41,7 +41,7 @@ class AdmissionListNotifier extends FamilyAsyncNotifier<List<AdmissionEntity>, S
     String? priority,
     DateTime? admissionDate,
   }) async {
-    final repo = ref.watch(admissionRepositoryProvider);
+    final repo = ref.read(admissionRepositoryProvider);
     final admission = AdmissionEntity(
       id: '',
       patientId: patientId,
@@ -69,7 +69,7 @@ class AdmissionListNotifier extends FamilyAsyncNotifier<List<AdmissionEntity>, S
   }
 
   Future<bool> uploadDocument(String admissionId, File file, String fileName) async {
-    final repo = ref.watch(admissionRepositoryProvider);
+    final repo = ref.read(admissionRepositoryProvider);
     final result = await repo.uploadDocument(admissionId, arg, file, fileName);
     return result.fold((f) => false, (_) {
       ref.invalidateSelf();

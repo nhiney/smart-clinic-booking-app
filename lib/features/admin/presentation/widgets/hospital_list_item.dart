@@ -33,71 +33,101 @@ class HospitalListItem extends StatelessWidget {
           onTap: onTap,
           borderRadius: context.radius.lRadius,
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: context.colors.primary.withOpacity(0.1),
-                    borderRadius: context.radius.mRadius,
-                  ),
-                  child: ClipRRect(
-                    borderRadius: context.radius.mRadius,
-                    child: hospital.logoUrl.isNotEmpty
-                        ? Image.network(
-                            hospital.logoUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Icon(
-                              Icons.business_rounded,
-                              color: context.colors.primary,
-                              size: 32,
-                            ),
-                          )
-                        : Icon(
-                            Icons.business_rounded,
-                            color: context.colors.primary,
-                            size: 32,
-                          ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        hospital.name,
-                        style: context.textStyles.bodyBold.copyWith(fontSize: 18),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                Row(
+                  children: [
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: context.colors.primary.withOpacity(0.1),
+                        borderRadius: context.radius.mRadius,
                       ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(Icons.location_on_rounded, 
-                               size: 14, 
-                               color: context.colors.textHint),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              hospital.address,
-                              style: context.textStyles.bodySmall.copyWith(
-                                color: context.colors.textSecondary,
+                      child: ClipRRect(
+                        borderRadius: context.radius.mRadius,
+                        child: hospital.logoUrl.isNotEmpty
+                            ? Image.network(
+                                hospital.logoUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Icon(
+                                  Icons.business_rounded,
+                                  color: context.colors.primary,
+                                  size: 28,
+                                ),
+                              )
+                            : Icon(
+                                Icons.business_rounded,
+                                color: context.colors.primary,
+                                size: 28,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            hospital.name,
+                            style: context.textStyles.bodyBold.copyWith(fontSize: 16),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Row(
+                            children: [
+                              Icon(Icons.location_on_rounded, 
+                                   size: 12, 
+                                   color: context.colors.textHint),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  hospital.address,
+                                  style: context.textStyles.bodySmall.copyWith(
+                                    color: context.colors.textSecondary,
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      // Optional: Show some stats like "X Departments" if available
-                    ],
-                  ),
+                    ),
+                    Icon(Icons.chevron_right_rounded, color: context.colors.textHint),
+                  ],
                 ),
-                Icon(Icons.chevron_right_rounded, color: context.colors.textHint),
+                if (hospital.specialties.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  const Divider(height: 1),
+                  const SizedBox(height: 12),
+                  Text('Chuyên khoa:', style: context.textStyles.bodySmall.copyWith(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: hospital.specialties.take(5).map((s) => Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: context.colors.primary.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: context.colors.primary.withOpacity(0.1)),
+                      ),
+                      child: Text(
+                        s,
+                        style: context.textStyles.bodySmall.copyWith(
+                          color: context.colors.primaryDark,
+                          fontSize: 11,
+                        ),
+                      ),
+                    )).toList(),
+                  ),
+                ],
               ],
             ),
           ),

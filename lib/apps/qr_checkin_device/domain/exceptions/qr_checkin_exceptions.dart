@@ -16,6 +16,14 @@ class AlreadyCheckedInException extends QrCheckInException {
 
 class TooEarlyException extends QrCheckInException {
   final int minutesRemaining;
-  TooEarlyException(this.minutesRemaining) 
+  TooEarlyException(this.minutesRemaining)
       : super('Còn quá sớm để Check-in. Vui lòng quay lại trước giờ hẹn 60 phút (còn $minutesRemaining phút).');
+}
+
+class ExpiredQRCodeException extends QrCheckInException {
+  ExpiredQRCodeException() : super('Mã QR đã hết hạn. Vui lòng liên hệ quầy lễ tân để được hỗ trợ.');
+}
+
+class FakeQRCodeException extends QrCheckInException {
+  FakeQRCodeException() : super('Mã QR bị giả mạo hoặc chưa được cấp phép. Check-in bị từ chối.');
 }

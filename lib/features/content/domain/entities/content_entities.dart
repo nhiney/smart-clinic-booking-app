@@ -75,6 +75,10 @@ class Survey extends Equatable {
   final String description;
   final List<SurveyOption> options;
   final Map<String, int> results; // optionId -> count
+  final List<SurveyQuestion> questions;
+  final String? category;
+  final int estimatedMinutes;
+  final int responseCount;
 
   const Survey({
     required this.id,
@@ -82,10 +86,14 @@ class Survey extends Equatable {
     required this.description,
     required this.options,
     required this.results,
+    this.questions = const [],
+    this.category,
+    this.estimatedMinutes = 3,
+    this.responseCount = 0,
   });
 
   @override
-  List<Object?> get props => [id, title, options, results];
+  List<Object?> get props => [id, title, options, results, questions, category, estimatedMinutes, responseCount];
 }
 
 class SurveyOption extends Equatable {
@@ -96,4 +104,25 @@ class SurveyOption extends Equatable {
 
   @override
   List<Object?> get props => [id, text];
+}
+
+class SurveyQuestion extends Equatable {
+  final String id;
+  final String text;
+  final String type; // 'single_choice' | 'multiple_choice' | 'rating' | 'text'
+  final List<String> options; // for choice types
+  final bool required;
+  final int maxRating; // for rating, default 5
+
+  const SurveyQuestion({
+    required this.id,
+    required this.text,
+    required this.type,
+    this.options = const [],
+    this.required = false,
+    this.maxRating = 5,
+  });
+
+  @override
+  List<Object?> get props => [id, text, type];
 }

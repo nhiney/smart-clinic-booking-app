@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 import '../../domain/entities/booking_entity.dart';
 
 class BookingModel extends BookingEntity {
@@ -17,6 +16,9 @@ class BookingModel extends BookingEntity {
     required super.paymentStatus,
     required super.createdAt,
     required super.expiresAt,
+    super.checkInToken,
+    super.qrValidFrom,
+    super.qrExpiresAt,
   });
 
   factory BookingModel.fromFirestore(
@@ -33,6 +35,13 @@ class BookingModel extends BookingEntity {
     DateTime expires = created.add(const Duration(hours: 24));
     if (expTs is Timestamp) expires = expTs.toDate();
 
+    DateTime? qrValidFrom;
+    DateTime? qrExpiresAt;
+    final qvf = m['qrValidFrom'];
+    if (qvf is Timestamp) qrValidFrom = qvf.toDate();
+    final qex = m['qrExpiresAt'];
+    if (qex is Timestamp) qrExpiresAt = qex.toDate();
+
     return BookingModel(
       id: doc.id,
       userId: (m['userId'] ?? '').toString(),
@@ -48,6 +57,9 @@ class BookingModel extends BookingEntity {
           (m['paymentStatus'] ?? MedicalBookingPaymentStatuses.unpaid).toString(),
       createdAt: created,
       expiresAt: expires,
+      checkInToken: m['checkInToken'] as String?,
+      qrValidFrom: qrValidFrom,
+      qrExpiresAt: qrExpiresAt,
     );
   }
 
@@ -71,6 +83,9 @@ class BookingModel extends BookingEntity {
       'paymentStatus': paymentStatus,
       'createdAt': FieldValue.serverTimestamp(),
       'expiresAt': Timestamp.fromDate(expiresAt),
+      'checkInToken': checkInToken,
+      'qrValidFrom': qrValidFrom != null ? Timestamp.fromDate(qrValidFrom!) : null,
+      'qrExpiresAt': qrExpiresAt != null ? Timestamp.fromDate(qrExpiresAt!) : null,
     };
   }
 }

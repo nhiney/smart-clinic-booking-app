@@ -77,6 +77,7 @@ import 'package:smart_clinic_booking/features/home/data/repositories/home_reposi
 import 'package:smart_clinic_booking/features/home/domain/usecases/get_health_summary_usecase.dart';
 import 'package:smart_clinic_booking/features/home/domain/usecases/medication_usecases.dart';
 import 'package:smart_clinic_booking/features/home/domain/usecases/get_health_news_usecase.dart';
+import 'package:smart_clinic_booking/core/services/seed_data_service.dart';
 
 
 Future<void> main() async {
@@ -129,6 +130,9 @@ Future<void> main() async {
 
     // Initialize Dynamic Configuration (Firestore)
     await getIt<AppConfigService>().initialize();
+
+    // Seed sample survey data if collection is empty
+    await SeedDataService().seedSurveys();
   } catch (e) {
     debugPrint('Service initialization failed: $e');
     // We still try to run the app, but some features might be degraded

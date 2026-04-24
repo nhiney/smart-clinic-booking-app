@@ -56,7 +56,38 @@ class AdmissionHistoryScreen extends ConsumerWidget {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.cloud_off_rounded, size: 56, color: Colors.grey[400]),
+                const SizedBox(height: 16),
+                const Text(
+                  'Không thể tải dữ liệu',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  e.toString().contains('FAILED_PRECONDITION') || e.toString().contains('index')
+                      ? 'Cơ sở dữ liệu chưa được cấu hình index. Vui lòng liên hệ quản trị viên.'
+                      : e.toString().contains('permission') || e.toString().contains('PERMISSION')
+                          ? 'Không có quyền truy cập dữ liệu.'
+                          : 'Lỗi kết nối. Kiểm tra mạng và thử lại.',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                OutlinedButton.icon(
+                  onPressed: () => ref.invalidate(admissionStreamProvider(patientId)),
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                  label: const Text('Thử lại'),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -157,7 +188,7 @@ class _AdmissionCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  DateFormat('MMM dd, yyyy – HH:mm').format(admission.createdAt),
+                  DateFormat('dd/MM/yyyy – HH:mm').format(admission.createdAt),
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 const SizedBox(height: 4),
@@ -185,11 +216,11 @@ class _AdmissionCard extends ConsumerWidget {
 
   (Color, IconData, String) _statusStyle(String status) {
     return switch (status) {
-      'approved' => (Colors.blue, Icons.check_circle_outline, 'Approved'),
-      'admitted' => (Colors.green, Icons.local_hospital, 'Admitted'),
-      'discharged' => (Colors.purple, Icons.logout, 'Discharged'),
-      'rejected' => (Colors.red, Icons.cancel_outlined, 'Rejected'),
-      _ => (Colors.orange, Icons.schedule, 'Pending'),
+      'approved' => (Colors.blue, Icons.check_circle_outline, 'Đã duyệt'),
+      'admitted' => (Colors.green, Icons.local_hospital, 'Đang điều trị'),
+      'discharged' => (Colors.purple, Icons.logout, 'Đã xuất viện'),
+      'rejected' => (Colors.red, Icons.cancel_outlined, 'Từ chối'),
+      _ => (Colors.orange, Icons.schedule, 'Chờ xử lý'),
     };
   }
 }
@@ -298,10 +329,10 @@ class _StatusTimeline extends StatelessWidget {
   }
 
   String _label(String step) => switch (step) {
-        'pending' => 'Submitted',
-        'approved' => 'Approved',
-        'admitted' => 'Admitted',
-        'discharged' => 'Discharged',
+        'pending' => 'Gửi yêu cầu',
+        'approved' => 'Đã duyệt',
+        'admitted' => 'Nhập viện',
+        'discharged' => 'Xuất viện',
         _ => step,
       };
 }
@@ -314,9 +345,9 @@ class _WardInfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final parts = <String>[];
-    if (wardInfo['name'] != null) parts.add('Ward: ${wardInfo['name']}');
-    if (wardInfo['room'] != null) parts.add('Room: ${wardInfo['room']}');
-    if (wardInfo['bed'] != null) parts.add('Bed: ${wardInfo['bed']}');
+    if (wardInfo['name'] != null) parts.add('Khoa: ${wardInfo['name']}');
+    if (wardInfo['room'] != null) parts.add('Phòng: ${wardInfo['room']}');
+    if (wardInfo['bed'] != null) parts.add('Giường: ${wardInfo['bed']}');
 
     return Container(
       padding: const EdgeInsets.all(10),
@@ -343,22 +374,22 @@ class _DatesRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fmt = DateFormat('MMM dd, yyyy');
+    final fmt = DateFormat('dd/MM/yyyy');
     return Wrap(
       spacing: 8,
       runSpacing: 6,
       children: [
         if (admission.admissionDate != null)
           _DateChip(
-              label: 'Admission', date: fmt.format(admission.admissionDate!), color: Colors.blue),
+              label: 'Nhập viện', date: fmt.format(admission.admissionDate!), color: Colors.blue),
         if (admission.estimatedDischargeDate != null)
           _DateChip(
-              label: 'Est. Discharge',
+              label: 'Dự kiến xuất viện',
               date: fmt.format(admission.estimatedDischargeDate!),
               color: Colors.orange),
         if (admission.actualDischargeDate != null)
           _DateChip(
-              label: 'Discharged',
+              label: 'Đã xuất viện',
               date: fmt.format(admission.actualDischargeDate!),
               color: Colors.purple),
       ],

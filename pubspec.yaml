@@ -118,4 +118,5 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - assets/icons/quick_actions/
     - assets/fonts/

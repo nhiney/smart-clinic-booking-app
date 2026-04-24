@@ -99,103 +99,106 @@ class _AdmissionRegistrationScreenState extends ConsumerState<AdmissionRegistrat
       ),
       body: Form(
         key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _InfoBanner(),
-              const SizedBox(height: 20),
-              _SectionCard(
-                title: 'Chi tiết nhập viện',
-                children: [
-                  _buildPrioritySelector(),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _reasonController,
-                    maxLines: 4,
-                    decoration: _inputDecoration(
-                      label: 'Lý do nhập viện *',
-                      hint: 'Mô tả triệu chứng, chẩn đoán hoặc thủ thuật đã lên lịch...',
-                      icon: Icons.medical_services_outlined,
-                    ),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Vui lòng nhập lý do' : null,
+        child: CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.all(16),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  _InfoBanner(),
+                  const SizedBox(height: 20),
+                  _SectionCard(
+                    title: 'Chi tiết nhập viện',
+                    children: [
+                      _buildPrioritySelector(),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _reasonController,
+                        maxLines: 4,
+                        decoration: _inputDecoration(
+                          label: 'Lý do nhập viện *',
+                          hint: 'Mô tả triệu chứng, chẩn đoán hoặc thủ thuật đã lên lịch...',
+                          icon: Icons.medical_services_outlined,
+                        ),
+                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Vui lòng nhập lý do' : null,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildDateField(),
+                    ],
                   ),
                   const SizedBox(height: 16),
-                  _buildDateField(),
-                ],
-              ),
-              const SizedBox(height: 16),
-              _SectionCard(
-                title: 'Thông tin liên hệ',
-                children: [
-                  TextFormField(
-                    controller: _contactPhoneController,
-                    keyboardType: TextInputType.phone,
-                    decoration: _inputDecoration(
-                      label: 'Số điện thoại liên hệ',
-                      hint: '0901234567',
-                      icon: Icons.phone_outlined,
-                    ),
+                  _SectionCard(
+                    title: 'Thông tin liên hệ',
+                    children: [
+                      TextFormField(
+                        controller: _contactPhoneController,
+                        keyboardType: TextInputType.phone,
+                        decoration: _inputDecoration(
+                          label: 'Số điện thoại liên hệ',
+                          hint: '0901234567',
+                          icon: Icons.phone_outlined,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _emergencyContactController,
+                        decoration: _inputDecoration(
+                          label: 'Tên người liên hệ khẩn cấp',
+                          hint: 'Tên người thân',
+                          icon: Icons.person_outline,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _emergencyPhoneController,
+                        keyboardType: TextInputType.phone,
+                        decoration: _inputDecoration(
+                          label: 'SĐT người liên hệ khẩn cấp',
+                          hint: '0901234567',
+                          icon: Icons.phone_in_talk_outlined,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _emergencyContactController,
-                    decoration: _inputDecoration(
-                      label: 'Tên người liên hệ khẩn cấp',
-                      hint: 'Tên người thân',
-                      icon: Icons.person_outline,
+                  _SectionCard(
+                    title: 'Bảo hiểm',
+                    children: [
+                      TextFormField(
+                        controller: _insuranceController,
+                        decoration: _inputDecoration(
+                          label: 'Số thẻ Bảo hiểm / BHYT',
+                          hint: 'DN4012345678901',
+                          icon: Icons.card_membership_outlined,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: _isSubmitting ? null : _submit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue[800],
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: _isSubmitting
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                            )
+                          : const Text('Gửi yêu cầu', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _emergencyPhoneController,
-                    keyboardType: TextInputType.phone,
-                    decoration: _inputDecoration(
-                      label: 'SĐT người liên hệ khẩn cấp',
-                      hint: '0901234567',
-                      icon: Icons.phone_in_talk_outlined,
-                    ),
-                  ),
-                ],
+                  const SizedBox(height: 24),
+                ]),
               ),
-              const SizedBox(height: 16),
-              _SectionCard(
-                title: 'Bảo hiểm',
-                children: [
-                  TextFormField(
-                    controller: _insuranceController,
-                    decoration: _inputDecoration(
-                      label: 'Số thẻ Bảo hiểm / BHYT',
-                      hint: 'DN4012345678901',
-                      icon: Icons.card_membership_outlined,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: _isSubmitting ? null : _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue[800],
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: _isSubmitting
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                        )
-                      : const Text('Gửi yêu cầu', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

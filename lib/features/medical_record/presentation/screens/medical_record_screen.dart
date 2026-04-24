@@ -96,20 +96,20 @@ class _TimelineIndicator extends StatelessWidget {
       width: 48,
       child: Column(
         children: [
-          Container(width: 2, height: 12, color: isFirst ? Colors.transparent : context.colors.divider.withValues(alpha: 0.5)),
+          Container(width: 2, height: 12, color: isFirst ? Colors.transparent : context.colors.divider.withOpacity(0.5)),
           Container(
             width: 24,
             height: 24,
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: context.colors.primary.withValues(alpha: 0.1),
+              color: context.colors.primary.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: Container(
               decoration: BoxDecoration(
                 color: context.colors.primary,
                 shape: BoxShape.circle,
-                boxShadow: [BoxShadow(color: context.colors.primary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2))],
+                boxShadow: [BoxShadow(color: context.colors.primary.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2))],
               ),
             ),
           ),
@@ -122,7 +122,7 @@ class _TimelineIndicator extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [context.colors.divider.withValues(alpha: 0.5), context.colors.divider.withValues(alpha: 0.1)],
+                    colors: [context.colors.divider.withOpacity(0.5), context.colors.divider.withOpacity(0.1)],
                   ),
                 ),
               ),
@@ -296,7 +296,7 @@ class _RecordCardState extends ConsumerState<_RecordCard> {
       decoration: BoxDecoration(
         color: context.colors.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-        border: Border(bottom: BorderSide(color: context.colors.divider.withValues(alpha: 0.5))),
+        border: Border(bottom: BorderSide(color: context.colors.divider.withOpacity(0.5))),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -319,7 +319,7 @@ class _RecordCardState extends ConsumerState<_RecordCard> {
       children: [
         CircleAvatar(
           radius: 12,
-          backgroundColor: context.colors.primary.withValues(alpha: 0.1),
+          backgroundColor: context.colors.primary.withOpacity(0.1),
           child: Icon(Icons.person_rounded, size: 14, color: context.colors.primary),
         ),
         const SizedBox(width: 8),
@@ -375,7 +375,7 @@ class _RecordCardState extends ConsumerState<_RecordCard> {
             label: const Text('Lịch sử', style: TextStyle(fontSize: 12)),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              side: BorderSide(color: context.colors.primary.withValues(alpha: 0.5)),
+              side: BorderSide(color: context.colors.primary.withOpacity(0.5)),
             ),
           ),
         ),
@@ -387,7 +387,7 @@ class _RecordCardState extends ConsumerState<_RecordCard> {
             label: const Text('Chia sẻ', style: TextStyle(fontSize: 12)),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              side: BorderSide(color: context.colors.primary.withValues(alpha: 0.5)),
+              side: BorderSide(color: context.colors.primary.withOpacity(0.5)),
             ),
           ),
         ),
@@ -409,14 +409,14 @@ class _AttachmentCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.colors.divider.withValues(alpha: 0.5)),
+        border: Border.all(color: context.colors.divider.withOpacity(0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
             child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(height: 8),

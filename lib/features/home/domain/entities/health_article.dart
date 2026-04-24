@@ -20,6 +20,26 @@ class HealthArticle extends Equatable {
     this.articleUrl,
   });
 
+  HealthArticle copyWith({
+    String? id,
+    String? title,
+    String? summary,
+    String? imageUrl,
+    String? source,
+    DateTime? publishedAt,
+    String? articleUrl,
+  }) {
+    return HealthArticle(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      summary: summary ?? this.summary,
+      imageUrl: imageUrl ?? this.imageUrl,
+      source: source ?? this.source,
+      publishedAt: publishedAt ?? this.publishedAt,
+      articleUrl: articleUrl ?? this.articleUrl,
+    );
+  }
+
   @override
-  List<Object?> get props => [id, title, source, publishedAt];
+  List<Object?> get props => [id, title, source, publishedAt, imageUrl, articleUrl];
 }

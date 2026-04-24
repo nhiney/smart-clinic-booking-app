@@ -56,6 +56,12 @@ class BookingEntity {
   final String paymentStatus;
   final DateTime createdAt;
   final DateTime expiresAt;
+  /// Signed QR check-in token (generated at booking time).
+  final String? checkInToken;
+  /// Earliest time the QR token is valid (appointmentTime - 1h).
+  final DateTime? qrValidFrom;
+  /// Latest time the QR token is valid (appointmentTime + 30min).
+  final DateTime? qrExpiresAt;
 
   const BookingEntity({
     required this.id,
@@ -71,6 +77,9 @@ class BookingEntity {
     required this.paymentStatus,
     required this.createdAt,
     required this.expiresAt,
+    this.checkInToken,
+    this.qrValidFrom,
+    this.qrExpiresAt,
   });
 }
 

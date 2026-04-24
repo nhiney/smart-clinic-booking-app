@@ -8,6 +8,11 @@ abstract class ContentRepository {
   Future<Either<Failure, List<ServicePrice>>> getPricing();
   Future<Either<Failure, List<Survey>>> getSurveys();
   Future<Either<Failure, void>> submitSurveyVote(String surveyId, String optionId);
+  Future<Either<Failure, void>> submitSurveyResponse({
+    required String surveyId,
+    required String userId,
+    required Map<String, dynamic> answers,
+  });
   Future<Either<Failure, void>> submitContactForm(String email, String message);
 
   // Health Library
@@ -15,4 +20,5 @@ abstract class ContentRepository {
   Future<Either<Failure, void>> bookmarkArticle(String userId, String articleId);
   Future<Either<Failure, void>> removeBookmark(String userId, String articleId);
   Future<Either<Failure, List<String>>> getBookmarkedIds(String userId);
+  Future<Either<Failure, List<String>>> getUserRespondedSurveyIds(String userId);
 }

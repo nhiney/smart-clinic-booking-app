@@ -36,6 +36,8 @@ import 'package:smart_clinic_booking/features/auth/presentation/screens/qr_login
 import 'package:smart_clinic_booking/features/support/domain/entities/support_entities.dart';
 import 'package:smart_clinic_booking/features/booking/presentation/screens/booking_screen.dart';
 import 'package:smart_clinic_booking/features/checkin/presentation/screens/checkin_screen.dart';
+import 'package:smart_clinic_booking/features/checkin/presentation/screens/appointment_qr_screen.dart';
+import 'package:smart_clinic_booking/features/booking/domain/entities/booking_entity.dart';
 
 import 'package:smart_clinic_booking/features/payment/presentation/screens/payment_screen.dart';
 import 'package:smart_clinic_booking/features/payment/presentation/screens/payment_processing_screen.dart';
@@ -46,6 +48,10 @@ import 'package:smart_clinic_booking/features/profile/presentation/screens/patie
 import 'package:smart_clinic_booking/features/invoice/presentation/screens/invoice_screen.dart';
 import 'package:smart_clinic_booking/features/appointment/presentation/screens/appointment_history_screen.dart';
 import 'package:smart_clinic_booking/features/medical_record/presentation/screens/prescription_screen.dart';
+import 'package:smart_clinic_booking/features/home/presentation/screens/services_screen.dart';
+import 'package:smart_clinic_booking/features/medication/presentation/screens/medication_screen.dart';
+import 'package:smart_clinic_booking/features/content/presentation/screens/health_library_screen.dart';
+import 'package:smart_clinic_booking/features/review/presentation/screens/doctor_review_screen.dart';
 import 'package:smart_clinic_booking/shared/widgets/under_development_screen.dart';
 
 // No longer need placeholders as we implemented the real screens
@@ -406,6 +412,10 @@ class AppRouter {
         builder: (context, state) => const PrescriptionScreen(),
       ),
       GoRoute(
+        path: '/medication',
+        builder: (context, state) => const MedicationScreen(),
+      ),
+      GoRoute(
         path: '/profile/patient',
         builder: (context, state) => const PatientProfileScreen(),
       ),
@@ -446,6 +456,28 @@ class AppRouter {
             appointmentId: extras['appointmentId'] as String? ?? '',
           );
         },
+      ),
+      GoRoute(
+        path: '/booking/qr',
+        builder: (context, state) {
+          final booking = state.extra as BookingEntity;
+          return AppointmentQrScreen(booking: booking);
+        },
+      ),
+      GoRoute(
+        path: '/services',
+        builder: (context, state) => const ServicesScreen(),
+      ),
+      GoRoute(
+        path: '/health-library',
+        builder: (context, state) => const HealthLibraryScreen(),
+      ),
+      GoRoute(
+        path: '/doctor/review/:doctorId',
+        builder: (context, state) => DoctorReviewScreen(
+          doctorId: state.pathParameters['doctorId']!,
+          doctorName: state.extra as String? ?? 'Bác sĩ',
+        ),
       ),
       GoRoute(
         path: '/under-development',

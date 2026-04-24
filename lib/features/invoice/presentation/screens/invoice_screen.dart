@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart' as legacy_provider;
 import '../../../../core/theme/colors/app_colors.dart';
 import '../../../../core/widgets/branded_app_bar.dart';
@@ -82,7 +83,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
               decoration: BoxDecoration(
                 color: context.colors.surface,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                border: Border(bottom: BorderSide(color: context.colors.divider.withValues(alpha: 0.5))),
+                border: Border(bottom: BorderSide(color: context.colors.divider.withOpacity(0.5))),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -128,7 +129,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: context.colors.primary.withValues(alpha: 0.05),
+                      color: context.colors.primary.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -147,7 +148,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () {},
+                          onPressed: () => context.push('/under-development?title=${Uri.encodeComponent('Chi tiết hóa đơn')}'),
                           icon: const Icon(Icons.description_outlined, size: 18),
                           label: const Text("Chi tiết"),
                           style: OutlinedButton.styleFrom(
@@ -161,7 +162,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed: () {},
+                          onPressed: () => context.push('/under-development?title=${Uri.encodeComponent(isPending ? 'Thanh toán hóa đơn' : 'Tải hóa đơn')}'),
                           icon: Icon(isPending ? Icons.payment_rounded : Icons.download_rounded, size: 18),
                           label: Text(isPending ? "Thanh toán" : "Tải về"),
                           style: ElevatedButton.styleFrom(
@@ -200,7 +201,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withOpacity(0.1),
         borderRadius: context.radius.xsRadius,
       ),
       child: Text(

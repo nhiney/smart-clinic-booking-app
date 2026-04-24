@@ -148,15 +148,15 @@ class _MedicationScreenState extends State<MedicationScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [color.withValues(alpha: 0.1), color.withValues(alpha: 0.05)]),
+        gradient: LinearGradient(colors: [color.withOpacity(0.1), color.withOpacity(0.05)]),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border.all(color: color.withOpacity(0.3)),
       ),
       child: Row(
         children: [
           CircleAvatar(
             radius: 28,
-            backgroundColor: color.withValues(alpha: 0.15),
+            backgroundColor: color.withOpacity(0.15),
             child: Text('$pct%', style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 16)),
           ),
           const SizedBox(width: 16),
@@ -197,7 +197,7 @@ class _MedicationCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 2))],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 2))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,7 +208,7 @@ class _MedicationCard extends StatelessWidget {
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: medication.isActive ? Colors.green.withValues(alpha: 0.12) : Colors.grey[100],
+                  color: medication.isActive ? Colors.green.withOpacity(0.12) : Colors.grey[100],
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(Icons.medication, color: medication.isActive ? Colors.green : Colors.grey),

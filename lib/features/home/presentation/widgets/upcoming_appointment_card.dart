@@ -68,7 +68,7 @@ class _AppointmentItem extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         border:
-            Border.all(color: Colors.blue.withValues(alpha: 0.1), width: 1.5),
+            Border.all(color: Colors.blue.withOpacity(0.1), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.03),

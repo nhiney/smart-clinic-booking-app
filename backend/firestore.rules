@@ -80,6 +80,18 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // Khảo sát (Surveys)
+    match /surveys/{surveyId} {
+      allow read: if true;
+      allow update: if isSignedIn(); // To increment responseCount
+      allow write: if isAdmin();
+    }
+
+    match /survey_responses/{responseId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn();
+    }
+
     match /{document=**} {
       allow read: if isSignedIn();
       allow write: if isAdmin();

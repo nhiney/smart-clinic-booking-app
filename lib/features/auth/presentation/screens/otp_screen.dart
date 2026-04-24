@@ -187,7 +187,7 @@ class _OtpScreenState extends State<OtpScreen> {
                               ),
                               boxShadow: isFocused ? [
                                 BoxShadow(
-                                  color: AppColors.primary.withValues(alpha: 0.1),
+                                  color: AppColors.primary.withOpacity(0.1),
                                   blurRadius: 4,
                                   offset: const Offset(0, 2),
                                 )
