@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/theme/colors/app_colors.dart';
 import '../../../../shared/widgets/empty_state_widget.dart';
 import '../../../../shared/widgets/loading_widget.dart';
 import '../../domain/entities/notification_entity.dart';
@@ -8,13 +9,50 @@ import '../../domain/entities/notification_data_entities.dart';
 import '../controllers/notification_controller.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 
-// ─── Palette ──────────────────────────────────────────────────────────────────
+// ─── Type metadata ─────────────────────────────────────────────────────────────
 
-const _kHeaderTop = Color(0xFF38BDF8);    // sky-400
-const _kHeaderBot = Color(0xFF0EA5E9);    // sky-500
-const _kBg        = Color(0xFFF0F7FF);    // very light blue tint
+class _Meta {
+  final IconData icon;
+  final Color color;
+  final Color bg;
+  final String label;
+  const _Meta({required this.icon, required this.color, required this.bg, required this.label});
+}
 
-// ─── Filter enum ─────────────────────────────────────────────────────────────
+_Meta _metaFor(String type) {
+  if (type.startsWith('appointment')) {
+    return const _Meta(
+      icon: Icons.event_note_rounded,
+      color: Color(0xFF1D5BDC),
+      bg: Color(0xFFDEEBFF),
+      label: 'Lịch hẹn',
+    );
+  }
+  if (type == 'medication') {
+    return const _Meta(
+      icon: Icons.medication_liquid_rounded,
+      color: Color(0xFF059669),
+      bg: Color(0xFFD1FAE5),
+      label: 'Thuốc',
+    );
+  }
+  if (type == 'admission') {
+    return const _Meta(
+      icon: Icons.local_hospital_rounded,
+      color: Color(0xFFD97706),
+      bg: Color(0xFFFEF3C7),
+      label: 'Nhập viện',
+    );
+  }
+  return const _Meta(
+    icon: Icons.campaign_rounded,
+    color: Color(0xFF7C3AED),
+    bg: Color(0xFFEDE9FE),
+    label: 'Hệ thống',
+  );
+}
+
+// ─── Filter enum ──────────────────────────────────────────────────────────────
 
 enum _Filter { all, unread, appointment, medication, admission, comms }
 
@@ -32,36 +70,25 @@ extension _FilterX on _Filter {
 
   IconData get icon {
     switch (this) {
-      case _Filter.all:         return Icons.apps_rounded;
-      case _Filter.unread:      return Icons.mark_email_unread_outlined;
-      case _Filter.appointment: return Icons.calendar_today_outlined;
-      case _Filter.medication:  return Icons.medication_outlined;
-      case _Filter.admission:   return Icons.hotel_outlined;
-      case _Filter.comms:       return Icons.forum_outlined;
+      case _Filter.all:         return Icons.grid_view_rounded;
+      case _Filter.unread:      return Icons.fiber_new_rounded;
+      case _Filter.appointment: return Icons.event_note_rounded;
+      case _Filter.medication:  return Icons.medication_liquid_rounded;
+      case _Filter.admission:   return Icons.local_hospital_rounded;
+      case _Filter.comms:       return Icons.chat_bubble_outline_rounded;
     }
   }
-}
 
-// ─── Type metadata ────────────────────────────────────────────────────────────
-
-class _Meta {
-  final IconData icon;
-  final Color color;
-  final String label;
-  const _Meta({required this.icon, required this.color, required this.label});
-}
-
-_Meta _metaFor(String type) {
-  if (type.startsWith('appointment')) {
-    return const _Meta(icon: Icons.calendar_today_rounded, color: Color(0xFF2563EB), label: 'Lịch hẹn');
+  Color get activeColor {
+    switch (this) {
+      case _Filter.all:         return const Color(0xFF1D5BDC);
+      case _Filter.unread:      return const Color(0xFFDC2626);
+      case _Filter.appointment: return const Color(0xFF1D5BDC);
+      case _Filter.medication:  return const Color(0xFF059669);
+      case _Filter.admission:   return const Color(0xFFD97706);
+      case _Filter.comms:       return const Color(0xFF7C3AED);
+    }
   }
-  if (type == 'medication') {
-    return const _Meta(icon: Icons.medication_rounded, color: Color(0xFF16A34A), label: 'Thuốc');
-  }
-  if (type == 'admission') {
-    return const _Meta(icon: Icons.hotel_rounded, color: Color(0xFFEA580C), label: 'Nhập viện');
-  }
-  return const _Meta(icon: Icons.notifications_rounded, color: Color(0xFF7C3AED), label: 'Hệ thống');
 }
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -100,23 +127,14 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // NotificationScreen is used as a tab — no inner Scaffold needed.
     return Consumer<NotificationController>(
-      builder: (_, ctrl, __) => ColoredBox(
-        color: _kBg,
+      builder: (_, ctrl, __) => Container(
+        color: AppColors.background,
         child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
           slivers: [
-            _Header(
-              ctrl: ctrl,
-              onMarkAll: () {
-                final uid = context.read<AuthController>().currentUser?.id;
-                if (uid != null) ctrl.markAllAsRead(uid);
-              },
-            ),
-            _FilterBar(
-              active: _filter,
-              onSelect: (f) => setState(() => _filter = f),
-            ),
+            _buildHeader(ctrl),
+            _buildFilterBar(),
             if (ctrl.isLoading)
               const SliverFillRemaining(child: LoadingWidget(itemCount: 5))
             else if (_filter == _Filter.comms)
@@ -132,113 +150,117 @@ class _NotificationScreenState extends State<NotificationScreen> {
       ),
     );
   }
-}
 
-// ─── Header ───────────────────────────────────────────────────────────────────
-
-class _Header extends StatelessWidget {
-  final NotificationController ctrl;
-  final VoidCallback onMarkAll;
-
-  const _Header({required this.ctrl, required this.onMarkAll});
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildHeader(NotificationController ctrl) {
     final unread = ctrl.unreadCount;
     final total  = ctrl.notifications.length;
-    final read   = total - unread;
 
     return SliverToBoxAdapter(
       child: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [_kHeaderTop, _kHeaderBot],
+            colors: [Color(0xFF1E40AF), Color(0xFF2563EB), Color(0xFF3B82F6)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(36)),
         ),
         child: Stack(
           children: [
-            // decorative circle top-right
+            // decorative blobs
             Positioned(
-              right: -30, top: -30,
+              right: -50, top: -50,
               child: Container(
-                width: 160, height: 160,
+                width: 200, height: 200,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.08),
+                  color: Colors.white.withValues(alpha: 0.06),
                 ),
               ),
             ),
             Positioned(
-              right: 60, bottom: 0,
+              left: -20, bottom: 20,
               child: Container(
-                width: 70, height: 70,
+                width: 120, height: 120,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.10),
+                  color: Colors.white.withValues(alpha: 0.05),
                 ),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 16, 24),
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title row
+                  // Top row: icon + title + mark-all
                   Row(
                     children: [
-                      const Icon(Icons.notifications_rounded, color: Colors.white, size: 22),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Thông báo',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.3,
+                      Container(
+                        width: 40, height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(12),
                         ),
+                        child: const Icon(Icons.notifications_rounded, color: Colors.white, size: 22),
                       ),
-                      if (unread > 0) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFF3B30),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            '$unread mới',
-                            style: const TextStyle(
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Thông báo',
+                            style: TextStyle(
                               color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.4,
+                              height: 1,
                             ),
                           ),
-                        ),
-                      ],
+                          Text(
+                            total == 0
+                                ? 'Không có thông báo'
+                                : '$total thông báo${unread > 0 ? ' · $unread chưa đọc' : ''}',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.75),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
                       const Spacer(),
                       if (unread > 0)
                         GestureDetector(
-                          onTap: onMarkAll,
+                          onTap: () {
+                            final uid = context.read<AuthController>().currentUser?.id;
+                            if (uid != null) ctrl.markAllAsRead(uid);
+                          },
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.22),
-                              borderRadius: BorderRadius.circular(20),
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(24),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.15),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
                             child: const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.done_all_rounded, color: Colors.white, size: 15),
-                                SizedBox(width: 4),
+                                Icon(Icons.done_all_rounded, size: 15, color: Color(0xFF2563EB)),
+                                SizedBox(width: 5),
                                 Text(
                                   'Đọc tất cả',
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: Color(0xFF2563EB),
                                     fontSize: 12,
-                                    fontWeight: FontWeight.w600,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                               ],
@@ -247,18 +269,34 @@ class _Header extends StatelessWidget {
                         ),
                     ],
                   ),
-                  const SizedBox(height: 20),
-                  // Stats row — equal-width tiles
-                  IntrinsicHeight(
-                    child: Row(
-                      children: [
-                        _StatTile(value: total,  label: 'Tổng',     icon: Icons.inbox_rounded,          color: Colors.white),
-                        _StatDivider(),
-                        _StatTile(value: unread, label: 'Chưa đọc', icon: Icons.mark_email_unread_rounded, color: unread > 0 ? const Color(0xFFFFD60A) : Colors.white),
-                        _StatDivider(),
-                        _StatTile(value: read,   label: 'Đã đọc',   icon: Icons.mark_email_read_rounded,  color: Colors.white),
-                      ],
-                    ),
+                  const SizedBox(height: 24),
+                  // Stats row: 3 frosted-glass cards
+                  Row(
+                    children: [
+                      _StatCard(
+                        value: total,
+                        label: 'Tổng',
+                        icon: Icons.inbox_rounded,
+                        iconBg: Colors.white.withValues(alpha: 0.2),
+                      ),
+                      const SizedBox(width: 12),
+                      _StatCard(
+                        value: unread,
+                        label: 'Chưa đọc',
+                        icon: Icons.mark_email_unread_rounded,
+                        iconBg: unread > 0
+                            ? const Color(0xFFFF3B30).withValues(alpha: 0.25)
+                            : Colors.white.withValues(alpha: 0.2),
+                        valueColor: unread > 0 ? const Color(0xFFFFE14D) : Colors.white,
+                      ),
+                      const SizedBox(width: 12),
+                      _StatCard(
+                        value: total - unread,
+                        label: 'Đã đọc',
+                        icon: Icons.mark_email_read_rounded,
+                        iconBg: Colors.white.withValues(alpha: 0.2),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -268,81 +306,82 @@ class _Header extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildFilterBar() {
+    return SliverPersistentHeader(
+      pinned: true,
+      delegate: _FilterDelegate(active: _filter, onSelect: (f) => setState(() => _filter = f)),
+    );
+  }
 }
 
-class _StatTile extends StatelessWidget {
+// ─── Stat card ────────────────────────────────────────────────────────────────
+
+class _StatCard extends StatelessWidget {
   final int value;
   final String label;
   final IconData icon;
-  final Color color;
+  final Color iconBg;
+  final Color valueColor;
 
-  const _StatTile({
+  const _StatCard({
     required this.value,
     required this.label,
     required this.icon,
-    required this.color,
+    required this.iconBg,
+    this.valueColor = Colors.white,
   });
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: color.withValues(alpha: 0.85), size: 18),
-          const SizedBox(height: 4),
-          Text(
-            '$value',
-            style: TextStyle(
-              color: color,
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              height: 1,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 34, height: 34,
+              decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(10)),
+              child: Icon(icon, color: Colors.white, size: 17),
             ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.75),
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '$value',
+                  style: TextStyle(
+                    color: valueColor,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    height: 1,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.72),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class _StatDivider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 1,
-      height: 48,
-      color: Colors.white.withValues(alpha: 0.25),
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-    );
-  }
-}
-
 // ─── Filter bar ───────────────────────────────────────────────────────────────
-
-class _FilterBar extends StatelessWidget {
-  final _Filter active;
-  final ValueChanged<_Filter> onSelect;
-
-  const _FilterBar({required this.active, required this.onSelect});
-
-  @override
-  Widget build(BuildContext context) {
-    return SliverPersistentHeader(
-      pinned: true,
-      delegate: _FilterDelegate(active: active, onSelect: onSelect),
-    );
-  }
-}
 
 class _FilterDelegate extends SliverPersistentHeaderDelegate {
   final _Filter active;
@@ -350,54 +389,58 @@ class _FilterDelegate extends SliverPersistentHeaderDelegate {
 
   const _FilterDelegate({required this.active, required this.onSelect});
 
-  @override double get minExtent => 52;
-  @override double get maxExtent => 52;
-
-  @override
-  bool shouldRebuild(_FilterDelegate old) => old.active != active;
+  @override double get minExtent => 58;
+  @override double get maxExtent => 58;
+  @override bool shouldRebuild(_FilterDelegate old) => old.active != active;
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
-      height: 52,
-      color: _kBg,
+      height: 58,
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        boxShadow: overlapsContent
+            ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 3))]
+            : null,
+      ),
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         itemCount: _Filter.values.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (_, i) {
-          final f = _Filter.values[i];
-          final isActive = f == active;
+          final f    = _Filter.values[i];
+          final isOn = f == active;
+          final col  = f.activeColor;
+
           return GestureDetector(
             onTap: () => onSelect(f),
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
               decoration: BoxDecoration(
-                color: isActive ? _kHeaderBot : Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: isActive
-                        ? _kHeaderBot.withValues(alpha: 0.40)
-                        : Colors.black.withValues(alpha: 0.06),
-                    blurRadius: isActive ? 8 : 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                color: isOn ? col : Colors.white,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(
+                  color: isOn ? col : const Color(0xFFE5E7EB),
+                  width: 1.5,
+                ),
+                boxShadow: isOn
+                    ? [BoxShadow(color: col.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4))]
+                    : [],
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(f.icon, size: 13, color: isActive ? Colors.white : Colors.grey[600]),
+                  Icon(f.icon, size: 13, color: isOn ? Colors.white : const Color(0xFF9CA3AF)),
                   const SizedBox(width: 5),
                   Text(
                     f.label,
                     style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                      color: isActive ? Colors.white : Colors.grey[700],
+                      fontSize: 12.5,
+                      fontWeight: isOn ? FontWeight.w700 : FontWeight.w500,
+                      color: isOn ? Colors.white : const Color(0xFF6B7280),
                     ),
                   ),
                 ],
@@ -405,6 +448,43 @@ class _FilterDelegate extends SliverPersistentHeaderDelegate {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+// ─── Date section label ───────────────────────────────────────────────────────
+
+class _DateLabel extends StatelessWidget {
+  final String label;
+  const _DateLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 20, 0, 10),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF6FF),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFBFDBFE)),
+            ),
+            child: Text(
+              label.toUpperCase(),
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1D4ED8),
+                letterSpacing: 0.8,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(child: Divider(color: const Color(0xFFE5E7EB), height: 1)),
+        ],
       ),
     );
   }
@@ -419,7 +499,7 @@ class _NotifSliver extends StatelessWidget {
 
   const _NotifSliver({required this.items, required this.ctrl, required this.filter});
 
-  static const _order = ['Hôm nay', 'Hôm qua', 'Tuần này'];
+  static const _knownOrder = ['Hôm nay', 'Hôm qua', 'Tuần này'];
 
   Map<String, List<NotificationEntity>> _group(List<NotificationEntity> list) {
     final now   = DateTime.now();
@@ -427,22 +507,17 @@ class _NotifSliver extends StatelessWidget {
     final yest  = today.subtract(const Duration(days: 1));
     final week  = today.subtract(const Duration(days: 7));
 
-    final groups = <String, List<NotificationEntity>>{};
+    final out = <String, List<NotificationEntity>>{};
     for (final n in list) {
       final d = DateTime(n.createdAt.year, n.createdAt.month, n.createdAt.day);
-      final String key;
-      if (!d.isBefore(today)) {
-        key = 'Hôm nay';
-      } else if (!d.isBefore(yest)) {
-        key = 'Hôm qua';
-      } else if (!d.isBefore(week)) {
-        key = 'Tuần này';
-      } else {
-        key = DateFormat('MMMM yyyy', 'vi').format(n.createdAt);
-      }
-      groups.putIfAbsent(key, () => []).add(n);
+      final String k;
+      if (!d.isBefore(today))     k = 'Hôm nay';
+      else if (!d.isBefore(yest)) k = 'Hôm qua';
+      else if (!d.isBefore(week)) k = 'Tuần này';
+      else                        k = DateFormat('MMMM yyyy', 'vi').format(n.createdAt);
+      out.putIfAbsent(k, () => []).add(n);
     }
-    return groups;
+    return out;
   }
 
   @override
@@ -453,19 +528,16 @@ class _NotifSliver extends StatelessWidget {
           icon: filter == _Filter.unread
               ? Icons.mark_email_read_outlined
               : Icons.notifications_off_outlined,
-          title: filter == _Filter.unread
-              ? 'Bạn đã đọc hết thông báo!'
-              : 'Chưa có thông báo nào',
+          title: filter == _Filter.unread ? 'Bạn đã đọc hết!' : 'Chưa có thông báo nào',
           subtitle: 'Thông báo mới sẽ xuất hiện tại đây',
         ),
       );
     }
 
     final groups = _group(items);
-    // Sort: known order first, then the rest
     final keys = [
-      ..._order.where(groups.containsKey),
-      ...groups.keys.where((k) => !_order.contains(k)),
+      ..._knownOrder.where(groups.containsKey),
+      ...groups.keys.where((k) => !_knownOrder.contains(k)),
     ];
 
     final children = <Widget>[];
@@ -475,40 +547,11 @@ class _NotifSliver extends StatelessWidget {
         children.add(_NotifCard(notification: n, ctrl: ctrl));
       }
     }
-    children.add(const SizedBox(height: 100)); // bottom nav clearance
+    children.add(const SizedBox(height: 100));
 
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       sliver: SliverList(delegate: SliverChildListDelegate(children)),
-    );
-  }
-}
-
-// ─── Date label ───────────────────────────────────────────────────────────────
-
-class _DateLabel extends StatelessWidget {
-  final String label;
-  const _DateLabel({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(0, 16, 0, 8),
-      child: Row(
-        children: [
-          Text(
-            label.toUpperCase(),
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF64748B),
-              letterSpacing: 0.8,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(child: Divider(color: Colors.blueGrey.shade100, height: 1)),
-        ],
-      ),
     );
   }
 }
@@ -530,14 +573,14 @@ class _NotifCard extends StatelessWidget {
       key: Key(notification.id),
       background: _SwipeBg(
         alignment: Alignment.centerLeft,
-        color: const Color(0xFF0EA5E9),
+        color: const Color(0xFF2563EB),
         icon: Icons.done_all_rounded,
         label: 'Đã đọc',
       ),
       secondaryBackground: _SwipeBg(
         alignment: Alignment.centerRight,
         color: const Color(0xFFEF4444),
-        icon: Icons.delete_outline_rounded,
+        icon: Icons.delete_sweep_rounded,
         label: 'Xoá',
       ),
       confirmDismiss: (dir) async {
@@ -550,117 +593,133 @@ class _NotifCard extends StatelessWidget {
       onDismissed: (_) => ctrl.deleteNotification(notification.id),
       child: GestureDetector(
         onTap: () { if (!isRead) ctrl.markAsRead(notification.id); },
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
           margin: const EdgeInsets.only(bottom: 10),
           decoration: BoxDecoration(
-            color: isRead ? Colors.white : const Color(0xFFEFF6FF),
-            borderRadius: BorderRadius.circular(16),
-            border: isRead
-                ? Border.all(color: Colors.blueGrey.shade50)
-                : Border.all(color: meta.color.withValues(alpha: 0.25)),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
             boxShadow: [
               BoxShadow(
                 color: isRead
-                    ? Colors.black.withValues(alpha: 0.04)
-                    : meta.color.withValues(alpha: 0.10),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
+                    ? Colors.black.withValues(alpha: 0.05)
+                    : meta.color.withValues(alpha: 0.12),
+                blurRadius: 16,
+                spreadRadius: 0,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // left accent bar
-                  Container(
-                    width: 4,
-                    color: isRead ? Colors.blueGrey.shade100 : meta.color,
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // icon
-                          Container(
-                            width: 42,
-                            height: 42,
-                            decoration: BoxDecoration(
-                              color: meta.color.withValues(alpha: isRead ? 0.07 : 0.14),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              meta.icon,
-                              color: meta.color.withValues(alpha: isRead ? 0.55 : 1.0),
-                              size: 20,
-                            ),
-                          ),
-                          const SizedBox(width: 11),
-                          // text
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    _TypeChip(label: meta.label, color: meta.color, faded: isRead),
-                                    const Spacer(),
-                                    if (!isRead)
-                                      Container(
-                                        width: 8, height: 8,
-                                        decoration: BoxDecoration(
-                                          color: meta.color,
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                                const SizedBox(height: 5),
-                                Text(
-                                  notification.title,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: isRead ? FontWeight.w500 : FontWeight.w700,
-                                    color: isRead ? const Color(0xFF6B7280) : const Color(0xFF0F172A),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 3),
-                                Text(
-                                  notification.body,
-                                  style: const TextStyle(
-                                    fontSize: 12.5,
-                                    color: Color(0xFF6B7280),
-                                    height: 1.4,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 6),
-                                Row(
-                                  children: [
-                                    Icon(Icons.access_time_rounded, size: 11, color: Colors.blueGrey.shade300),
-                                    const SizedBox(width: 3),
-                                    Text(
-                                      _fmt(notification.createdAt),
-                                      style: TextStyle(fontSize: 11, color: Colors.blueGrey.shade300),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+            borderRadius: BorderRadius.circular(18),
+            child: Stack(
+              children: [
+                // unread left bar
+                if (!isRead)
+                  Positioned(
+                    left: 0, top: 0, bottom: 0,
+                    child: Container(
+                      width: 4,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [meta.color, meta.color.withValues(alpha: 0.5)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
                       ),
                     ),
                   ),
-                ],
-              ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(isRead ? 16 : 20, 14, 16, 14),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Icon
+                      Container(
+                        width: 46, height: 46,
+                        decoration: BoxDecoration(
+                          color: meta.bg,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(meta.icon, color: meta.color, size: 22),
+                      ),
+                      const SizedBox(width: 13),
+                      // Content
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: meta.bg,
+                                    borderRadius: BorderRadius.circular(7),
+                                  ),
+                                  child: Text(
+                                    meta.label,
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: meta.color,
+                                      letterSpacing: 0.2,
+                                    ),
+                                  ),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  _fmt(notification.createdAt),
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Color(0xFFB0BAC7),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                if (!isRead) ...[
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    width: 8, height: 8,
+                                    decoration: BoxDecoration(
+                                      color: meta.color,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [BoxShadow(color: meta.color.withValues(alpha: 0.5), blurRadius: 4)],
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              notification.title,
+                              style: TextStyle(
+                                fontSize: 14.5,
+                                fontWeight: isRead ? FontWeight.w600 : FontWeight.w700,
+                                color: isRead ? const Color(0xFF6B7280) : const Color(0xFF111827),
+                                height: 1.2,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              notification.body,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: isRead ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
+                                height: 1.45,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -671,37 +730,10 @@ class _NotifCard extends StatelessWidget {
   String _fmt(DateTime dt) {
     final diff = DateTime.now().difference(dt);
     if (diff.inMinutes < 1)  return 'Vừa xong';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} phút trước';
-    if (diff.inHours   < 24) return '${diff.inHours} giờ trước';
-    if (diff.inDays    <  7) return '${diff.inDays} ngày trước';
-    return DateFormat('HH:mm, dd/MM/yyyy').format(dt);
-  }
-}
-
-class _TypeChip extends StatelessWidget {
-  final String label;
-  final Color color;
-  final bool faded;
-  const _TypeChip({required this.label, required this.color, required this.faded});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: faded ? 0.07 : 0.12),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: color.withValues(alpha: faded ? 0.55 : 1.0),
-          letterSpacing: 0.2,
-        ),
-      ),
-    );
+    if (diff.inMinutes < 60) return '${diff.inMinutes} phút';
+    if (diff.inHours   < 24) return '${diff.inHours} giờ';
+    if (diff.inDays    <  7) return '${diff.inDays} ngày';
+    return DateFormat('dd/MM').format(dt);
   }
 }
 
@@ -724,15 +756,18 @@ class _SwipeBg extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(18)),
       alignment: alignment,
-      padding: const EdgeInsets.symmetric(horizontal: 22),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white, size: 22),
+          Icon(icon, color: Colors.white, size: 24),
           const SizedBox(height: 3),
-          Text(label, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+          ),
         ],
       ),
     );
@@ -750,7 +785,7 @@ class _CommsSliver extends StatelessWidget {
     if (logs.isEmpty) {
       return const SliverFillRemaining(
         child: EmptyStateWidget(
-          icon: Icons.forum_outlined,
+          icon: Icons.chat_bubble_outline_rounded,
           title: 'Chưa có liên lạc',
           subtitle: 'Lịch sử SMS và Email sẽ được lưu tại đây',
         ),
@@ -775,72 +810,66 @@ class _CommsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isEmail = log.type == 'email';
-    final color   = isEmail ? const Color(0xFF2563EB) : const Color(0xFF16A34A);
+    final color   = isEmail ? const Color(0xFF2563EB) : const Color(0xFF059669);
+    final bg      = isEmail ? const Color(0xFFDBEAFE) : const Color(0xFFD1FAE5);
     final icon    = isEmail ? Icons.email_rounded     : Icons.sms_rounded;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.blueGrey.shade50),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 16, offset: const Offset(0, 4)),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: IntrinsicHeight(
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(width: 4, color: color),
+              Container(
+                width: 46, height: 46,
+                decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(14)),
+                child: Icon(icon, color: color, size: 22),
+              ),
+              const SizedBox(width: 13),
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 42, height: 42,
-                        decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.10),
-                          borderRadius: BorderRadius.circular(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(7)),
+                          child: Text(
+                            isEmail ? 'EMAIL' : 'SMS',
+                            style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: color),
+                          ),
                         ),
-                        child: Icon(icon, color: color, size: 20),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                _TypeChip(label: isEmail ? 'EMAIL' : 'SMS', color: color, faded: false),
-                                const Spacer(),
-                                Text(
-                                  DateFormat('HH:mm · dd/MM').format(log.createdAt),
-                                  style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              'Đến: ${log.recipient}',
-                              style: const TextStyle(fontSize: 12, color: Color(0xFF475569), fontWeight: FontWeight.w600),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              log.content,
-                              style: const TextStyle(fontSize: 13, color: Color(0xFF374151), height: 1.4),
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                        const Spacer(),
+                        Text(
+                          DateFormat('HH:mm · dd/MM').format(log.createdAt),
+                          style: const TextStyle(fontSize: 11, color: Color(0xFFB0BAC7), fontWeight: FontWeight.w500),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Gửi đến: ${log.recipient}',
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF374151)),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      log.content,
+                      style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280), height: 1.45),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ),
             ],
