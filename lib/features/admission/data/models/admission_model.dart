@@ -29,7 +29,9 @@ class AdmissionModel extends AdmissionEntity {
       patientId: json['patientId'] ?? '',
       reason: json['reason'] ?? '',
       status: json['status'] ?? 'pending',
-      createdAt: (json['createdAt'] as Timestamp).toDate(),
+      createdAt: json['createdAt'] != null
+          ? (json['createdAt'] as Timestamp).toDate()
+          : DateTime.now(),
       wardInfo: json['wardInfo'] != null ? Map<String, dynamic>.from(json['wardInfo']) : null,
       notes: json['notes'],
       hospitalId: json['hospitalId'],

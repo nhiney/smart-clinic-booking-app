@@ -56,7 +56,38 @@ class AdmissionHistoryScreen extends ConsumerWidget {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.cloud_off_rounded, size: 56, color: Colors.grey[400]),
+                const SizedBox(height: 16),
+                const Text(
+                  'Không thể tải dữ liệu',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  e.toString().contains('FAILED_PRECONDITION') || e.toString().contains('index')
+                      ? 'Cơ sở dữ liệu chưa được cấu hình index. Vui lòng liên hệ quản trị viên.'
+                      : e.toString().contains('permission') || e.toString().contains('PERMISSION')
+                          ? 'Không có quyền truy cập dữ liệu.'
+                          : 'Lỗi kết nối. Kiểm tra mạng và thử lại.',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                OutlinedButton.icon(
+                  onPressed: () => ref.invalidate(admissionStreamProvider(patientId)),
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                  label: const Text('Thử lại'),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
