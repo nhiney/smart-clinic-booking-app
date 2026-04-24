@@ -63,7 +63,7 @@ class AppTextStyles {
     fontFamily: AppFont.primary,
     fontSize: 16,
     fontWeight: FontWeight.w600,
-    color: AppColors.textOnPrimary,
+    color: AppColors.textInverse,
   );
 
   static const TextStyle link = TextStyle(
