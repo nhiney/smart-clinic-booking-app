@@ -2,23 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart' as legacy_provider;
-import '../../../../core/theme/colors/app_colors.dart';
-import '../../../../core/theme/typography/app_text_styles.dart';
 import '../../../../core/widgets/branded_app_bar.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/extensions/context_extension.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
-import '../controllers/payment_controller.dart';
 import 'package:smart_clinic_booking/features/payment/domain/entities/transaction_entity.dart';
 
 class PaymentScreen extends ConsumerStatefulWidget {
   final double amount;
   final String description;
+  final String? invoiceId;
+  final String? appointmentId;
 
   const PaymentScreen({
     super.key,
     required this.amount,
     required this.description,
+    this.invoiceId,
+    this.appointmentId,
   });
 
   @override
@@ -175,6 +176,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
               'method': _selectedMethod,
               'description': widget.description,
               'userId': auth.currentUser!.id,
+              'invoiceId': widget.invoiceId,
+              'appointmentId': widget.appointmentId,
             });
           },
         ),

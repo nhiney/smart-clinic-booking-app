@@ -19,10 +19,9 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
           .where('userId', isEqualTo: userId)
           .orderBy('createdAt', descending: true)
           .get();
-      
+
       final invoices = snapshot.docs.map((doc) => InvoiceModel.fromFirestore(doc)).toList();
-      
-      // Cache to SQLite
+
       final db = await _sqlite.database;
       await db.transaction((txn) async {
         for (final i in invoices) {
@@ -45,27 +44,28 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
           );
         }
       });
-      
+
       return invoices;
     } catch (e) {
-      // Fallback to SQLite
       final db = await _sqlite.database;
       final List<Map<String, dynamic>> maps = await db.query(
         'invoices_cache',
         where: 'userId = ?',
         whereArgs: [userId],
       );
-      
+
       return maps.map((m) {
         final data = jsonDecode(m['data']);
         return InvoiceModel(
           id: m['id'],
           userId: m['userId'],
-          services: (data['services'] as List).map((i) => InvoiceItem(
-            name: i['name'],
-            price: (i['price'] as num).toDouble(),
-            quantity: i['quantity'] ?? 1,
-          )).toList(),
+          services: (data['services'] as List)
+              .map((i) => InvoiceItem(
+                    name: i['name'],
+                    price: (i['price'] as num).toDouble(),
+                    quantity: i['quantity'] ?? 1,
+                  ))
+              .toList(),
           total: (data['total'] as num).toDouble(),
           paymentId: data['paymentId'] ?? '',
           status: data['status'] ?? '',
@@ -81,25 +81,26 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
       final doc = await _firestore.collection('invoices').doc(invoiceId).get();
       return InvoiceModel.fromFirestore(doc);
     } catch (e) {
-      // Try local cache
       final db = await _sqlite.database;
       final List<Map<String, dynamic>> results = await db.query(
         'invoices_cache',
         where: 'id = ?',
         whereArgs: [invoiceId],
       );
-      
+
       if (results.isNotEmpty) {
         final m = results.first;
         final data = jsonDecode(m['data']);
         return InvoiceModel(
           id: m['id'],
           userId: m['userId'],
-          services: (data['services'] as List).map((i) => InvoiceItem(
-            name: i['name'],
-            price: (i['price'] as num).toDouble(),
-            quantity: i['quantity'] ?? 1,
-          )).toList(),
+          services: (data['services'] as List)
+              .map((i) => InvoiceItem(
+                    name: i['name'],
+                    price: (i['price'] as num).toDouble(),
+                    quantity: i['quantity'] ?? 1,
+                  ))
+              .toList(),
           total: (data['total'] as num).toDouble(),
           paymentId: data['paymentId'] ?? '',
           status: data['status'] ?? '',
@@ -108,5 +109,62 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
       }
       throw Exception("Invoice not found");
     }
+  }
+
+  @override
+  Future<void> updateInvoiceStatus(String invoiceId, String status, {String? paymentId}) async {
+    final update = <String, dynamic>{
+      'status': status,
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+    if (paymentId != null) update['paymentId'] = paymentId;
+
+    await _firestore.collection('invoices').doc(invoiceId).update(update);
+
+    final db = await _sqlite.database;
+    final results = await db.query('invoices_cache', where: 'id = ?', whereArgs: [invoiceId]);
+    if (results.isNotEmpty) {
+      final data = jsonDecode(results.first['data'] as String) as Map<String, dynamic>;
+      data['status'] = status;
+      if (paymentId != null) data['paymentId'] = paymentId;
+      await db.update(
+        'invoices_cache',
+        {'data': jsonEncode(data)},
+        where: 'id = ?',
+        whereArgs: [invoiceId],
+      );
+    }
+  }
+
+  @override
+  Future<String> createInvoice(InvoiceEntity invoice) async {
+    final model = InvoiceModel(
+      id: invoice.id,
+      userId: invoice.userId,
+      services: invoice.services,
+      total: invoice.total,
+      paymentId: invoice.paymentId,
+      status: invoice.status,
+      createdAt: invoice.createdAt,
+    );
+
+    final docRef = invoice.id.isNotEmpty
+        ? _firestore.collection('invoices').doc(invoice.id)
+        : _firestore.collection('invoices').doc();
+
+    await docRef.set(model.toFirestore());
+
+    final db = await _sqlite.database;
+    await db.insert(
+      'invoices_cache',
+      {
+        'id': docRef.id,
+        'userId': invoice.userId,
+        'data': jsonEncode(model.toFirestore()..['createdAt'] = invoice.createdAt.toIso8601String()),
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+
+    return docRef.id;
   }
 }

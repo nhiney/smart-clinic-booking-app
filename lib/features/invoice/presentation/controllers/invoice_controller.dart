@@ -61,4 +61,49 @@ class InvoiceController extends StateNotifier<InvoiceState> {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
+
+  Future<void> markInvoicePaid(String invoiceId, {String? paymentId}) async {
+    try {
+      await repository.updateInvoiceStatus(invoiceId, 'paid', paymentId: paymentId);
+      final updatedList = state.invoices.map((inv) {
+        if (inv.id == invoiceId) {
+          return InvoiceEntity(
+            id: inv.id,
+            userId: inv.userId,
+            services: inv.services,
+            total: inv.total,
+            paymentId: paymentId ?? inv.paymentId,
+            status: 'paid',
+            createdAt: inv.createdAt,
+          );
+        }
+        return inv;
+      }).toList();
+      state = state.copyWith(invoices: updatedList);
+    } catch (_) {}
+  }
+
+  Future<String?> createInvoiceForAppointment({
+    required String userId,
+    required String appointmentId,
+    required List<InvoiceItem> services,
+    required double total,
+    required String paymentId,
+  }) async {
+    try {
+      final invoice = InvoiceEntity(
+        id: 'INV${DateTime.now().millisecondsSinceEpoch}',
+        userId: userId,
+        services: services,
+        total: total,
+        paymentId: paymentId,
+        status: 'paid',
+        createdAt: DateTime.now(),
+      );
+      final id = await repository.createInvoice(invoice);
+      return id;
+    } catch (_) {
+      return null;
+    }
+  }
 }

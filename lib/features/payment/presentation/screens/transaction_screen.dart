@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart' as legacy_provider;
 import '../../../../core/theme/colors/app_colors.dart';
-import '../../../../core/theme/typography/app_text_styles.dart';
 import '../../../../core/widgets/branded_app_bar.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/extensions/context_extension.dart';
@@ -133,78 +132,88 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
       BuildContext context, TransactionEntity transaction) {
     final isSuccess = transaction.status == PaymentStatus.success;
 
-    return AppCard(
-      padding: EdgeInsets.all(context.spacing.m),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              _buildMethodIcon(context, transaction.method),
-              SizedBox(width: context.spacing.m),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return GestureDetector(
+      onTap: () => context.push('/transactions/detail', extra: transaction),
+      child: AppCard(
+        padding: EdgeInsets.all(context.spacing.m),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                _buildMethodIcon(context, transaction.method),
+                SizedBox(width: context.spacing.m),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        transaction.description ?? "Thanh toán viện phí",
+                        style: context.textStyles.bodyBold
+                            .copyWith(color: context.colors.textPrimary),
+                      ),
+                      Text(
+                        DateFormat('dd/MM/yyyy HH:mm')
+                            .format(transaction.createdAt),
+                        style: context.textStyles.caption
+                            .copyWith(color: context.colors.textHint),
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      transaction.description ?? "Thanh toán viện phí",
-                      style: context.textStyles.bodyBold
-                          .copyWith(color: context.colors.textPrimary),
+                      "${transaction.amount.toStringAsFixed(0)}đ",
+                      style: context.textStyles.bodyBold.copyWith(
+                        color: context.colors.textPrimary,
+                        fontSize: 16,
+                      ),
                     ),
-                    Text(
-                      DateFormat('dd/MM/yyyy HH:mm')
-                          .format(transaction.createdAt),
-                      style: context.textStyles.caption
-                          .copyWith(color: context.colors.textHint),
-                    ),
+                    _buildStatusBadge(context, transaction.status),
                   ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    "${transaction.amount.toStringAsFixed(0)}đ",
-                    style: context.textStyles.bodyBold.copyWith(
-                      color: context.colors.textPrimary,
-                      fontSize: 16,
-                    ),
-                  ),
-                  _buildStatusBadge(context, transaction.status),
-                ],
-              ),
-            ],
-          ),
-          if (isSuccess) ...[
-            Divider(height: context.spacing.l, color: context.colors.divider),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton.icon(
-                  onPressed: () => _handleRefund(transaction),
-                  icon: const Icon(Icons.undo, size: 18),
-                  label: const Text("Hoàn tiền"),
-                  style: TextButton.styleFrom(
-                    foregroundColor: context.colors.textSecondary,
-                    padding:
-                        EdgeInsets.symmetric(horizontal: context.spacing.m),
-                  ),
-                ),
-                SizedBox(width: context.spacing.s),
-                OutlinedButton.icon(
-                  onPressed: () => context.push('/under-development?title=${Uri.encodeComponent('Chi tiết hóa đơn')}'),
-                  icon: const Icon(Icons.receipt_long, size: 18),
-                  label: const Text("Hóa đơn"),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: context.colors.primary,
-                    side: BorderSide(color: context.colors.primary),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: context.radius.sRadius),
-                  ),
                 ),
               ],
             ),
+            if (isSuccess) ...[
+              Divider(height: context.spacing.l, color: context.colors.divider),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton.icon(
+                    onPressed: () => _handleRefund(transaction),
+                    icon: const Icon(Icons.undo, size: 18),
+                    label: const Text("Hoàn tiền"),
+                    style: TextButton.styleFrom(
+                      foregroundColor: context.colors.textSecondary,
+                      padding:
+                          EdgeInsets.symmetric(horizontal: context.spacing.m),
+                    ),
+                  ),
+                  SizedBox(width: context.spacing.s),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      if (transaction.invoiceId != null) {
+                        context.push('/invoices/detail',
+                            extra: {'invoiceId': transaction.invoiceId});
+                      } else {
+                        context.push('/invoices');
+                      }
+                    },
+                    icon: const Icon(Icons.receipt_long, size: 18),
+                    label: const Text("Hóa đơn"),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: context.colors.primary,
+                      side: BorderSide(color: context.colors.primary),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: context.radius.sRadius),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

@@ -148,7 +148,10 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () => context.push('/under-development?title=${Uri.encodeComponent('Chi tiết hóa đơn')}'),
+                          onPressed: () => context.push(
+                            '/invoices/detail',
+                            extra: {'invoiceId': invoice.id, 'invoice': invoice},
+                          ),
                           icon: const Icon(Icons.description_outlined, size: 18),
                           label: const Text("Chi tiết"),
                           style: OutlinedButton.styleFrom(
@@ -162,11 +165,21 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed: () => context.push('/under-development?title=${Uri.encodeComponent(isPending ? 'Thanh toán hóa đơn' : 'Tải hóa đơn')}'),
+                          onPressed: isPending
+                              ? () => context.push('/payment', extra: {
+                                    'amount': invoice.total,
+                                    'description': 'Thanh toán hóa đơn #${invoice.id.substring(0, 8).toUpperCase()}',
+                                    'invoiceId': invoice.id,
+                                  })
+                              : () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("Tính năng tải PDF đang phát triển")),
+                                  );
+                                },
                           icon: Icon(isPending ? Icons.payment_rounded : Icons.download_rounded, size: 18),
                           label: Text(isPending ? "Thanh toán" : "Tải về"),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: isPending ? context.colors.primary : const Color(0xFF2E7D32), // Green for completed
+                            backgroundColor: isPending ? context.colors.primary : const Color(0xFF2E7D32),
                             foregroundColor: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

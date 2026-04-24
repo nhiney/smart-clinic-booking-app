@@ -8,11 +8,15 @@ import 'package:go_router/go_router.dart';
 class PaymentResultScreen extends StatelessWidget {
   final PaymentStatus status;
   final double amount;
+  final String? transactionId;
+  final String? invoiceId;
 
   const PaymentResultScreen({
     super.key,
     required this.status,
     required this.amount,
+    this.transactionId,
+    this.invoiceId,
   });
 
   @override
@@ -34,6 +38,7 @@ class PaymentResultScreen extends StatelessWidget {
                 _getStatusTitle(status),
                 style: context.textStyles.heading2
                     .copyWith(fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
               ),
               SizedBox(height: context.spacing.m),
               Text(
@@ -42,6 +47,30 @@ class PaymentResultScreen extends StatelessWidget {
                 style: context.textStyles.body
                     .copyWith(color: context.colors.textSecondary),
               ),
+              if (transactionId != null) ...[
+                SizedBox(height: context.spacing.m),
+                Container(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: context.spacing.m, vertical: context.spacing.s),
+                  decoration: BoxDecoration(
+                    color: context.colors.background,
+                    borderRadius: context.radius.mRadius,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.receipt_outlined,
+                          size: 16, color: context.colors.textHint),
+                      SizedBox(width: context.spacing.s),
+                      Text(
+                        'Mã GD: ${transactionId!.substring(0, 12)}...',
+                        style: context.textStyles.caption
+                            .copyWith(color: context.colors.textHint),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               SizedBox(height: context.spacing.xxl),
               AppButton(
                 text: "Về trang chủ",
@@ -50,6 +79,33 @@ class PaymentResultScreen extends StatelessWidget {
                     ? AppColors.success
                     : (isPending ? AppColors.warning : context.colors.primary),
               ),
+              if (isSuccess) ...[
+                SizedBox(height: context.spacing.m),
+                OutlinedButton.icon(
+                  onPressed: () => context.go('/transactions'),
+                  icon: const Icon(Icons.history_rounded, size: 18),
+                  label: const Text("Xem lịch sử giao dịch"),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: context.colors.primary,
+                    side: BorderSide(color: context.colors.primary),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: context.radius.mRadius),
+                    minimumSize: const Size(double.infinity, 48),
+                  ),
+                ),
+                if (invoiceId != null) ...[
+                  SizedBox(height: context.spacing.m),
+                  TextButton.icon(
+                    onPressed: () =>
+                        context.push('/invoices/detail', extra: {'invoiceId': invoiceId}),
+                    icon: const Icon(Icons.receipt_long_rounded, size: 18),
+                    label: const Text("Xem hóa đơn"),
+                    style: TextButton.styleFrom(
+                      foregroundColor: context.colors.textSecondary,
+                    ),
+                  ),
+                ],
+              ],
               if (!isSuccess && !isPending) ...[
                 SizedBox(height: context.spacing.m),
                 TextButton(
