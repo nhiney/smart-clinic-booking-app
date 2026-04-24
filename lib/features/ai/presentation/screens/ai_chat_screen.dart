@@ -134,7 +134,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
           onTap: () => _sendMessage(suggestions[i]),
           child: Chip(
             label: Text(suggestions[i], style: const TextStyle(fontSize: 12)),
-            backgroundColor: context.colors.primary.withValues(alpha: 0.1),
+            backgroundColor: context.colors.primary.withOpacity(0.1),
             side: BorderSide.none,
           ),
         ),
@@ -209,7 +209,7 @@ class _MessageBubble extends StatelessWidget {
             bottomLeft: Radius.circular(isUser ? 20 : 4),
             bottomRight: Radius.circular(isUser ? 4 : 20),
           ),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 2))],
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 8, offset: const Offset(0, 2))],
         ),
         child: Text(
           message.content,
@@ -228,7 +228,7 @@ class _TypingIndicator extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8)]),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 8)]),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: List.generate(3, (i) => _Dot(delay: i * 200)),

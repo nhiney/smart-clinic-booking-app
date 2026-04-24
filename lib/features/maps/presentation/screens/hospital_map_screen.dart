@@ -400,7 +400,7 @@ class _HospitalMapScreenState extends ConsumerState<HospitalMapScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.error.withValues(alpha: 0.9),
+                        color: AppColors.error.withOpacity(0.9),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(

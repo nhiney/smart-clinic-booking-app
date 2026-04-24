@@ -56,7 +56,7 @@ class _PendingBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.warning.withValues(alpha: 0.15),
+        color: AppColors.warning.withOpacity(0.15),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -83,10 +83,10 @@ class _MedicationTile extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
       decoration: BoxDecoration(
-        color: reminder.isTaken ? AppColors.success.withValues(alpha: 0.05) : Colors.white,
+        color: reminder.isTaken ? AppColors.success.withOpacity(0.05) : Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: reminder.isTaken ? AppColors.success.withValues(alpha: 0.3) : AppColors.divider,
+          color: reminder.isTaken ? AppColors.success.withOpacity(0.3) : AppColors.divider,
         ),
         boxShadow: const [BoxShadow(color: AppColors.shadow, blurRadius: 6)],
       ),
@@ -98,7 +98,7 @@ class _MedicationTile extends StatelessWidget {
             height: 42,
             decoration: BoxDecoration(
               color: reminder.isTaken
-                  ? AppColors.success.withValues(alpha: 0.1)
+                  ? AppColors.success.withOpacity(0.1)
                   : AppColors.primarySurface,
               borderRadius: BorderRadius.circular(12),
             ),

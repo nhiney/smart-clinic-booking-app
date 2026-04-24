@@ -205,7 +205,7 @@ class _HospitalDetailScreenState extends ConsumerState<HospitalDetailScreen>
               leading: Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: CircleAvatar(
-                  backgroundColor: Colors.white.withValues(alpha: 0.9),
+                  backgroundColor: Colors.white.withOpacity(0.9),
                   child: IconButton(
                     icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
                     onPressed: () => context.pop(),
@@ -366,8 +366,8 @@ class _OpenBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: isOpen
-            ? AppColors.success.withValues(alpha: 0.12)
-            : AppColors.error.withValues(alpha: 0.12),
+            ? AppColors.success.withOpacity(0.12)
+            : AppColors.error.withOpacity(0.12),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -774,8 +774,8 @@ class _RoomChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
+        color: color.withOpacity(0.1),
+        border: Border.all(color: color.withOpacity(0.4)),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(

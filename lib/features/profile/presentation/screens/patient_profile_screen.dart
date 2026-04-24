@@ -255,7 +255,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -268,7 +268,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: iconColor.withValues(alpha: 0.1),
+                    color: iconColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(icon, color: iconColor, size: 18),
@@ -432,7 +432,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                     margin: const EdgeInsets.only(right: 8),
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
-                      color: selected ? _kPrimary.withValues(alpha: 0.08) : const Color(0xFFF8FAFC),
+                      color: selected ? _kPrimary.withOpacity(0.08) : const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: selected ? _kPrimary : const Color(0xFFE2E8F0),
@@ -487,7 +487,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                   width: 52,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: selected ? Colors.red.withValues(alpha: 0.1) : const Color(0xFFF8FAFC),
+                    color: selected ? Colors.red.withOpacity(0.1) : const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: selected ? Colors.red : const Color(0xFFE2E8F0),
@@ -651,7 +651,7 @@ class _HeroHeader extends StatelessWidget {
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 3),
                       boxShadow: [
-                        BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 12, offset: const Offset(0, 4)),
+                        BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 12, offset: const Offset(0, 4)),
                       ],
                     ),
                     child: ClipOval(
@@ -707,9 +707,9 @@ class _HeroHeader extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.red.withValues(alpha: 0.2),
+                    color: Colors.red.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.red.withValues(alpha: 0.5)),
+                    border: Border.all(color: Colors.red.withOpacity(0.5)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -761,7 +761,7 @@ class _MedicalManagementSection extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -774,7 +774,7 @@ class _MedicalManagementSection extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0D62A2).withValues(alpha: 0.1),
+                    color: const Color(0xFF0D62A2).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(Icons.medical_services_rounded, color: Color(0xFF0D62A2), size: 18),
@@ -834,9 +834,9 @@ class _MedNavTile extends StatelessWidget {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: item.color.withValues(alpha: 0.06),
+          color: item.color.withOpacity(0.06),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: item.color.withValues(alpha: 0.15)),
+          border: Border.all(color: item.color.withOpacity(0.15)),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -844,7 +844,7 @@ class _MedNavTile extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: item.color.withValues(alpha: 0.12),
+                color: item.color.withOpacity(0.12),
                 shape: BoxShape.circle,
               ),
               child: Icon(item.icon, color: item.color, size: 20),
@@ -860,7 +860,7 @@ class _MedNavTile extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
-                  color: item.color.withValues(alpha: 0.9),
+                  color: item.color.withOpacity(0.9),
                   height: 1.2,
                 ),
               ),

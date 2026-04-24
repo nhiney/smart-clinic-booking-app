@@ -350,13 +350,13 @@ class _ActionItem extends StatelessWidget {
               borderRadius: BorderRadius.circular(18),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF0D62A2).withValues(alpha: 0.06),
+                  color: const Color(0xFF0D62A2).withOpacity(0.06),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
               ],
               border: Border.all(
-                color: const Color(0xFF0D62A2).withValues(alpha: 0.08),
+                color: const Color(0xFF0D62A2).withOpacity(0.08),
                 width: 1,
               ),
             ),

@@ -5,12 +5,28 @@ class Hospital extends Equatable {
   final String name;
   final String address;
   final String logoUrl;
+  final String imageUrl;
+  final String description;
+  final String phone;
+  final String workingHours;
+  final List<String> specialties;
+  final double rating;
+  final bool isOpen;
+  final bool featured;
 
   const Hospital({
     required this.id,
     required this.name,
     this.address = '',
     this.logoUrl = '',
+    this.imageUrl = '',
+    this.description = '',
+    this.phone = '',
+    this.workingHours = '',
+    this.specialties = const [],
+    this.rating = 0.0,
+    this.isOpen = true,
+    this.featured = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -19,6 +35,14 @@ class Hospital extends Equatable {
       'name': name,
       'address': address,
       'logoUrl': logoUrl,
+      'imageUrl': imageUrl,
+      'description': description,
+      'phone': phone,
+      'workingHours': workingHours,
+      'specialties': specialties,
+      'rating': rating,
+      'isOpen': isOpen,
+      'featured': featured,
     };
   }
 
@@ -28,11 +52,32 @@ class Hospital extends Equatable {
       name: map['name'] ?? '',
       address: map['address'] ?? '',
       logoUrl: map['logoUrl'] ?? '',
+      imageUrl: map['imageUrl'] ?? '',
+      description: map['description'] ?? '',
+      phone: map['phone'] ?? '',
+      workingHours: map['workingHours'] ?? '',
+      specialties: (map['specialties'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      rating: (map['rating'] as num?)?.toDouble() ?? 0.0,
+      isOpen: map['isOpen'] ?? true,
+      featured: map['featured'] ?? false,
     );
   }
 
   @override
-  List<Object?> get props => [id, name, address, logoUrl];
+  List<Object?> get props => [
+        id,
+        name,
+        address,
+        logoUrl,
+        imageUrl,
+        description,
+        phone,
+        workingHours,
+        specialties,
+        rating,
+        isOpen,
+        featured,
+      ];
 }
 
 class Department extends Equatable {

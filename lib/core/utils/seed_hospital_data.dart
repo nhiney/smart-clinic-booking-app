@@ -9,14 +9,7 @@ Future<void> seedHospitalData() async {
   final db = FirebaseFirestore.instance;
   final col = db.collection('hospitals');
 
-  // Guard: skip hospital seeding if already done, but still run department seed below
-  final guard = await col.doc('hosp_fv').get();
-  final hospitalsAlreadySeeded = guard.exists;
-  if (hospitalsAlreadySeeded) {
-    debugPrint('[HospitalSeeder] Hospitals already seeded – skipping hospital batch.');
-  }
-
-  if (!hospitalsAlreadySeeded) {
+  // Removed guard to ensure updates are applied
   final now = Timestamp.now();
 
   final hospitals = <Map<String, dynamic>>[
@@ -35,9 +28,9 @@ Future<void> seedHospitalData() async {
       'isOpen': true,
       'featured': true,
       'imageUrl':
-          'https://images.unsplash.com/photo-1587350859728-117699f4a13d?auto=format&fit=crop&q=80&w=800',
+          'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Cho_Ray_Hospital.jpg/1024px-Cho_Ray_Hospital.jpg',
       'logoUrl':
-          'https://images.unsplash.com/photo-1587350859728-117699f4a13d?auto=format&fit=crop&q=80&w=200',
+          'https://bvchoray.vn/images/logo.png',
       'description':
           'Bệnh viện Chợ Rẫy là một trong những bệnh viện lớn nhất và lâu đời nhất tại TP.HCM, được thành lập năm 1900. Với hơn 1.800 giường bệnh và đội ngũ hàng nghìn y bác sĩ giàu kinh nghiệm, bệnh viện cung cấp dịch vụ khám chữa bệnh toàn diện từ điều trị nội trú đến các ca phẫu thuật phức tạp.',
       'phone': '028 3855 4137',
@@ -70,9 +63,9 @@ Future<void> seedHospitalData() async {
       'isOpen': true,
       'featured': true,
       'imageUrl':
-          'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=800',
+          'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/University_Medical_Center_Ho_Chi_Minh_City.jpg/1024px-University_Medical_Center_Ho_Chi_Minh_City.jpg',
       'logoUrl':
-          'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=200',
+          'https://bvdaihoc.com.vn/images/logo.png',
       'description':
           'Bệnh viện Đại học Y Dược TP.HCM là cơ sở khám chữa bệnh thực hành của Trường Đại học Y Dược TP.HCM, thành lập năm 1957. Bệnh viện kết hợp chặt chẽ giữa đào tạo và điều trị, quy tụ đội ngũ giáo sư, bác sĩ đầu ngành cùng thiết bị y tế hiện đại.',
       'phone': '028 3855 4269',
@@ -105,9 +98,9 @@ Future<void> seedHospitalData() async {
       'isOpen': true,
       'featured': false,
       'imageUrl':
-          'https://images.unsplash.com/photo-1576671081554-15d45958d9a4?auto=format&fit=crop&q=80&w=800',
+          'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Benh_vien_nhi_dong_1-ph%C6%B0%E1%BB%9Dng_10%2C_Qu%E1%BA%ADn_10%2C_TPHCM%2C_Vi%E1%BB%87t_Nam_-_panoramio.jpg/1024px-Benh_vien_nhi_dong_1-ph%C6%B0%E1%BB%9Dng_10%2C_Qu%E1%BA%ADn_10%2C_TPHCM%2C_Vi%E1%BB%87t_Nam_-_panoramio.jpg',
       'logoUrl':
-          'https://images.unsplash.com/photo-1576671081554-15d45958d9a4?auto=format&fit=crop&q=80&w=200',
+          'https://nhidong.org.vn/Uploads/Logo/logo.png',
       'description':
           'Bệnh viện Nhi Đồng 1 là bệnh viện nhi khoa lớn nhất khu vực phía Nam, được thành lập năm 1954. Bệnh viện chuyên về khám và điều trị các bệnh lý ở trẻ em từ sơ sinh đến 15 tuổi, với hơn 1.500 giường bệnh và trung tâm cấp cứu nhi khoa hoạt động 24/7.',
       'phone': '028 3927 1119',
@@ -140,9 +133,9 @@ Future<void> seedHospitalData() async {
       'isOpen': true,
       'featured': true,
       'imageUrl':
-          'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&q=80&w=800',
+          'https://tudu.com.vn/images/banner_home.jpg',
       'logoUrl':
-          'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&q=80&w=200',
+          'https://tudu.com.vn/images/logo.png',
       'description':
           'Bệnh viện Từ Dũ là bệnh viện sản phụ khoa hàng đầu Việt Nam, được thành lập năm 1942. Bệnh viện có trung tâm hỗ trợ sinh sản (IVF) hiện đại, tiếp nhận hơn 50.000 ca sinh mỗi năm. Đây là địa chỉ tin cậy cho mọi vấn đề sức khỏe phụ nữ và trẻ sơ sinh.',
       'phone': '028 3839 5117',
@@ -175,9 +168,9 @@ Future<void> seedHospitalData() async {
       'isOpen': true,
       'featured': false,
       'imageUrl':
-          'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?auto=format&fit=crop&q=80&w=800',
+          'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/B%E1%BB%87nh_vi%E1%BB%87n_Nh%C3%A2n_d%C3%A2n_115.jpg/1024px-B%E1%BB%87nh_vi%E1%BB%87n_Nh%C3%A2n_d%C3%A2n_115.jpg',
       'logoUrl':
-          'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?auto=format&fit=crop&q=80&w=200',
+          'https://benhvien115.com.vn/images/logo.png',
       'description':
           'Bệnh viện Nhân Dân 115 là bệnh viện tuyến cuối chuyên điều trị các bệnh lý thần kinh và đột quỵ. Với trung tâm cấp cứu đột quỵ hoạt động 24/7 và hệ thống máy MRI, CT tiên tiến, bệnh viện đạt nhiều kết quả xuất sắc trong can thiệp mạch não và thần kinh.',
       'phone': '028 3865 4319',
@@ -210,9 +203,9 @@ Future<void> seedHospitalData() async {
       'isOpen': true,
       'featured': true,
       'imageUrl':
-          'https://images.unsplash.com/photo-1538108168700-09ba0dd97c06?auto=format&fit=crop&q=80&w=800',
+          'https://www.fvhospital.com/wp-content/uploads/2018/03/fv-hospital-building.jpg',
       'logoUrl':
-          'https://images.unsplash.com/photo-1538108168700-09ba0dd97c06?auto=format&fit=crop&q=80&w=200',
+          'https://www.fvhospital.com/wp-content/themes/fvhospital/images/logo.png',
       'description':
           'Bệnh viện FV (Franco-Viet) là bệnh viện quốc tế đạt chuẩn Joint Commission International (JCI), được thành lập năm 2003. Với chuẩn mực Pháp, FV cung cấp dịch vụ y tế chất lượng cao, đội ngũ bác sĩ trong và ngoài nước, phục vụ cả bệnh nhân Việt Nam lẫn người nước ngoài.',
       'phone': '028 5411 3333',
@@ -248,9 +241,9 @@ Future<void> seedHospitalData() async {
       'isOpen': true,
       'featured': true,
       'imageUrl':
-          'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&q=80&w=800',
+          'https://tamanhhospital.vn/wp-content/uploads/2020/12/bv-tam-anh-hcm.jpg',
       'logoUrl':
-          'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&q=80&w=200',
+          'https://tamanhhospital.vn/wp-content/uploads/2020/11/logo-tam-anh.png',
       'description':
           'Bệnh viện Đa khoa Tâm Anh TP.HCM là bệnh viện tư nhân hàng đầu được thành lập năm 2020 với hơn 1.000 giường bệnh. Hệ thống được đầu tư thiết bị y tế hiện đại nhất Đông Nam Á, với đội ngũ chuyên gia đầu ngành, cam kết mang đến trải nghiệm y tế đẳng cấp cho người dân.',
       'phone': '028 7102 6789',
@@ -286,9 +279,9 @@ Future<void> seedHospitalData() async {
       'isOpen': true,
       'featured': false,
       'imageUrl':
-          'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&q=80&w=800',
+          'https://vinmec-static.s3.amazonaws.com/images/20210408_023805_130386_vinmec-central-park.max-800x800.jpg',
       'logoUrl':
-          'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&q=80&w=200',
+          'https://vinmec-static.s3.amazonaws.com/logo/vinmec-logo.png',
       'description':
           'Bệnh viện Vinmec Central Park là bệnh viện đa khoa quốc tế thuộc hệ thống Vinmec, đạt chuẩn JCI. Bệnh viện cung cấp dịch vụ y tế toàn diện với phong cách phục vụ khách sạn 5 sao, phòng bệnh riêng tư cao cấp và quy trình khám chữa bệnh chuyên nghiệp.',
       'phone': '028 3622 1166',
@@ -324,9 +317,9 @@ Future<void> seedHospitalData() async {
       'isOpen': true,
       'featured': false,
       'imageUrl':
-          'https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?auto=format&fit=crop&q=80&w=800',
+          'https://hoanmy.com/wp-content/uploads/2023/05/bv-hoan-my-sai-gon-1.jpg',
       'logoUrl':
-          'https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?auto=format&fit=crop&q=80&w=200',
+          'https://hoanmy.com/wp-content/uploads/2023/04/logo-hoan-my.png',
       'description':
           'Bệnh viện Hoàn Mỹ Sài Gòn là bệnh viện tư nhân đầu tiên tại TP.HCM được thành lập năm 1996, tiên phong trong mô hình bệnh viện tư nhân Việt Nam. Bệnh viện cung cấp đầy đủ dịch vụ khám chữa bệnh từ nội ngoại trú đến phẫu thuật và chăm sóc tích cực.',
       'phone': '028 3516 3777',
@@ -359,9 +352,9 @@ Future<void> seedHospitalData() async {
       'isOpen': true,
       'featured': false,
       'imageUrl':
-          'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=800',
+          'https://bvmathcm.vn/wp-content/uploads/2019/08/bv-mat-tphcm.jpg',
       'logoUrl':
-          'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=200',
+          'https://bvmathcm.vn/wp-content/uploads/2019/08/logo.png',
       'description':
           'Bệnh viện Mắt TP.HCM là bệnh viện chuyên khoa mắt hàng đầu tại TP.HCM, được thành lập năm 1975. Bệnh viện thực hiện hàng chục nghìn ca phẫu thuật mỗi năm, trong đó nổi bật là phẫu thuật LASIK, Phaco đục thủy tinh thể và điều trị bệnh võng mạc phức tạp.',
       'phone': '028 3930 5862',
@@ -394,9 +387,9 @@ Future<void> seedHospitalData() async {
       'isOpen': true,
       'featured': false,
       'imageUrl':
-          'https://images.unsplash.com/photo-1631217668868-e9d81c890614?auto=format&fit=crop&q=80&w=800',
+          'https://bvungbuou.vn/uploads/news/2021_04/bvub-cs2.jpg',
       'logoUrl':
-          'https://images.unsplash.com/photo-1631217668868-e9d81c890614?auto=format&fit=crop&q=80&w=200',
+          'https://bvungbuou.vn/uploads/logo.png',
       'description':
           'Bệnh viện Ung Bướu TP.HCM là bệnh viện chuyên khoa ung thư hàng đầu Việt Nam, được thành lập năm 1976. Với hệ thống máy xạ trị hiện đại, phòng thí nghiệm giải phẫu bệnh tiên tiến và đội ngũ chuyên gia ung bướu giàu kinh nghiệm, bệnh viện tiếp nhận hàng trăm nghìn lượt bệnh nhân mỗi năm.',
       'phone': '028 3841 4505',
@@ -429,9 +422,9 @@ Future<void> seedHospitalData() async {
       'isOpen': true,
       'featured': false,
       'imageUrl':
-          'https://images.unsplash.com/photo-1551601697-3b4e2aad3a96?auto=format&fit=crop&q=80&w=800',
+          'https://thongnhathospital.org.vn/uploads/slide/bv-thong-nhat.jpg',
       'logoUrl':
-          'https://images.unsplash.com/photo-1551601697-3b4e2aad3a96?auto=format&fit=crop&q=80&w=200',
+          'https://thongnhathospital.org.vn/uploads/logo.png',
       'description':
           'Bệnh viện Thống Nhất TP.HCM là bệnh viện thuộc Bộ Y tế, thành lập năm 1978, chuyên về nội khoa và các bệnh lý mãn tính. Bệnh viện phục vụ cán bộ trung cao cấp và người dân khu vực phía Nam, nổi bật với chuyên khoa tim mạch, nội tiết và phục hồi chức năng.',
       'phone': '028 3849 5008',
@@ -460,7 +453,6 @@ Future<void> seedHospitalData() async {
 
   await batch.commit();
   debugPrint('[HospitalSeeder] Seeded ${hospitals.length} hospitals successfully.');
-  } // end if (!hospitalsAlreadySeeded)
 
   await _seedDepartmentsAndRooms(db);
   await _seedDoctors(db);

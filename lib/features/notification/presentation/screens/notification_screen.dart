@@ -251,7 +251,7 @@ class _FilterDelegate extends SliverPersistentHeaderDelegate {
       decoration: BoxDecoration(
         color: AppColors.background,
         boxShadow: overlapsContent
-            ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 3))]
+            ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 3))]
             : null,
       ),
       child: ListView.separated(
@@ -278,7 +278,7 @@ class _FilterDelegate extends SliverPersistentHeaderDelegate {
                   width: 1.5,
                 ),
                 boxShadow: isOn
-                    ? [BoxShadow(color: col.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4))]
+                    ? [BoxShadow(color: col.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4))]
                     : [],
               ),
               child: Row(
@@ -453,8 +453,8 @@ class _NotifCard extends StatelessWidget {
             boxShadow: [
               BoxShadow(
                 color: isRead
-                    ? Colors.black.withValues(alpha: 0.05)
-                    : meta.color.withValues(alpha: 0.12),
+                    ? Colors.black.withOpacity(0.05)
+                    : meta.color.withOpacity(0.12),
                 blurRadius: 16,
                 spreadRadius: 0,
                 offset: const Offset(0, 4),
@@ -473,7 +473,7 @@ class _NotifCard extends StatelessWidget {
                       width: 4,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [meta.color, meta.color.withValues(alpha: 0.5)],
+                          colors: [meta.color, meta.color.withOpacity(0.5)],
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                         ),
@@ -535,7 +535,7 @@ class _NotifCard extends StatelessWidget {
                                     decoration: BoxDecoration(
                                       color: meta.color,
                                       shape: BoxShape.circle,
-                                      boxShadow: [BoxShadow(color: meta.color.withValues(alpha: 0.5), blurRadius: 4)],
+                                      boxShadow: [BoxShadow(color: meta.color.withOpacity(0.5), blurRadius: 4)],
                                     ),
                                   ),
                                 ],
@@ -671,7 +671,7 @@ class _CommsCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 16, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 16, offset: const Offset(0, 4)),
         ],
       ),
       child: ClipRRect(

@@ -83,7 +83,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
               decoration: BoxDecoration(
                 color: context.colors.surface,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                border: Border(bottom: BorderSide(color: context.colors.divider.withValues(alpha: 0.5))),
+                border: Border(bottom: BorderSide(color: context.colors.divider.withOpacity(0.5))),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -129,7 +129,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: context.colors.primary.withValues(alpha: 0.05),
+                      color: context.colors.primary.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -201,7 +201,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withOpacity(0.1),
         borderRadius: context.radius.xsRadius,
       ),
       child: Text(
