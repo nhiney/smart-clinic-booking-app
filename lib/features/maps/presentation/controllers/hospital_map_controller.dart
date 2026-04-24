@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/hospital_entity.dart';
+import '../../data/models/hospital_model.dart';
 import '../../domain/services/location_service.dart';
 import '../../domain/services/distance_util.dart';
 import "package:smart_clinic_booking/apps/shared/di/injection.dart";
@@ -162,4 +164,45 @@ final hospitalMapProvider = StateNotifierProvider<HospitalMapController, Hospita
     repository: getIt<MapsRepository>(),
     locationService: LocationService(),
   );
+});
+
+// Lightweight provider for the home screen featured hospitals section.
+// Queries Firestore directly to avoid the SQLite caching layer swallowing errors.
+// Returns hospitals marked as featured; falls back to top-rated if none marked.
+final featuredHospitalsProvider = FutureProvider<List<HospitalEntity>>((ref) async {
+  try {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('hospitals')
+        .get(const GetOptions(source: Source.serverAndCache));
+
+    debugPrint('[FeaturedHospitals] Fetched ${snapshot.docs.length} hospitals from Firestore');
+
+    if (snapshot.docs.isEmpty) {
+      debugPrint('[FeaturedHospitals] Collection is empty – seed may not have run yet');
+      return [];
+    }
+
+    final all = snapshot.docs.map((doc) {
+      final data = doc.data();
+      data['id'] = doc.id;
+      return HospitalModel.fromJson(data) as HospitalEntity;
+    }).toList();
+
+    final featured = all.where((h) => h.featured).toList()
+      ..sort((a, b) => b.rating.compareTo(a.rating));
+
+    if (featured.isNotEmpty) {
+      debugPrint('[FeaturedHospitals] Returning ${featured.length} featured hospitals');
+      return featured.take(6).toList();
+    }
+
+    // Fallback: top 6 by rating
+    final sorted = List<HospitalEntity>.from(all)
+      ..sort((a, b) => b.rating.compareTo(a.rating));
+    debugPrint('[FeaturedHospitals] No featured flag – returning top ${sorted.take(6).length} by rating');
+    return sorted.take(6).toList();
+  } catch (e) {
+    debugPrint('[FeaturedHospitals] Error: $e');
+    rethrow;
+  }
 });

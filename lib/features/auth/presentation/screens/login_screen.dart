@@ -106,11 +106,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (!mounted) return;
 
-    if (success) {
-      navigateByRole(context, authController.currentUser?.role ?? 'patient');
-    } else {
+    if (!success) {
       _showError(localizeAuthError(context, authController.errorMessage, fallback: l10n.error_login_failed));
     }
+    // GoRouter's refreshListenable handles role-based redirect when auth state changes.
   }
 
   bool _isValidPhoneFormat(String phone) {

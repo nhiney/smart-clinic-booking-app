@@ -9,6 +9,12 @@ class HospitalEntity extends Equatable {
   final List<String> specialties;
   final double rating;
   final bool isOpen;
+  final bool featured;
+
+  final String? imageUrl;
+  final String? description;
+  final String? phone;
+  final String? workingHours;
 
   const HospitalEntity({
     required this.id,
@@ -19,8 +25,27 @@ class HospitalEntity extends Equatable {
     required this.specialties,
     required this.rating,
     required this.isOpen,
+    this.featured = false,
+    this.imageUrl,
+    this.description,
+    this.phone,
+    this.workingHours,
   });
 
   @override
-  List<Object?> get props => [id, name, address, lat, lng, specialties, rating, isOpen];
+  List<Object?> get props => [
+        id,
+        name,
+        address,
+        lat,
+        lng,
+        specialties,
+        rating,
+        isOpen,
+        featured,
+        imageUrl,
+        description,
+        phone,
+        workingHours,
+      ];
 }

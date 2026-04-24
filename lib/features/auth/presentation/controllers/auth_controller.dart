@@ -12,6 +12,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import "package:smart_clinic_booking/apps/shared/di/injection.dart";
 import 'package:smart_clinic_booking/apps/shared/router/app_router.dart';
+import 'package:smart_clinic_booking/core/utils/seed_hospital_data.dart';
 
 final authControllerProvider = ChangeNotifierProvider<AuthController>((ref) {
   return AuthController(
@@ -113,16 +114,24 @@ class AuthController extends ChangeNotifier {
       notifyListeners();
 
       currentUser = await loginWithEmailUseCase(
-        credential, 
+        credential,
         password,
         requiredRole: requiredRole,
       );
       if (currentUser != null) {
         await authRepository.saveSession(currentUser!);
-        
+
         // Update router if it's a mock user
         if (currentUser!.id.startsWith('MOCK_USER_')) {
           AppRouter.mockAuthNotifier.value = true;
+        }
+
+        // Only admins have write permission to hospitals collection
+        final role = currentUser!.role;
+        if (role == 'admin' || role == 'super_admin') {
+          seedHospitalData().catchError((e) {
+            debugPrint('[AuthController] seedHospitalData error (non-fatal): $e');
+          });
         }
       }
 
