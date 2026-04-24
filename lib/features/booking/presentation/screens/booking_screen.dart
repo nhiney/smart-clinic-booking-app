@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-import "package:smart_clinic_booking/apps/shared/di/injection.dart";
+import "package:smart_clinic_booking/shared/di/injection.dart";
 import '../../../../core/theme/colors/app_colors.dart';
 import '../../../../core/theme/typography/app_text_styles.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';

@@ -54,6 +54,8 @@ import 'package:smart_clinic_booking/features/content/presentation/screens/healt
 import 'package:smart_clinic_booking/features/review/presentation/screens/doctor_review_screen.dart';
 import 'package:smart_clinic_booking/shared/widgets/under_development_screen.dart';
 
+import 'package:smart_clinic_booking/shared/screens/status_screens.dart';
+
 // No longer need placeholders as we implemented the real screens
 class KycUploadScreen extends StatelessWidget {
   const KycUploadScreen({super.key});
@@ -272,25 +274,11 @@ class AppRouter {
       ),
       GoRoute(
         path: '/pending-approval',
-        builder: (context, state) => const Scaffold(
-          body: Center(
-            child: Text(
-              'Your application is pending approval.',
-              style: TextStyle(color: Colors.orange, fontSize: 18),
-            ),
-          ),
-        ),
+        builder: (context, state) => const PendingApprovalScreen(),
       ),
       GoRoute(
         path: '/forbidden',
-        builder: (context, state) => const Scaffold(
-          body: Center(
-            child: Text(
-              '403 Forbidden - You lack permissions for this page.',
-              style: TextStyle(color: Colors.red, fontSize: 18),
-            ),
-          ),
-        ),
+        builder: (context, state) => const ForbiddenScreen(),
       ),
       GoRoute(
         path: '/doctor/dashboard',

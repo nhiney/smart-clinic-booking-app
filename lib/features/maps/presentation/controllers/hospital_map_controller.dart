@@ -6,7 +6,7 @@ import '../../domain/entities/hospital_entity.dart';
 import '../../data/models/hospital_model.dart';
 import '../../domain/services/location_service.dart';
 import '../../domain/services/distance_util.dart';
-import "package:smart_clinic_booking/apps/shared/di/injection.dart";
+import "package:smart_clinic_booking/shared/di/injection.dart";
 import '../../domain/repositories/maps_repository.dart';
 import 'dart:async';
 

@@ -17,8 +17,8 @@ import 'package:smart_clinic_booking/core/localization/app_language.dart';
 
 import 'package:smart_clinic_booking/core/config/firebase_options.dart';
 import 'package:smart_clinic_booking/core/theme/themes/app_theme.dart';
-import 'package:smart_clinic_booking/apps/shared/di/injection.dart';
-import 'package:smart_clinic_booking/apps/shared/router/app_router.dart';
+import 'package:smart_clinic_booking/shared/di/injection.dart';
+import 'package:smart_clinic_booking/shared/router/app_router.dart';
 import 'package:smart_clinic_booking/core/services/app_config_service.dart';
 import 'package:smart_clinic_booking/features/auth/presentation/bloc/sign_up_bloc.dart';
 

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
-import "package:smart_clinic_booking/apps/shared/di/injection.dart";
+import "package:smart_clinic_booking/shared/di/injection.dart";
 import '../../../../core/services/voice_service.dart';
 import '../../domain/services/intent_parser.dart';
 import '../../domain/services/ai_service.dart';

@@ -3,7 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import "package:smart_clinic_booking/apps/shared/di/injection.dart";
+import "package:smart_clinic_booking/shared/di/injection.dart";
 import '../../../../core/theme/colors/app_colors.dart';
 import '../../../../core/theme/typography/app_text_styles.dart';
 import '../../../../core/widgets/icare_logo.dart';
