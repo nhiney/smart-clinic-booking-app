@@ -169,6 +169,7 @@ class _PatientHomeScreenState extends ConsumerState<PatientHomeScreen>
 
     return Scaffold(
       backgroundColor: _P.surface,
+      extendBody: true,
       body: SafeArea(child: pages[_tabIndex]),
       bottomNavigationBar: _buildBottomNav(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
@@ -183,8 +184,8 @@ class _PatientHomeScreenState extends ConsumerState<PatientHomeScreen>
         return GestureDetector(
           onTap: () => context.push('/ai/voice-assistant'),
           child: Container(
-            width: 64,
-            height: 64,
+            width: 56,
+            height: 56,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: const LinearGradient(
@@ -196,17 +197,17 @@ class _PatientHomeScreenState extends ConsumerState<PatientHomeScreen>
                 BoxShadow(
                   color: const Color(0xFF7C3AED)
                       .withOpacity(0.35 * (1 - _fabPulse.value)),
-                  spreadRadius: 12 * _fabPulse.value,
-                  blurRadius: 20 * _fabPulse.value,
+                  spreadRadius: 10 * _fabPulse.value,
+                  blurRadius: 18 * _fabPulse.value,
                 ),
                 const BoxShadow(
-                  color: Color(0x557C3AED),
+                  color: Color(0x447C3AED),
                   blurRadius: 12,
-                  offset: Offset(0, 6),
+                  offset: Offset(0, 4),
                 ),
               ],
             ),
-            child: const Icon(Icons.mic_rounded, color: Colors.white, size: 30),
+            child: const Icon(Icons.mic_rounded, color: Colors.white, size: 26),
           ),
         );
       },
@@ -215,69 +216,78 @@ class _PatientHomeScreenState extends ConsumerState<PatientHomeScreen>
 
   Widget _buildBottomNav() {
     final lang = ref.watch(languageControllerProvider);
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 16,
-            offset: Offset(0, -4),
-          ),
-        ],
+    return BottomAppBar(
+      shape: const CircularNotchedRectangle(),
+      notchMargin: 8,
+      color: Colors.white,
+      elevation: 16,
+      child: SizedBox(
+        height: 60,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildNavItem(0, Icons.home_rounded, lang.localize('Trang chủ', 'Home')),
+            _buildNavItem(1, Icons.notifications_none_rounded, lang.localize('Thông báo', 'Notifications'), showBadge: _unreadCount > 0),
+            const SizedBox(width: 40), // Space for FAB
+            _buildNavItem(2, Icons.map_rounded, lang.localize('Bản đồ', 'Map')),
+            _buildNavItem(3, Icons.person_rounded, lang.localize('Cá nhân', 'Profile')),
+          ],
+        ),
       ),
-      child: BottomNavigationBar(
-        currentIndex: _tabIndex,
-        onTap: (i) => setState(() => _tabIndex = i),
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        selectedItemColor: _P.primary,
-        unselectedItemColor: _P.textHint,
-        selectedFontSize: 11,
-        unselectedFontSize: 11,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700),
-        items: [
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.home_rounded),
-            label: lang.localize('Trang chủ', 'Home'),
-          ),
-          BottomNavigationBarItem(
-            icon: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                const Icon(Icons.notifications_none_rounded),
-                if (_unreadCount > 0)
-                  Positioned(
-                    right: -4,
-                    top: -4,
-                    child: Container(
-                      padding: const EdgeInsets.all(3),
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        _unreadCount > 9 ? '9+' : '$_unreadCount',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 8,
-                          fontWeight: FontWeight.bold,
-                        ),
+    );
+  }
+
+  Widget _buildNavItem(int index, IconData icon, String label, {bool showBadge = false}) {
+    final isSelected = _tabIndex == index;
+    return InkWell(
+      onTap: () => setState(() => _tabIndex = index),
+      borderRadius: BorderRadius.circular(16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Icon(
+                icon,
+                color: isSelected ? _P.primary : _P.textHint,
+                size: 24,
+              ),
+              if (showBadge)
+                Positioned(
+                  right: -4,
+                  top: -4,
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 12,
+                      minHeight: 12,
+                    ),
+                    child: Text(
+                      _unreadCount > 9 ? '9+' : '$_unreadCount',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 7,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-              ],
+                ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              color: isSelected ? _P.primary : _P.textHint,
             ),
-            label: lang.localize('Thông báo', 'Notifications'),
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.map_rounded),
-            label: lang.localize('Bản đồ', 'Map'),
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.person_rounded),
-            label: lang.localize('Cá nhân', 'Profile'),
           ),
         ],
       ),
@@ -788,7 +798,7 @@ class _QuickActionsGrid extends ConsumerWidget {
     _Action(Icons.receipt_long_rounded, lang.localize('Hóa đơn', 'Invoices'), const Color(0xFF00BFA5), '/invoices', assetPath: 'assets/icons/quick_actions/invoice.png'),
     _Action(Icons.medication_rounded, lang.localize('Đơn thuốc', 'Prescription'), const Color(0xFFE91E63), '/prescriptions', assetPath: 'assets/icons/quick_actions/invoice.png'),
     _Action(Icons.folder_open_rounded, lang.localize('Hồ sơ', 'Records'), const Color(0xFFFF6D00), '/medical-records', assetPath: 'assets/icons/quick_actions/medical_records.png'),
-    _Action(Icons.local_hospital_rounded, lang.localize('Nhập viện', 'Admission'), const Color(0xFF5C6BC0), null, assetPath: 'assets/icons/quick_actions/inpatient_admission.png'),
+    _Action(Icons.local_hospital_rounded, lang.localize('Nhập viện', 'Admission'), const Color(0xFF5C6BC0), '/admission/history/me', assetPath: 'assets/icons/quick_actions/inpatient_admission.png'),
     _Action(Icons.payments_outlined, lang.localize('Thanh toán', 'Payment'), const Color(0xFF43A047), '/payment', assetPath: 'assets/icons/quick_actions/fee_payment.png'),
     _Action(Icons.poll_outlined, lang.localize('Khảo sát', 'Survey'), const Color(0xFFFB8C00), '/surveys', assetPath: 'assets/icons/quick_actions/lab_results.png'),
     _Action(Icons.headset_mic_rounded, lang.localize('Hỗ trợ', 'Support'), const Color(0xFF0288D1), '/support', assetPath: 'assets/icons/quick_actions/customer_support.png'),
@@ -829,7 +839,71 @@ class _QuickActionsGrid extends ConsumerWidget {
                   color: _P.primaryDark,
                 ),
               ),
-              const Icon(Icons.apps_rounded, color: _P.primary, size: 22),
+              GestureDetector(
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => Container(
+                      height: MediaQuery.of(context).size.height * 0.7,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                      ),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 12),
+                          Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade300,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Tất cả chức năng',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w800,
+                                    color: _P.primaryDark,
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.close_rounded),
+                                  onPressed: () => Navigator.pop(context),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Expanded(
+                            child: GridView.builder(
+                              padding: const EdgeInsets.all(24),
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 4,
+                                mainAxisSpacing: 24,
+                                crossAxisSpacing: 16,
+                                childAspectRatio: 0.8,
+                              ),
+                              itemCount: items.length,
+                              itemBuilder: (context, index) => _ActionCell(item: items[index]),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+                child: const Icon(Icons.apps_rounded, color: _P.primary, size: 22),
+              ),
             ],
           ),
           const SizedBox(height: 20),
@@ -840,7 +914,7 @@ class _QuickActionsGrid extends ConsumerWidget {
             mainAxisSpacing: 20,
             crossAxisSpacing: 12,
             childAspectRatio: 0.85,
-            children: items
+            children: items.take(8)
                 .map((item) => _ActionCell(item: item))
                 .toList(),
           ),
@@ -868,12 +942,10 @@ class _ActionCell extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         if (item.route != null) {
-          if (item.route == '/admission/registration/me') {
-            final uid = FirebaseAuth.instance.currentUser?.uid ?? 'me';
-            GoRouter.of(context).push('/admission/registration/$uid');
-          } else {
-            GoRouter.of(context).push(item.route!);
-          }
+          final uid = FirebaseAuth.instance.currentUser?.uid ?? 'me';
+          final route = item.route!
+              .replaceAll('/me', '/$uid');
+          GoRouter.of(context).push(route);
         } else {
           GoRouter.of(context).push('/under-development?title=${Uri.encodeComponent(item.label)}');
         }
@@ -1514,7 +1586,7 @@ class _HospitalCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Text(
-                          'Book',
+                          'Đặt lịch',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 11,

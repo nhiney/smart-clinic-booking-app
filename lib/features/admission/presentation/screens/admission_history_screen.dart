@@ -157,7 +157,7 @@ class _AdmissionCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  DateFormat('MMM dd, yyyy – HH:mm').format(admission.createdAt),
+                  DateFormat('dd/MM/yyyy – HH:mm').format(admission.createdAt),
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 const SizedBox(height: 4),
@@ -185,11 +185,11 @@ class _AdmissionCard extends ConsumerWidget {
 
   (Color, IconData, String) _statusStyle(String status) {
     return switch (status) {
-      'approved' => (Colors.blue, Icons.check_circle_outline, 'Approved'),
-      'admitted' => (Colors.green, Icons.local_hospital, 'Admitted'),
-      'discharged' => (Colors.purple, Icons.logout, 'Discharged'),
-      'rejected' => (Colors.red, Icons.cancel_outlined, 'Rejected'),
-      _ => (Colors.orange, Icons.schedule, 'Pending'),
+      'approved' => (Colors.blue, Icons.check_circle_outline, 'Đã duyệt'),
+      'admitted' => (Colors.green, Icons.local_hospital, 'Đang điều trị'),
+      'discharged' => (Colors.purple, Icons.logout, 'Đã xuất viện'),
+      'rejected' => (Colors.red, Icons.cancel_outlined, 'Từ chối'),
+      _ => (Colors.orange, Icons.schedule, 'Chờ xử lý'),
     };
   }
 }
@@ -298,10 +298,10 @@ class _StatusTimeline extends StatelessWidget {
   }
 
   String _label(String step) => switch (step) {
-        'pending' => 'Submitted',
-        'approved' => 'Approved',
-        'admitted' => 'Admitted',
-        'discharged' => 'Discharged',
+        'pending' => 'Gửi yêu cầu',
+        'approved' => 'Đã duyệt',
+        'admitted' => 'Nhập viện',
+        'discharged' => 'Xuất viện',
         _ => step,
       };
 }
@@ -314,9 +314,9 @@ class _WardInfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final parts = <String>[];
-    if (wardInfo['name'] != null) parts.add('Ward: ${wardInfo['name']}');
-    if (wardInfo['room'] != null) parts.add('Room: ${wardInfo['room']}');
-    if (wardInfo['bed'] != null) parts.add('Bed: ${wardInfo['bed']}');
+    if (wardInfo['name'] != null) parts.add('Khoa: ${wardInfo['name']}');
+    if (wardInfo['room'] != null) parts.add('Phòng: ${wardInfo['room']}');
+    if (wardInfo['bed'] != null) parts.add('Giường: ${wardInfo['bed']}');
 
     return Container(
       padding: const EdgeInsets.all(10),
@@ -343,22 +343,22 @@ class _DatesRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fmt = DateFormat('MMM dd, yyyy');
+    final fmt = DateFormat('dd/MM/yyyy');
     return Wrap(
       spacing: 8,
       runSpacing: 6,
       children: [
         if (admission.admissionDate != null)
           _DateChip(
-              label: 'Admission', date: fmt.format(admission.admissionDate!), color: Colors.blue),
+              label: 'Nhập viện', date: fmt.format(admission.admissionDate!), color: Colors.blue),
         if (admission.estimatedDischargeDate != null)
           _DateChip(
-              label: 'Est. Discharge',
+              label: 'Dự kiến xuất viện',
               date: fmt.format(admission.estimatedDischargeDate!),
               color: Colors.orange),
         if (admission.actualDischargeDate != null)
           _DateChip(
-              label: 'Discharged',
+              label: 'Đã xuất viện',
               date: fmt.format(admission.actualDischargeDate!),
               color: Colors.purple),
       ],
