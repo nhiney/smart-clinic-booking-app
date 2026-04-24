@@ -36,6 +36,8 @@ import 'package:smart_clinic_booking/features/auth/presentation/screens/qr_login
 import 'package:smart_clinic_booking/features/support/domain/entities/support_entities.dart';
 import 'package:smart_clinic_booking/features/booking/presentation/screens/booking_screen.dart';
 import 'package:smart_clinic_booking/features/checkin/presentation/screens/checkin_screen.dart';
+import 'package:smart_clinic_booking/features/checkin/presentation/screens/appointment_qr_screen.dart';
+import 'package:smart_clinic_booking/features/booking/domain/entities/booking_entity.dart';
 
 import 'package:smart_clinic_booking/features/payment/presentation/screens/payment_screen.dart';
 import 'package:smart_clinic_booking/features/payment/presentation/screens/payment_processing_screen.dart';
@@ -453,6 +455,13 @@ class AppRouter {
           return CheckInScreen(
             appointmentId: extras['appointmentId'] as String? ?? '',
           );
+        },
+      ),
+      GoRoute(
+        path: '/booking/qr',
+        builder: (context, state) {
+          final booking = state.extra as BookingEntity;
+          return AppointmentQrScreen(booking: booking);
         },
       ),
       GoRoute(

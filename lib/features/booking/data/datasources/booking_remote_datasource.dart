@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/booking_entity.dart';
 import '../models/booking_model.dart';
 import '../models/slot_model.dart';
+import 'package:smart_clinic_booking/core/services/qr_token_service.dart';
 
 /// Firestore persistence for `bookings`, `slots`, and `waitlist`.
 class BookingRemoteDatasource {
@@ -150,6 +151,24 @@ class BookingRemoteDatasource {
     final now = DateTime.now();
     final expiresAt = now.add(bookingTtlUnpaid);
 
+    // Parse timeSlot ("HH:mm") to compute appointment DateTime for QR window.
+    DateTime appointmentTime;
+    try {
+      final parts = timeSlot.split(':');
+      appointmentTime = DateTime(
+        date.year, date.month, date.day,
+        int.parse(parts[0]), int.parse(parts[1]),
+      );
+    } catch (_) {
+      appointmentTime = DateTime(date.year, date.month, date.day, 8);
+    }
+
+    final qr = QrTokenService.generate(
+      bookingId: bookingRef.id,
+      userId: userId,
+      appointmentTime: appointmentTime,
+    );
+
     await _firestore.runTransaction((transaction) async {
       final snap = await transaction.get(slotRef);
       if (!snap.exists) {
@@ -186,6 +205,9 @@ class BookingRemoteDatasource {
         'paymentStatus': MedicalBookingPaymentStatuses.unpaid,
         'createdAt': FieldValue.serverTimestamp(),
         'expiresAt': Timestamp.fromDate(expiresAt),
+        'checkInToken': qr.token,
+        'qrValidFrom': Timestamp.fromDate(qr.nbf),
+        'qrExpiresAt': Timestamp.fromDate(qr.exp),
       });
 
       transaction.set(
@@ -219,6 +241,9 @@ class BookingRemoteDatasource {
       paymentStatus: MedicalBookingPaymentStatuses.unpaid,
       createdAt: now,
       expiresAt: expiresAt,
+      checkInToken: qr.token,
+      qrValidFrom: qr.nbf,
+      qrExpiresAt: qr.exp,
     );
   }
 

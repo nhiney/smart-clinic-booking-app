@@ -17,6 +17,7 @@ import '../../domain/usecases/lock_slot_usecase.dart';
 import '../../domain/usecases/release_slot_lock_usecase.dart';
 import '../../domain/usecases/reschedule_booking_usecase.dart';
 import '../controllers/booking_controller.dart';
+import 'package:smart_clinic_booking/features/checkin/presentation/screens/appointment_qr_screen.dart';
 
 /// Đặt lịch khám — Firestore `bookings` + `slots` (khóa 5 phút, transaction khi xác nhận).
 import '../../../../core/widgets/branded_app_bar.dart';
@@ -272,26 +273,19 @@ class _BookingViewState extends State<_BookingView> {
                                 if (bc.flowState == BookingFlowState.success) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content: Text('Đặt lịch thành công!'),
+                                      content: Text('Đặt lịch thành công! Mã QR check-in đã được tạo.'),
                                       backgroundColor: AppColors.success,
                                     ),
                                   );
-                                  await showDialog<void>(
-                                    context: context,
-                                    builder: (ctx) => AlertDialog(
-                                      title: const Text('Hoàn tất'),
-                                      content: Text(
-                                        'Mã lịch: ${bc.lastBooking?.id ?? ''}\n'
-                                        'Hết hạn giữ chỗ: ${DateFormat('HH:mm dd/MM').format(bc.lastBooking?.expiresAt ?? DateTime.now())}',
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () => Navigator.of(ctx).pop(),
-                                          child: const Text('Đồng ý'),
+                                  if (context.mounted && bc.lastBooking != null) {
+                                    await Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => AppointmentQrScreen(
+                                          booking: bc.lastBooking!,
                                         ),
-                                      ],
-                                    ),
-                                  );
+                                      ),
+                                    );
+                                  }
                                   if (context.mounted) Navigator.of(context).pop();
                                 } else if (bc.flowState == BookingFlowState.error && bc.errorMessage != null) {
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -498,7 +492,7 @@ class _SlotSelectionGrid extends StatelessWidget {
                     color: lockedSelf
                         ? AppColors.primary
                         : (booked || lockedOther)
-                            ? AppColors.divider.withValues(alpha: 0.35)
+                            ? AppColors.divider.withOpacity(0.35)
                             : AppColors.cardBackground,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
