@@ -235,7 +235,7 @@ class _HomeDashboardState extends State<_HomeDashboard> {
                           if (state.medicationReminders.isNotEmpty) ...[
                             MedicationReminderSection(
                               reminders: state.medicationReminders,
-                              onMarkAsTaken: (id) {
+                              onMarkTaken: (id) {
                                 context.read<HomeBlocHandler>().add(HomeMedicationMarkedTaken(reminderId: id));
                               },
                             ),
@@ -255,6 +255,7 @@ class _HomeDashboardState extends State<_HomeDashboard> {
                           // Health News
                           HealthNewsFeed(
                             articles: state.healthNews,
+                            onArticleTap: (_) {},
                           ),
                           const SizedBox(height: 32),
 
@@ -265,7 +266,7 @@ class _HomeDashboardState extends State<_HomeDashboard> {
                           const MedicalFacilitiesSection(),
                           const SizedBox(height: 32),
 
-                          const ConsultingDoctorsSection(),
+                          ConsultingDoctorsSection(doctors: state.recommendedDoctors),
                           const SizedBox(height: 32),
 
                           const FeaturedHospitalsSection(),

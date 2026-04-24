@@ -6,14 +6,15 @@ class CheckInModel extends CheckInResultEntity {
     required super.appointmentId,
     required super.patientName,
     required super.patientPhone,
+    required super.doctorName,
+    required super.queueNumber,
     required super.scheduledTime,
     required super.checkInTime,
   });
 
   factory CheckInModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    
-    // Handle potential nulls or Timestamp conversions
+
     final scheduledTs = data['scheduledTime'] as Timestamp?;
     final checkInTs = data['checkInTime'] as Timestamp?;
 
@@ -21,6 +22,8 @@ class CheckInModel extends CheckInResultEntity {
       appointmentId: doc.id,
       patientName: data['patientName'] ?? 'N/A',
       patientPhone: data['patientPhone'] ?? 'N/A',
+      doctorName: data['doctorName'] ?? 'N/A',
+      queueNumber: data['queueNumber']?.toString() ?? 'N/A',
       scheduledTime: scheduledTs?.toDate() ?? DateTime.now(),
       checkInTime: checkInTs?.toDate() ?? DateTime.now(),
     );

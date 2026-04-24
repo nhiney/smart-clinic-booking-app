@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/theme/colors/app_colors.dart';
+import '../../../../core/extensions/context_extension.dart';
 import '../../../doctor/domain/entities/doctor_entity.dart';
 
 class RecommendedDoctorsSection extends StatelessWidget {
@@ -21,24 +21,19 @@ class RecommendedDoctorsSection extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Bác sĩ chuyên gia nổi bật',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
+                  style: context.textStyles.heading3,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               TextButton(
                 onPressed: () => context.push('/doctor/search'),
-                child: const Text(
+                child: Text(
                   'Xem tất cả',
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
+                  style: context.textStyles.bodyBold.copyWith(
+                    color: context.colors.primary,
                   ),
                 ),
               ),
@@ -79,11 +74,11 @@ class _DoctorCard extends StatelessWidget {
         width: 280,
         margin: const EdgeInsets.only(right: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          color: context.colors.surface,
+          borderRadius: context.radius.mRadius,
           boxShadow: [
             BoxShadow(
-              color: AppColors.shadow.withOpacity(0.06),
+              color: context.colors.shadow,
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -100,7 +95,7 @@ class _DoctorCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: context.colors.primary.withOpacity(0.1),
                     width: 3,
                   ),
                 ),
@@ -113,9 +108,9 @@ class _DoctorCard extends StatelessWidget {
                             padding: EdgeInsets.all(20),
                             child: CircularProgressIndicator(strokeWidth: 2),
                           ),
-                          errorWidget: (_, __, ___) => _buildAvatarError(),
+                          errorWidget: (_, __, ___) => _buildAvatarError(context),
                         )
-                      : _buildAvatarError(),
+                      : _buildAvatarError(context),
                 ),
               ),
               const SizedBox(width: 16),
@@ -127,10 +122,8 @@ class _DoctorCard extends StatelessWidget {
                   children: [
                     Text(
                       doctor.name.isNotEmpty ? doctor.name : 'Bác sĩ',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                      style: context.textStyles.bodyBold.copyWith(
+                        color: context.colors.textPrimary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -138,9 +131,8 @@ class _DoctorCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       doctor.specialty.isNotEmpty ? doctor.specialty : '—',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppColors.primary,
+                      style: context.textStyles.caption.copyWith(
+                        color: context.colors.primary,
                         fontWeight: FontWeight.w600,
                       ),
                       maxLines: 1,
@@ -156,19 +148,18 @@ class _DoctorCard extends StatelessWidget {
                           doctor.rating > 0
                               ? doctor.rating.toStringAsFixed(1)
                               : '—',
-                          style: const TextStyle(
-                            fontSize: 12,
+                          style: context.textStyles.bodySmall.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: AppColors.textSecondary,
+                            color: context.colors.textSecondary,
                           ),
                         ),
                         if (doctor.totalReviews > 0) ...[
                           const SizedBox(width: 4),
                           Text(
                             '(${doctor.totalReviews})',
-                            style: const TextStyle(
+                            style: context.textStyles.caption.copyWith(
                               fontSize: 10,
-                              color: AppColors.textHint,
+                              color: context.colors.textHint,
                             ),
                           ),
                         ],
@@ -181,11 +172,11 @@ class _DoctorCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 6),
                         decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(12),
+                          color: context.colors.primary,
+                          borderRadius: context.radius.sRadius,
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.primary.withOpacity(0.3),
+                              color: context.colors.primary.withOpacity(0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -211,12 +202,12 @@ class _DoctorCard extends StatelessWidget {
     );
   }
 
-  Widget _buildAvatarError() {
+  Widget _buildAvatarError(BuildContext context) {
     return Container(
-      color: AppColors.primarySurface,
-      child: const Icon(
+      color: context.colors.primary.withOpacity(0.1),
+      child: Icon(
         Icons.person,
-        color: AppColors.primary,
+        color: context.colors.primary,
         size: 32,
       ),
     );

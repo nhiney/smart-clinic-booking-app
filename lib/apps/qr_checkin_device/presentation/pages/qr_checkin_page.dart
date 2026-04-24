@@ -109,7 +109,7 @@ class _QRCheckInPageState extends ConsumerState<QRCheckInPage> {
               state.result.queueNumber,
               style: const TextStyle(
                 fontSize: 100, 
-                fontWeight: FontWeight.black, 
+                fontWeight: FontWeight.w900,
                 color: Colors.blue
               ),
             ),

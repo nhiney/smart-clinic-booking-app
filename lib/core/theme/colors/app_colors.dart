@@ -207,6 +207,20 @@ class AppColors {
   static const Color chipSuccess   = green50;
   static const Color chipWarning   = amber50;
 
+  // --- Card / Shadow ---
+  static const Color cardBackground = Colors.white;
+  static const Color shadow         = black8;
+
+  // --- Shimmer (loading skeleton) ---
+  static const Color shimmerBase      = gray100;
+  static const Color shimmerHighlight = gray50;
+
+  // --- Appointment Status ---
+  static const Color statusPending   = amber600;
+  static const Color statusConfirmed = brand;
+  static const Color statusCompleted = green600;
+  static const Color statusCancelled = red600;
+
   // --- Medical Category Colors (dùng cho icon từng chuyên khoa) ---
   static const Color catCardiology   = Color(0xFFE53E3E);  // tim mạch - đỏ
   static const Color catNeurology    = Color(0xFF805AD5);  // thần kinh - tím
@@ -272,4 +286,8 @@ class AppColors {
 
   // Giữ alias cũ để tương thích ngược với code đang có
   static const LinearGradient mainGradient = primaryGradient;
+  
+  // Legacy Aliases — Fix build errors in existing screens
+  static const Color textOnPrimary = Colors.white;
 }
+

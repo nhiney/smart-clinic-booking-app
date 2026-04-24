@@ -4,6 +4,8 @@ class CheckInResultEntity extends Equatable {
   final String appointmentId;
   final String patientName;
   final String patientPhone;
+  final String doctorName;
+  final String queueNumber;
   final DateTime scheduledTime;
   final DateTime checkInTime;
 
@@ -11,6 +13,8 @@ class CheckInResultEntity extends Equatable {
     required this.appointmentId,
     required this.patientName,
     required this.patientPhone,
+    required this.doctorName,
+    required this.queueNumber,
     required this.scheduledTime,
     required this.checkInTime,
   });
@@ -20,6 +24,8 @@ class CheckInResultEntity extends Equatable {
     appointmentId,
     patientName,
     patientPhone,
+    doctorName,
+    queueNumber,
     scheduledTime,
     checkInTime,
   ];

@@ -50,7 +50,7 @@ class _ICareKioskBotAppState extends ConsumerState<ICareKioskBotApp> {
 
   @override
   void dispose() {
-    _idleManager.stop();
+    _idleManager.dispose();
     super.dispose();
   }
 

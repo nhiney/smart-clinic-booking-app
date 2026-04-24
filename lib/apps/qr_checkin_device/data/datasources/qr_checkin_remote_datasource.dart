@@ -71,10 +71,12 @@ class QRCheckInRemoteDataSourceImpl implements IQRCheckInRemoteDataSource {
       final doctorName = data['doctorName'] ?? 'Bác sĩ';
 
       return CheckInResultModel(
-        bookingId: bookingId,
+        appointmentId: bookingId,
         patientName: patientName,
+        patientPhone: data['patientPhone']?.toString() ?? '',
         doctorName: doctorName,
         queueNumber: nextQueueNumber.toString(),
+        scheduledTime: appointmentTime,
         checkInTime: now,
       );
     });

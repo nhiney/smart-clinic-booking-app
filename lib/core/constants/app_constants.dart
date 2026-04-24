@@ -1,4 +1,4 @@
-import '../../app/di/injection.dart';
+import '../../shared/di/injection.dart';
 import '../services/app_config_service.dart';
 
 class AppConstants {
