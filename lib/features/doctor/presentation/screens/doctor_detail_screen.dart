@@ -269,22 +269,60 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                   Text("Lịch làm việc", style: AppTextStyles.heading3),
                   const SizedBox(height: 8),
                   _buildSchedule(),
-                  const SizedBox(height: 32),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        context.push(
-                          '/patient/create-appointment',
-                          extra: {'doctor': _doctor},
-                        );
-                      },
-                      icon: const Icon(Icons.calendar_today),
-                      label: const Text("Đặt lịch khám"),
-                    ),
+                  const SizedBox(height: 24),
+                  // ── Đánh giá bác sĩ ─────────────────────────────────
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Đánh giá bệnh nhân', style: AppTextStyles.heading3),
+                      TextButton(
+                        onPressed: () => context.push(
+                          '/doctor/review/${_doctor.id}',
+                          extra: _doctor.name,
+                        ),
+                        child: const Text('Xem tất cả'),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
+                  _buildRatingSummary(),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => context.push(
+                            '/doctor/review/${_doctor.id}',
+                            extra: _doctor.name,
+                          ),
+                          icon: const Icon(Icons.star_outline_rounded, size: 18),
+                          label: const Text('Viết đánh giá'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            side: const BorderSide(color: AppColors.primary),
+                            foregroundColor: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => context.push(
+                            '/patient/create-appointment',
+                            extra: {'doctor': _doctor},
+                          ),
+                          icon: const Icon(Icons.calendar_today, size: 18),
+                          label: const Text('Đặt lịch khám'),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
@@ -296,6 +334,63 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
 
   String get _titleName =>
       _doctor.name.isNotEmpty ? _doctor.name : 'Bác sĩ';
+
+  Widget _buildRatingSummary() {
+    final rating = _doctor.rating;
+    final total = _doctor.totalReviews;
+    if (rating <= 0 && total <= 0) {
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.cardBackground,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.star_border_rounded, color: Colors.amber, size: 20),
+            SizedBox(width: 10),
+            Text('Chưa có đánh giá nào', style: TextStyle(color: AppColors.textSecondary)),
+          ],
+        ),
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: const [BoxShadow(color: AppColors.shadow, blurRadius: 8)],
+      ),
+      child: Row(
+        children: [
+          Text(
+            rating.toStringAsFixed(1),
+            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: AppColors.primary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: List.generate(5, (i) => Icon(
+                    i < rating.round() ? Icons.star_rounded : Icons.star_border_rounded,
+                    size: 18,
+                    color: Colors.amber,
+                  )),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '$total lượt đánh giá',
+                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildAvatar() {
     final url = _doctor.imageUrl;

@@ -48,6 +48,8 @@ import 'package:smart_clinic_booking/features/appointment/presentation/screens/a
 import 'package:smart_clinic_booking/features/medical_record/presentation/screens/prescription_screen.dart';
 import 'package:smart_clinic_booking/features/home/presentation/screens/services_screen.dart';
 import 'package:smart_clinic_booking/features/medication/presentation/screens/medication_screen.dart';
+import 'package:smart_clinic_booking/features/content/presentation/screens/health_library_screen.dart';
+import 'package:smart_clinic_booking/features/review/presentation/screens/doctor_review_screen.dart';
 import 'package:smart_clinic_booking/shared/widgets/under_development_screen.dart';
 
 // No longer need placeholders as we implemented the real screens
@@ -456,6 +458,17 @@ class AppRouter {
       GoRoute(
         path: '/services',
         builder: (context, state) => const ServicesScreen(),
+      ),
+      GoRoute(
+        path: '/health-library',
+        builder: (context, state) => const HealthLibraryScreen(),
+      ),
+      GoRoute(
+        path: '/doctor/review/:doctorId',
+        builder: (context, state) => DoctorReviewScreen(
+          doctorId: state.pathParameters['doctorId']!,
+          doctorName: state.extra as String? ?? 'Bác sĩ',
+        ),
       ),
       GoRoute(
         path: '/under-development',
