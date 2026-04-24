@@ -4,6 +4,7 @@ import '../../domain/repositories/facility_repository.dart';
 import '../../../doctor/domain/entities/doctor_entity.dart';
 import '../../../doctor/domain/repositories/doctor_repository.dart';
 import '../../../../core/services/seed_data_service.dart';
+import '../../../../core/utils/seed_hospital_data.dart';
 
 import '../../../auth/data/datasources/auth_remote_datasource.dart';
 import '../../../auth/data/models/user_model.dart';
@@ -173,9 +174,27 @@ class AdminController extends ChangeNotifier {
       isLoading = true;
       notifyListeners();
       await SeedDataService().seedInitialData();
+      await seedHospitalData();
       await fetchHospitals();
     } catch (e) {
       errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<String> seedDepartmentsAndDoctors() async {
+    try {
+      isLoading = true;
+      errorMessage = null;
+      notifyListeners();
+      final result = await forceSeedDepartmentsAndDoctors();
+      await fetchHospitals();
+      return result;
+    } catch (e) {
+      errorMessage = e.toString();
+      return 'Lỗi: ${e.toString()}';
     } finally {
       isLoading = false;
       notifyListeners();

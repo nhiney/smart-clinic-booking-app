@@ -76,6 +76,25 @@ class AuthRemoteDatasource {
         await _firestore.collection('users').doc(user.uid).set(userData);
       }
 
+      // Auto-recreate Firestore profile for seeded staff accounts whose document
+      // may have been deleted or was never written under the real Firebase UID.
+      const staffEmails = ['admin@icare.com', 'annv.choray@icare.com'];
+      if (userData == null && staffEmails.contains(email)) {
+        final isAdmin = email == 'admin@icare.com';
+        // Use Timestamp.now() (not FieldValue.serverTimestamp) so the same map
+        // can be safely passed to UserModel.fromJson which casts created_at to Timestamp.
+        final profileData = {
+          'email': email,
+          'role': isAdmin ? 'admin' : 'doctor',
+          'name': isAdmin ? 'Hệ thống Quản trị' : 'BS. Nguyễn Văn An',
+          'status': 'active',
+          'created_at': Timestamp.now(),
+        };
+        await _firestore.collection('users').doc(user.uid).set(profileData);
+        userData = profileData;
+        debugPrint('[AUTH] Recreated missing Firestore profile for $email → ${user.uid}');
+      }
+
       if (userData == null) {
         await _firebaseAuth.signOut();
         throw Exception('Không tìm thấy hồ sơ tài khoản.');

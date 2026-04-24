@@ -26,6 +26,8 @@ import 'package:smart_clinic_booking/features/support/presentation/screens/ticke
 import 'package:smart_clinic_booking/features/content/presentation/screens/news_screen.dart';
 import 'package:smart_clinic_booking/features/content/presentation/screens/content_screens.dart';
 import 'package:smart_clinic_booking/features/maps/presentation/screens/hospital_map_screen.dart';
+import 'package:smart_clinic_booking/features/maps/presentation/screens/hospital_detail_screen.dart';
+import 'package:smart_clinic_booking/features/maps/domain/entities/hospital_entity.dart';
 import 'package:smart_clinic_booking/features/auth/presentation/screens/otp_verification_screen.dart';
 import 'package:smart_clinic_booking/features/auth/presentation/screens/create_password_screen.dart';
 import 'package:smart_clinic_booking/features/auth/presentation/screens/account_qr_screen.dart';
@@ -151,7 +153,7 @@ class AppRouter {
                                      path == '/create-password' || 
                                      path == '/account-qr';
 
-      if ((isPublicRoute || path == '/pending-approval') && !isRegistrationFlow && path != '/' && path != '/login' && path != '/qr-login') {
+      if ((isPublicRoute || path == '/pending-approval') && !isRegistrationFlow && path != '/' && path != '/qr-login') {
          debugPrint('[ROUTER] Redirecting authenticated user away from public route to home/dashboard');
          if (role == 'doctor') return '/doctor/dashboard';
          if (role == 'admin' || role == 'super_admin' || role == 'hospital_manager') return '/admin/dashboard';
@@ -334,6 +336,17 @@ class AppRouter {
       GoRoute(
         path: '/maps',
         builder: (context, state) => const HospitalMapScreen(),
+      ),
+      GoRoute(
+        path: '/hospital/detail/:id',
+        builder: (context, state) {
+          final hospitalId = state.pathParameters['id']!;
+          final hospital = state.extra as HospitalEntity?;
+          return HospitalDetailScreen(
+            hospitalId: hospitalId,
+            hospital: hospital,
+          );
+        },
       ),
       GoRoute(
         path: '/payment',

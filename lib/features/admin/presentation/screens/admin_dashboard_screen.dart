@@ -246,13 +246,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AddDoctorScreen())),
                     ),
                     AdminQuickActionButton(
-                      label: 'Dữ liệu y tế',
-                      icon: Icons.auto_fix_high_rounded,
+                      label: 'Khởi tạo Khoa & BS',
+                      icon: Icons.account_tree_rounded,
                       onTap: () async {
-                        await controller.seedData();
+                        final result = await controller.seedDepartmentsAndDoctors();
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Đã cập nhật dữ liệu Bệnh viện & Khoa mẫu!')),
+                            SnackBar(
+                              content: Text(result),
+                              backgroundColor: result.startsWith('Lỗi') ? Colors.red : Colors.green,
+                              duration: const Duration(seconds: 4),
+                            ),
                           );
                         }
                       },

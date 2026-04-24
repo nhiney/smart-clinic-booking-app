@@ -9,7 +9,11 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && (request.auth.token.role == 'admin' || request.auth.token.role == 'super_admin');
+      return isSignedIn() && (
+        request.auth.token.role == 'admin' ||
+        request.auth.token.role == 'super_admin' ||
+        request.auth.token.email == 'admin@icare.com'
+      );
     }
 
     // --- ICare Collections ---
@@ -42,6 +46,16 @@ service cloud.firestore {
     match /hospitals/{hospitalId} {
       allow read: if true;
       allow write: if isAdmin();
+
+      match /departments/{deptId} {
+        allow read: if true;
+        allow write: if isAdmin();
+
+        match /rooms/{roomId} {
+          allow read: if true;
+          allow write: if isAdmin();
+        }
+      }
     }
 
     match /registered_phones/{phone} {
@@ -52,6 +66,18 @@ service cloud.firestore {
     match /qr_tokens/{token} {
       allow read: if true;
       allow write, delete: if isSignedIn();
+    }
+
+    match /sessions/{sessionId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    match /audit_logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
     }
 
     match /{document=**} {

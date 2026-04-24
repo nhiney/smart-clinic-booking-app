@@ -15,6 +15,8 @@ import 'package:smart_clinic_booking/core/localization/app_language.dart';
 import 'package:smart_clinic_booking/core/widgets/icare_logo.dart';
 import 'package:smart_clinic_booking/features/content/presentation/controllers/content_controller.dart';
 import 'package:smart_clinic_booking/features/home/domain/entities/health_article.dart';
+import 'package:smart_clinic_booking/features/maps/presentation/controllers/hospital_map_controller.dart';
+import 'package:smart_clinic_booking/features/maps/domain/entities/hospital_entity.dart';
 import 'package:intl/intl.dart';
 
 // ── Brand palette ────────────────────────────────────────────────────────────
@@ -1235,33 +1237,13 @@ class _StatCard extends StatelessWidget {
 
 // ── Featured hospitals ────────────────────────────────────────────────────────
 class _FeaturedHospitals extends ConsumerWidget {
-  static const _hospitals = [
-    _HospitalData(
-      name: 'ĐH Y Dược TPHCM',
-      address: 'Quận 5, TP.HCM',
-      rating: '4.8',
-      imageUrl:
-          'https://images.unsplash.com/photo-1587350859728-117699f4a13d?auto=format&fit=crop&q=80&w=400',
-    ),
-    _HospitalData(
-      name: 'Bệnh viện Hoàn Mỹ',
-      address: 'Phú Nhuận, TP.HCM',
-      rating: '4.7',
-      imageUrl:
-          'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=400',
-    ),
-    _HospitalData(
-      name: 'Bệnh viện Chợ Rẫy',
-      address: 'Quận 5, TP.HCM',
-      rating: '4.6',
-      imageUrl:
-          'https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&q=80&w=400',
-    ),
-  ];
+  const _FeaturedHospitals();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final lang = ref.watch(languageControllerProvider);
+    final hospitalsAsync = ref.watch(featuredHospitalsProvider);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 24, 0, 0),
       child: Column(
@@ -1295,15 +1277,80 @@ class _FeaturedHospitals extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 14),
-          SizedBox(
-            height: 220,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              itemCount: _hospitals.length,
-              itemBuilder: (context, i) =>
-                  _HospitalCard(data: _hospitals[i]),
+          hospitalsAsync.when(
+            loading: () => const SizedBox(
+              height: 220,
+              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
             ),
+            error: (error, _) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Lỗi tải bệnh viện: $error',
+                        style: const TextStyle(fontSize: 12, color: _P.textSecondary),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => ref.refresh(featuredHospitalsProvider),
+                      child: const Icon(Icons.refresh_rounded, color: _P.primary, size: 20),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            data: (hospitals) {
+              if (hospitals.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: _P.surface,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.local_hospital_outlined,
+                            color: _P.primary.withOpacity(0.5), size: 20),
+                        const SizedBox(width: 10),
+                        Text(
+                          lang.localize(
+                            'Chưa có dữ liệu bệnh viện',
+                            'No hospital data yet',
+                          ),
+                          style: const TextStyle(color: _P.textSecondary, fontSize: 13),
+                        ),
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: () => ref.refresh(featuredHospitalsProvider),
+                          child: const Icon(Icons.refresh_rounded, color: _P.primary, size: 20),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+              return SizedBox(
+                height: 220,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: hospitals.length,
+                  itemBuilder: (context, i) => _HospitalCard(data: hospitals[i]),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -1311,27 +1358,16 @@ class _FeaturedHospitals extends ConsumerWidget {
   }
 }
 
-class _HospitalData {
-  final String name;
-  final String address;
-  final String rating;
-  final String imageUrl;
-  const _HospitalData({
-    required this.name,
-    required this.address,
-    required this.rating,
-    required this.imageUrl,
-  });
-}
-
 class _HospitalCard extends StatelessWidget {
-  final _HospitalData data;
+  final HospitalEntity data;
   const _HospitalCard({required this.data});
 
   @override
   Widget build(BuildContext context) {
+    final defaultImage = 'https://images.unsplash.com/photo-1587350859728-117699f4a13d?auto=format&fit=crop&q=80&w=400';
+    
     return GestureDetector(
-      onTap: () => context.push('/under-development?title=${Uri.encodeComponent(data.name)}'),
+      onTap: () => context.push('/hospital/detail/${data.id}', extra: data),
       child: Container(
         width: 200,
         margin: const EdgeInsets.only(right: 16),
@@ -1353,7 +1389,7 @@ class _HospitalCard extends StatelessWidget {
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(20)),
               child: CachedNetworkImage(
-                imageUrl: data.imageUrl,
+                imageUrl: data.imageUrl?.isNotEmpty == true ? data.imageUrl! : defaultImage,
                 height: 120,
                 width: double.infinity,
                 fit: BoxFit.cover,
@@ -1417,7 +1453,7 @@ class _HospitalCard extends StatelessWidget {
                               size: 14, color: _P.gold),
                           const SizedBox(width: 3),
                           Text(
-                            data.rating,
+                            data.rating.toStringAsFixed(1),
                             style: const TextStyle(
                               fontWeight: FontWeight.w700,
                               fontSize: 12,

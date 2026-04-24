@@ -10,6 +10,11 @@ class HospitalModel extends HospitalEntity {
     required super.specialties,
     required super.rating,
     required super.isOpen,
+    super.featured = false,
+    super.imageUrl,
+    super.description,
+    super.phone,
+    super.workingHours,
   });
 
   factory HospitalModel.fromJson(Map<String, dynamic> json) {
@@ -22,6 +27,11 @@ class HospitalModel extends HospitalEntity {
       specialties: (json['specialties'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
       isOpen: json['isOpen'] as bool? ?? false,
+      featured: json['featured'] as bool? ?? false,
+      imageUrl: json['imageUrl'] as String?,
+      description: json['description'] as String?,
+      phone: json['phone'] as String?,
+      workingHours: json['workingHours'] as String?,
     );
   }
 
@@ -35,6 +45,11 @@ class HospitalModel extends HospitalEntity {
       'specialties': specialties,
       'rating': rating,
       'isOpen': isOpen,
+      'featured': featured,
+      if (imageUrl != null) 'imageUrl': imageUrl,
+      if (description != null) 'description': description,
+      if (phone != null) 'phone': phone,
+      if (workingHours != null) 'workingHours': workingHours,
     };
   }
 }
