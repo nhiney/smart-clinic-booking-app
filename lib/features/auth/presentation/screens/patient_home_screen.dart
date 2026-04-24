@@ -23,17 +23,17 @@ import 'package:intl/intl.dart';
 
 // ── Brand palette ────────────────────────────────────────────────────────────
 class _P {
-  static const Color primary = Color(0xFF0288D1);
-  static const Color primaryDark = Color(0xFF01579B);
-  static const Color accent = Color(0xFF00ACC1);
-  static const Color surface = Color(0xFFF0F7FF);
+  static const Color primary = Color(0xFF1D4ED8); // Deeper, more modern blue
+  static const Color primaryDark = Color(0xFF1E3A8A);
+  static const Color accent = Color(0xFF3B82F6);
+  static const Color surface = Color(0xFFF8FAFC); // Clean slate background
   static const Color cardBg = Colors.white;
-  static const Color textPrimary = Color(0xFF1A2B4A);
-  static const Color textSecondary = Color(0xFF64748B);
-  static const Color textHint = Color(0xFFB0BEC5);
-  static const Color gold = Color(0xFFFFB300);
-  static const Color success = Color(0xFF26A69A);
-  static const Color warning = Color(0xFFF57C00);
+  static const Color textPrimary = Color(0xFF0F172A);
+  static const Color textSecondary = Color(0xFF475569);
+  static const Color textHint = Color(0xFF94A3B8);
+  static const Color gold = Color(0xFFF59E0B);
+  static const Color success = Color(0xFF10B981);
+  static const Color warning = Color(0xFFF97316);
 }
 
 // ── Upcoming appointment model (lightweight, no extra dependency) ─────────────
@@ -373,14 +373,38 @@ class _TopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            _P.primary.withOpacity(0.08),
+            _P.surface,
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      ),
       child: Row(
         children: [
           // Logo + brand
-          const ICareLogo(
-            size: 40,
-            showText: false,
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: _P.primary.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: const ICareLogo(
+              size: 32,
+              showText: false,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -390,28 +414,28 @@ class _TopBar extends StatelessWidget {
                 Text(
                   '$greeting, $firstName',
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 14,
                     color: _P.textSecondary,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const Text(
                   'ICare Health',
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: 22,
                     fontWeight: FontWeight.w900,
                     color: _P.primaryDark,
-                    letterSpacing: -0.3,
+                    letterSpacing: -0.5,
                   ),
                 ),
               ],
             ),
           ),
           // Notification icon
-          _IconBtn(icon: Icons.notifications_outlined, onTap: onNotifTap),
-          const SizedBox(width: 8),
-          // Language selector
-          const _LanguageBtn(),
+          _IconBtn(
+            icon: Icons.notifications_none_rounded,
+            onTap: onNotifTap,
+          ),
           const SizedBox(width: 8),
           _IconBtn(
             icon: Icons.person_outline_rounded,
@@ -817,17 +841,27 @@ class _BannerCard extends StatelessWidget {
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(30),
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
-                                decoration: const BoxDecoration(
-                                  color: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 11),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Colors.white,
+                                      Colors.white.withOpacity(0.9),
+                                    ],
+                                  ),
                                 ),
-                                child: Text(
-                                  data.action,
-                                  style: TextStyle(
-                                    color: data.gradient.first,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 0.5,
+                                child: ShaderMask(
+                                  shaderCallback: (bounds) => LinearGradient(
+                                    colors: data.gradient,
+                                  ).createShader(bounds),
+                                  child: Text(
+                                    data.action,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 14,
+                                      letterSpacing: 0.5,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -1306,13 +1340,27 @@ class _HealthStatsRow extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            lang.localize('Tổng quan sức khỏe', 'Health Overview'),
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: _P.primaryDark,
-            ),
+          Row(
+            children: [
+              Container(
+                width: 4,
+                height: 18,
+                decoration: BoxDecoration(
+                  color: _P.primary,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                lang.localize('Tổng quan sức khỏe', 'Health Overview'),
+                style: const TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.w900,
+                  color: _P.primaryDark,
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           Row(
@@ -1395,13 +1443,20 @@ class _StatCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: const EdgeInsets.all(6),
+              padding: const EdgeInsets.all(7),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(10),
+                gradient: LinearGradient(
+                  colors: [
+                    color.withOpacity(0.12),
+                    color.withOpacity(0.05),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: assetPath != null
-                  ? Image.asset(assetPath!, width: 28, height: 28)
+                  ? Image.asset(assetPath!, width: 26, height: 26)
                   : Icon(icon, color: color, size: 20),
             ),
             const SizedBox(height: 10),

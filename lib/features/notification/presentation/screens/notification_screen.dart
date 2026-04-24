@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/theme/colors/app_colors.dart';
 import '../../../../shared/widgets/empty_state_widget.dart';
 import '../../../../shared/widgets/loading_widget.dart';
 import '../../domain/entities/notification_entity.dart';
@@ -9,70 +8,60 @@ import '../../domain/entities/notification_data_entities.dart';
 import '../controllers/notification_controller.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 
+// ─── Palette ──────────────────────────────────────────────────────────────────
+
+const _kHeaderTop = Color(0xFF38BDF8);    // sky-400
+const _kHeaderBot = Color(0xFF0EA5E9);    // sky-500
+const _kBg        = Color(0xFFF0F7FF);    // very light blue tint
+
 // ─── Filter enum ─────────────────────────────────────────────────────────────
 
 enum _Filter { all, unread, appointment, medication, admission, comms }
 
-extension _FilterLabel on _Filter {
+extension _FilterX on _Filter {
   String get label {
     switch (this) {
-      case _Filter.all: return 'Tất cả';
-      case _Filter.unread: return 'Chưa đọc';
+      case _Filter.all:         return 'Tất cả';
+      case _Filter.unread:      return 'Chưa đọc';
       case _Filter.appointment: return 'Lịch hẹn';
-      case _Filter.medication: return 'Thuốc';
-      case _Filter.admission: return 'Nhập viện';
-      case _Filter.comms: return 'SMS / Email';
+      case _Filter.medication:  return 'Thuốc';
+      case _Filter.admission:   return 'Nhập viện';
+      case _Filter.comms:       return 'SMS / Email';
     }
   }
 
   IconData get icon {
     switch (this) {
-      case _Filter.all: return Icons.apps_rounded;
-      case _Filter.unread: return Icons.mark_email_unread_outlined;
+      case _Filter.all:         return Icons.apps_rounded;
+      case _Filter.unread:      return Icons.mark_email_unread_outlined;
       case _Filter.appointment: return Icons.calendar_today_outlined;
-      case _Filter.medication: return Icons.medication_outlined;
-      case _Filter.admission: return Icons.hotel_outlined;
-      case _Filter.comms: return Icons.forum_outlined;
+      case _Filter.medication:  return Icons.medication_outlined;
+      case _Filter.admission:   return Icons.hotel_outlined;
+      case _Filter.comms:       return Icons.forum_outlined;
     }
   }
 }
 
-// ─── Type metadata helper ─────────────────────────────────────────────────────
+// ─── Type metadata ────────────────────────────────────────────────────────────
 
-_NotifMeta _metaFor(String type) {
-  if (type.startsWith('appointment')) {
-    return _NotifMeta(
-      icon: Icons.calendar_today_rounded,
-      color: AppColors.primary,
-      label: 'Lịch hẹn',
-    );
-  }
-  if (type == 'medication') {
-    return _NotifMeta(
-      icon: Icons.medication_rounded,
-      color: const Color(0xFF22C55E),
-      label: 'Thuốc',
-    );
-  }
-  if (type == 'admission') {
-    return _NotifMeta(
-      icon: Icons.hotel_rounded,
-      color: const Color(0xFFF97316),
-      label: 'Nhập viện',
-    );
-  }
-  return _NotifMeta(
-    icon: Icons.notifications_rounded,
-    color: const Color(0xFF8B5CF6),
-    label: 'Hệ thống',
-  );
-}
-
-class _NotifMeta {
+class _Meta {
   final IconData icon;
   final Color color;
   final String label;
-  const _NotifMeta({required this.icon, required this.color, required this.label});
+  const _Meta({required this.icon, required this.color, required this.label});
+}
+
+_Meta _metaFor(String type) {
+  if (type.startsWith('appointment')) {
+    return const _Meta(icon: Icons.calendar_today_rounded, color: Color(0xFF2563EB), label: 'Lịch hẹn');
+  }
+  if (type == 'medication') {
+    return const _Meta(icon: Icons.medication_rounded, color: Color(0xFF16A34A), label: 'Thuốc');
+  }
+  if (type == 'admission') {
+    return const _Meta(icon: Icons.hotel_rounded, color: Color(0xFFEA580C), label: 'Nhập viện');
+  }
+  return const _Meta(icon: Icons.notifications_rounded, color: Color(0xFF7C3AED), label: 'Hệ thống');
 }
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -85,7 +74,7 @@ class NotificationScreen extends StatefulWidget {
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
-  _Filter _activeFilter = _Filter.all;
+  _Filter _filter = _Filter.all;
 
   @override
   void initState() {
@@ -98,183 +87,226 @@ class _NotificationScreenState extends State<NotificationScreen> {
     });
   }
 
-  List<NotificationEntity> _filtered(List<NotificationEntity> all) {
-    switch (_activeFilter) {
-      case _Filter.all: return all;
-      case _Filter.unread: return all.where((n) => !n.isRead).toList();
-      case _Filter.appointment:
-        return all.where((n) => n.type.startsWith('appointment')).toList();
-      case _Filter.medication:
-        return all.where((n) => n.type == 'medication').toList();
-      case _Filter.admission:
-        return all.where((n) => n.type == 'admission').toList();
-      case _Filter.comms: return [];
+  List<NotificationEntity> _applyFilter(List<NotificationEntity> all) {
+    switch (_filter) {
+      case _Filter.all:         return all;
+      case _Filter.unread:      return all.where((n) => !n.isRead).toList();
+      case _Filter.appointment: return all.where((n) => n.type.startsWith('appointment')).toList();
+      case _Filter.medication:  return all.where((n) => n.type == 'medication').toList();
+      case _Filter.admission:   return all.where((n) => n.type == 'admission').toList();
+      case _Filter.comms:       return [];
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // NotificationScreen is used as a tab — no inner Scaffold needed.
     return Consumer<NotificationController>(
-      builder: (_, controller, __) {
-        return Scaffold(
-          backgroundColor: const Color(0xFFF5F7FA),
-          body: CustomScrollView(
-            slivers: [
-              _SliverHeader(
-                controller: controller,
-                onMarkAll: () {
-                  final auth = context.read<AuthController>();
-                  if (auth.currentUser != null) {
-                    controller.markAllAsRead(auth.currentUser!.id);
-                  }
-                },
-              ),
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: _FilterBarDelegate(
-                  activeFilter: _activeFilter,
-                  onSelect: (f) => setState(() => _activeFilter = f),
-                ),
-              ),
-              if (controller.isLoading)
-                const SliverFillRemaining(
-                  child: LoadingWidget(itemCount: 5),
-                )
-              else if (_activeFilter == _Filter.comms)
-                _CommsSliver(logs: controller.notificationLogs)
-              else
-                _NotificationsSliver(
-                  items: _filtered(controller.notifications),
-                  controller: controller,
-                  filter: _activeFilter,
-                ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-// ─── Sliver app bar / hero header ─────────────────────────────────────────────
-
-class _SliverHeader extends StatelessWidget {
-  final NotificationController controller;
-  final VoidCallback onMarkAll;
-
-  const _SliverHeader({required this.controller, required this.onMarkAll});
-
-  @override
-  Widget build(BuildContext context) {
-    final unread = controller.unreadCount;
-    return SliverAppBar(
-      expandedHeight: 120,
-      collapsedHeight: kToolbarHeight,
-      pinned: true,
-      elevation: 0,
-      backgroundColor: AppColors.primary,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
-        onPressed: () => Navigator.maybePop(context),
-      ),
-      actions: [
-        if (unread > 0)
-          TextButton.icon(
-            onPressed: onMarkAll,
-            icon: const Icon(Icons.done_all_rounded, color: Colors.white, size: 18),
-            label: const Text(
-              'Đọc tất cả',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
+      builder: (_, ctrl, __) => ColoredBox(
+        color: _kBg,
+        child: CustomScrollView(
+          slivers: [
+            _Header(
+              ctrl: ctrl,
+              onMarkAll: () {
+                final uid = context.read<AuthController>().currentUser?.id;
+                if (uid != null) ctrl.markAllAsRead(uid);
+              },
             ),
-          ),
-        const SizedBox(width: 4),
-      ],
-      flexibleSpace: FlexibleSpaceBar(
-        titlePadding: const EdgeInsets.only(left: 56, bottom: 14),
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Thông báo',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 17),
+            _FilterBar(
+              active: _filter,
+              onSelect: (f) => setState(() => _filter = f),
             ),
-            if (unread > 0) ...[
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFF3B30),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '$unread',
-                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
-                ),
+            if (ctrl.isLoading)
+              const SliverFillRemaining(child: LoadingWidget(itemCount: 5))
+            else if (_filter == _Filter.comms)
+              _CommsSliver(logs: ctrl.notificationLogs)
+            else
+              _NotifSliver(
+                items: _applyFilter(ctrl.notifications),
+                ctrl: ctrl,
+                filter: _filter,
               ),
-            ],
           ],
         ),
-        background: _HeaderBackground(unread: unread, total: controller.notifications.length),
       ),
     );
   }
 }
 
-class _HeaderBackground extends StatelessWidget {
-  final int unread;
-  final int total;
+// ─── Header ───────────────────────────────────────────────────────────────────
 
-  const _HeaderBackground({required this.unread, required this.total});
+class _Header extends StatelessWidget {
+  final NotificationController ctrl;
+  final VoidCallback onMarkAll;
+
+  const _Header({required this.ctrl, required this.onMarkAll});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF1A73E8), Color(0xFF0D47A1)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    final unread = ctrl.unreadCount;
+    final total  = ctrl.notifications.length;
+    final read   = total - unread;
+
+    return SliverToBoxAdapter(
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [_kHeaderTop, _kHeaderBot],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+        ),
+        child: Stack(
+          children: [
+            // decorative circle top-right
+            Positioned(
+              right: -30, top: -30,
+              child: Container(
+                width: 160, height: 160,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.08),
+                ),
+              ),
+            ),
+            Positioned(
+              right: 60, bottom: 0,
+              child: Container(
+                width: 70, height: 70,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.10),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 16, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title row
+                  Row(
+                    children: [
+                      const Icon(Icons.notifications_rounded, color: Colors.white, size: 22),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Thông báo',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                      if (unread > 0) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFF3B30),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '$unread mới',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                      const Spacer(),
+                      if (unread > 0)
+                        GestureDetector(
+                          onTap: onMarkAll,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.22),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.done_all_rounded, color: Colors.white, size: 15),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Đọc tất cả',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  // Stats row — equal-width tiles
+                  IntrinsicHeight(
+                    child: Row(
+                      children: [
+                        _StatTile(value: total,  label: 'Tổng',     icon: Icons.inbox_rounded,          color: Colors.white),
+                        _StatDivider(),
+                        _StatTile(value: unread, label: 'Chưa đọc', icon: Icons.mark_email_unread_rounded, color: unread > 0 ? const Color(0xFFFFD60A) : Colors.white),
+                        _StatDivider(),
+                        _StatTile(value: read,   label: 'Đã đọc',   icon: Icons.mark_email_read_rounded,  color: Colors.white),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
-      child: Stack(
+    );
+  }
+}
+
+class _StatTile extends StatelessWidget {
+  final int value;
+  final String label;
+  final IconData icon;
+  final Color color;
+
+  const _StatTile({
+    required this.value,
+    required this.label,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // decorative circles
-          Positioned(
-            right: -20,
-            top: -20,
-            child: Container(
-              width: 140,
-              height: 140,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.06),
-              ),
+          Icon(icon, color: color.withValues(alpha: 0.85), size: 18),
+          const SizedBox(height: 4),
+          Text(
+            '$value',
+            style: TextStyle(
+              color: color,
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              height: 1,
             ),
           ),
-          Positioned(
-            right: 40,
-            bottom: 10,
-            child: Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.08),
-              ),
-            ),
-          ),
-          // stats row at bottom
-          Positioned(
-            left: 56,
-            bottom: 44,
-            child: Row(
-              children: [
-                _Stat(value: total, label: 'Tổng'),
-                const SizedBox(width: 20),
-                _Stat(value: unread, label: 'Chưa đọc', highlight: unread > 0),
-                const SizedBox(width: 20),
-                _Stat(value: total - unread, label: 'Đã đọc'),
-              ],
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.75),
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -283,93 +315,96 @@ class _HeaderBackground extends StatelessWidget {
   }
 }
 
-class _Stat extends StatelessWidget {
-  final int value;
-  final String label;
-  final bool highlight;
-
-  const _Stat({required this.value, required this.label, this.highlight = false});
-
+class _StatDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '$value',
-          style: TextStyle(
-            color: highlight ? const Color(0xFFFFD60A) : Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 11)),
-      ],
+    return Container(
+      width: 1,
+      height: 48,
+      color: Colors.white.withValues(alpha: 0.25),
+      margin: const EdgeInsets.symmetric(horizontal: 4),
     );
   }
 }
 
 // ─── Filter bar ───────────────────────────────────────────────────────────────
 
-class _FilterBarDelegate extends SliverPersistentHeaderDelegate {
-  final _Filter activeFilter;
+class _FilterBar extends StatelessWidget {
+  final _Filter active;
   final ValueChanged<_Filter> onSelect;
 
-  const _FilterBarDelegate({required this.activeFilter, required this.onSelect});
+  const _FilterBar({required this.active, required this.onSelect});
 
   @override
-  double get minExtent => 52;
-  @override
-  double get maxExtent => 52;
+  Widget build(BuildContext context) {
+    return SliverPersistentHeader(
+      pinned: true,
+      delegate: _FilterDelegate(active: active, onSelect: onSelect),
+    );
+  }
+}
+
+class _FilterDelegate extends SliverPersistentHeaderDelegate {
+  final _Filter active;
+  final ValueChanged<_Filter> onSelect;
+
+  const _FilterDelegate({required this.active, required this.onSelect});
+
+  @override double get minExtent => 52;
+  @override double get maxExtent => 52;
 
   @override
-  bool shouldRebuild(_FilterBarDelegate old) =>
-      old.activeFilter != activeFilter;
+  bool shouldRebuild(_FilterDelegate old) => old.active != active;
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
       height: 52,
-      color: const Color(0xFFF5F7FA),
-      child: ListView(
+      color: _kBg,
+      child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        children: _Filter.values.map((f) {
-          final active = f == activeFilter;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: GestureDetector(
-              onTap: () => onSelect(f),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                decoration: BoxDecoration(
-                  color: active ? AppColors.primary : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: active
-                      ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 8, offset: const Offset(0, 3))]
-                      : [const BoxShadow(color: Color(0x0D000000), blurRadius: 4)],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(f.icon, size: 14, color: active ? Colors.white : Colors.grey[600]),
-                    const SizedBox(width: 5),
-                    Text(
-                      f.label,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                        color: active ? Colors.white : Colors.grey[700],
-                      ),
+        itemCount: _Filter.values.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (_, i) {
+          final f = _Filter.values[i];
+          final isActive = f == active;
+          return GestureDetector(
+            onTap: () => onSelect(f),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: isActive ? _kHeaderBot : Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: isActive
+                        ? _kHeaderBot.withValues(alpha: 0.40)
+                        : Colors.black.withValues(alpha: 0.06),
+                    blurRadius: isActive ? 8 : 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(f.icon, size: 13, color: isActive ? Colors.white : Colors.grey[600]),
+                  const SizedBox(width: 5),
+                  Text(
+                    f.label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                      color: isActive ? Colors.white : Colors.grey[700],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           );
-        }).toList(),
+        },
       ),
     );
   }
@@ -377,22 +412,20 @@ class _FilterBarDelegate extends SliverPersistentHeaderDelegate {
 
 // ─── Notifications sliver ─────────────────────────────────────────────────────
 
-class _NotificationsSliver extends StatelessWidget {
+class _NotifSliver extends StatelessWidget {
   final List<NotificationEntity> items;
-  final NotificationController controller;
+  final NotificationController ctrl;
   final _Filter filter;
 
-  const _NotificationsSliver({
-    required this.items,
-    required this.controller,
-    required this.filter,
-  });
+  const _NotifSliver({required this.items, required this.ctrl, required this.filter});
 
-  Map<String, List<NotificationEntity>> _groupByDate(List<NotificationEntity> list) {
-    final now = DateTime.now();
+  static const _order = ['Hôm nay', 'Hôm qua', 'Tuần này'];
+
+  Map<String, List<NotificationEntity>> _group(List<NotificationEntity> list) {
+    final now   = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final yesterday = today.subtract(const Duration(days: 1));
-    final weekAgo = today.subtract(const Duration(days: 7));
+    final yest  = today.subtract(const Duration(days: 1));
+    final week  = today.subtract(const Duration(days: 7));
 
     final groups = <String, List<NotificationEntity>>{};
     for (final n in list) {
@@ -400,9 +433,9 @@ class _NotificationsSliver extends StatelessWidget {
       final String key;
       if (!d.isBefore(today)) {
         key = 'Hôm nay';
-      } else if (!d.isBefore(yesterday)) {
+      } else if (!d.isBefore(yest)) {
         key = 'Hôm qua';
-      } else if (!d.isBefore(weekAgo)) {
+      } else if (!d.isBefore(week)) {
         key = 'Tuần này';
       } else {
         key = DateFormat('MMMM yyyy', 'vi').format(n.createdAt);
@@ -428,30 +461,34 @@ class _NotificationsSliver extends StatelessWidget {
       );
     }
 
-    final groups = _groupByDate(items);
-    final sliverItems = <Widget>[];
-    for (final entry in groups.entries) {
-      sliverItems.add(_DateHeader(label: entry.key));
-      for (final n in entry.value) {
-        sliverItems.add(_NotifCard(notification: n, controller: controller));
+    final groups = _group(items);
+    // Sort: known order first, then the rest
+    final keys = [
+      ..._order.where(groups.containsKey),
+      ...groups.keys.where((k) => !_order.contains(k)),
+    ];
+
+    final children = <Widget>[];
+    for (final key in keys) {
+      children.add(_DateLabel(label: key));
+      for (final n in groups[key]!) {
+        children.add(_NotifCard(notification: n, ctrl: ctrl));
       }
     }
-    sliverItems.add(const SizedBox(height: 24));
+    children.add(const SizedBox(height: 100)); // bottom nav clearance
 
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      sliver: SliverList(
-        delegate: SliverChildListDelegate(sliverItems),
-      ),
+      sliver: SliverList(delegate: SliverChildListDelegate(children)),
     );
   }
 }
 
-// ─── Date section header ──────────────────────────────────────────────────────
+// ─── Date label ───────────────────────────────────────────────────────────────
 
-class _DateHeader extends StatelessWidget {
+class _DateLabel extends StatelessWidget {
   final String label;
-  const _DateHeader({required this.label});
+  const _DateLabel({required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -460,16 +497,16 @@ class _DateHeader extends StatelessWidget {
       child: Row(
         children: [
           Text(
-            label,
+            label.toUpperCase(),
             style: const TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF6B7280),
-              letterSpacing: 0.5,
+              color: Color(0xFF64748B),
+              letterSpacing: 0.8,
             ),
           ),
-          const SizedBox(width: 8),
-          Expanded(child: Divider(color: Colors.grey.shade300, height: 1)),
+          const SizedBox(width: 10),
+          Expanded(child: Divider(color: Colors.blueGrey.shade100, height: 1)),
         ],
       ),
     );
@@ -480,49 +517,52 @@ class _DateHeader extends StatelessWidget {
 
 class _NotifCard extends StatelessWidget {
   final NotificationEntity notification;
-  final NotificationController controller;
+  final NotificationController ctrl;
 
-  const _NotifCard({required this.notification, required this.controller});
+  const _NotifCard({required this.notification, required this.ctrl});
 
   @override
   Widget build(BuildContext context) {
-    final meta = _metaFor(notification.type);
+    final meta   = _metaFor(notification.type);
     final isRead = notification.isRead;
 
     return Dismissible(
       key: Key(notification.id),
-      background: _SwipeAction(
+      background: _SwipeBg(
         alignment: Alignment.centerLeft,
-        color: const Color(0xFF3B82F6),
+        color: const Color(0xFF0EA5E9),
         icon: Icons.done_all_rounded,
         label: 'Đã đọc',
       ),
-      secondaryBackground: _SwipeAction(
+      secondaryBackground: _SwipeBg(
         alignment: Alignment.centerRight,
         color: const Color(0xFFEF4444),
         icon: Icons.delete_outline_rounded,
         label: 'Xoá',
       ),
-      confirmDismiss: (direction) async {
-        if (direction == DismissDirection.startToEnd) {
-          if (!isRead) controller.markAsRead(notification.id);
+      confirmDismiss: (dir) async {
+        if (dir == DismissDirection.startToEnd) {
+          if (!isRead) ctrl.markAsRead(notification.id);
           return false;
         }
         return true;
       },
-      onDismissed: (_) => controller.deleteNotification(notification.id),
+      onDismissed: (_) => ctrl.deleteNotification(notification.id),
       child: GestureDetector(
-        onTap: () {
-          if (!isRead) controller.markAsRead(notification.id);
-        },
+        onTap: () { if (!isRead) ctrl.markAsRead(notification.id); },
         child: Container(
           margin: const EdgeInsets.only(bottom: 10),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: isRead ? Colors.white : const Color(0xFFEFF6FF),
             borderRadius: BorderRadius.circular(16),
+            border: isRead
+                ? Border.all(color: Colors.blueGrey.shade50)
+                : Border.all(color: meta.color.withValues(alpha: 0.25)),
             boxShadow: [
               BoxShadow(
-                color: isRead ? Colors.black.withValues(alpha: 0.04) : meta.color.withValues(alpha: 0.10),
+                color: isRead
+                    ? Colors.black.withValues(alpha: 0.04)
+                    : meta.color.withValues(alpha: 0.10),
                 blurRadius: 10,
                 offset: const Offset(0, 3),
               ),
@@ -534,58 +574,44 @@ class _NotifCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Left accent bar
+                  // left accent bar
                   Container(
                     width: 4,
-                    color: isRead ? Colors.grey.shade200 : meta.color,
+                    color: isRead ? Colors.blueGrey.shade100 : meta.color,
                   ),
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.all(14),
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Icon badge
+                          // icon
                           Container(
-                            width: 44,
-                            height: 44,
+                            width: 42,
+                            height: 42,
                             decoration: BoxDecoration(
-                              color: meta.color.withValues(alpha: isRead ? 0.08 : 0.15),
+                              color: meta.color.withValues(alpha: isRead ? 0.07 : 0.14),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Icon(meta.icon, color: isRead ? meta.color.withValues(alpha: 0.5) : meta.color, size: 22),
+                            child: Icon(
+                              meta.icon,
+                              color: meta.color.withValues(alpha: isRead ? 0.55 : 1.0),
+                              size: 20,
+                            ),
                           ),
-                          const SizedBox(width: 12),
-                          // Text content
+                          const SizedBox(width: 11),
+                          // text
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    // Type chip
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: meta.color.withValues(alpha: 0.12),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Text(
-                                        meta.label,
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w700,
-                                          color: meta.color,
-                                          letterSpacing: 0.3,
-                                        ),
-                                      ),
-                                    ),
+                                    _TypeChip(label: meta.label, color: meta.color, faded: isRead),
                                     const Spacer(),
                                     if (!isRead)
                                       Container(
-                                        width: 8,
-                                        height: 8,
+                                        width: 8, height: 8,
                                         decoration: BoxDecoration(
                                           color: meta.color,
                                           shape: BoxShape.circle,
@@ -599,7 +625,7 @@ class _NotifCard extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: isRead ? FontWeight.w500 : FontWeight.w700,
-                                    color: isRead ? const Color(0xFF6B7280) : const Color(0xFF111827),
+                                    color: isRead ? const Color(0xFF6B7280) : const Color(0xFF0F172A),
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -608,7 +634,7 @@ class _NotifCard extends StatelessWidget {
                                 Text(
                                   notification.body,
                                   style: const TextStyle(
-                                    fontSize: 13,
+                                    fontSize: 12.5,
                                     color: Color(0xFF6B7280),
                                     height: 1.4,
                                   ),
@@ -618,11 +644,11 @@ class _NotifCard extends StatelessWidget {
                                 const SizedBox(height: 6),
                                 Row(
                                   children: [
-                                    Icon(Icons.access_time_rounded, size: 11, color: Colors.grey.shade400),
+                                    Icon(Icons.access_time_rounded, size: 11, color: Colors.blueGrey.shade300),
                                     const SizedBox(width: 3),
                                     Text(
-                                      _formatTime(notification.createdAt),
-                                      style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
+                                      _fmt(notification.createdAt),
+                                      style: TextStyle(fontSize: 11, color: Colors.blueGrey.shade300),
                                     ),
                                   ],
                                 ),
@@ -642,26 +668,52 @@ class _NotifCard extends StatelessWidget {
     );
   }
 
-  String _formatTime(DateTime dt) {
-    final now = DateTime.now();
-    final diff = now.difference(dt);
-    if (diff.inMinutes < 1) return 'Vừa xong';
+  String _fmt(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1)  return 'Vừa xong';
     if (diff.inMinutes < 60) return '${diff.inMinutes} phút trước';
-    if (diff.inHours < 24) return '${diff.inHours} giờ trước';
-    if (diff.inDays < 7) return '${diff.inDays} ngày trước';
+    if (diff.inHours   < 24) return '${diff.inHours} giờ trước';
+    if (diff.inDays    <  7) return '${diff.inDays} ngày trước';
     return DateFormat('HH:mm, dd/MM/yyyy').format(dt);
   }
 }
 
-// ─── Swipe action background ──────────────────────────────────────────────────
+class _TypeChip extends StatelessWidget {
+  final String label;
+  final Color color;
+  final bool faded;
+  const _TypeChip({required this.label, required this.color, required this.faded});
 
-class _SwipeAction extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: faded ? 0.07 : 0.12),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: color.withValues(alpha: faded ? 0.55 : 1.0),
+          letterSpacing: 0.2,
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Swipe background ─────────────────────────────────────────────────────────
+
+class _SwipeBg extends StatelessWidget {
   final Alignment alignment;
   final Color color;
   final IconData icon;
   final String label;
 
-  const _SwipeAction({
+  const _SwipeBg({
     required this.alignment,
     required this.color,
     required this.icon,
@@ -672,17 +724,14 @@ class _SwipeAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(16),
-      ),
+      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(16)),
       alignment: alignment,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 22),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, color: Colors.white, size: 22),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           Text(label, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
         ],
       ),
@@ -708,7 +757,7 @@ class _CommsSliver extends StatelessWidget {
       );
     }
     return SliverPadding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
           (_, i) => _CommsCard(log: logs[i]),
@@ -726,15 +775,18 @@ class _CommsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isEmail = log.type == 'email';
-    final color = isEmail ? const Color(0xFF3B82F6) : const Color(0xFF22C55E);
-    final icon = isEmail ? Icons.email_rounded : Icons.sms_rounded;
+    final color   = isEmail ? const Color(0xFF2563EB) : const Color(0xFF16A34A);
+    final icon    = isEmail ? Icons.email_rounded     : Icons.sms_rounded;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+        border: Border.all(color: Colors.blueGrey.shade50),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
+        ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
@@ -750,13 +802,12 @@ class _CommsCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        width: 44,
-                        height: 44,
+                        width: 42, height: 42,
                         decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.12),
+                          color: color.withValues(alpha: 0.10),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Icon(icon, color: color, size: 22),
+                        child: Icon(icon, color: color, size: 20),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -765,28 +816,18 @@ class _CommsCard extends StatelessWidget {
                           children: [
                             Row(
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: color.withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    isEmail ? 'EMAIL' : 'SMS',
-                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: color),
-                                  ),
-                                ),
+                                _TypeChip(label: isEmail ? 'EMAIL' : 'SMS', color: color, faded: false),
                                 const Spacer(),
                                 Text(
-                                  DateFormat('HH:mm, dd/MM').format(log.createdAt),
+                                  DateFormat('HH:mm · dd/MM').format(log.createdAt),
                                   style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 5),
                             Text(
-                              'Gửi đến: ${log.recipient}',
-                              style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280), fontWeight: FontWeight.w500),
+                              'Đến: ${log.recipient}',
+                              style: const TextStyle(fontSize: 12, color: Color(0xFF475569), fontWeight: FontWeight.w600),
                             ),
                             const SizedBox(height: 4),
                             Text(
