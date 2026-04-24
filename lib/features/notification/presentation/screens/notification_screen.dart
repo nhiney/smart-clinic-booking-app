@@ -154,138 +154,70 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   Widget _buildHeader(NotificationController ctrl, VoidCallback? onGoHome) {
     final unread = ctrl.unreadCount;
-    final total  = ctrl.notifications.length;
 
     return SliverToBoxAdapter(
       child: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF1E40AF), Color(0xFF2563EB), Color(0xFF3B82F6)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(36)),
-        ),
-        child: Stack(
+        height: kToolbarHeight,
+        color: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Row(
           children: [
-            // decorative blobs
-            Positioned(
-              right: -50, top: -50,
-              child: Container(
-                width: 200, height: 200,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.06),
-                ),
-              ),
-            ),
-            Positioned(
-              left: -20, bottom: 20,
-              child: Container(
-                width: 120, height: 120,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.05),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 22),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Top row: back + icon + title + mark-all
-                  Row(
+            // Back button — same style as BrandedAppBar
+            if (onGoHome != null)
+              InkWell(
+                onTap: onGoHome,
+                borderRadius: BorderRadius.circular(24),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 120),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Back button
-                      GestureDetector(
-                        onTap: onGoHome,
-                        child: Container(
-                          width: 38, height: 38,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.18),
-                            borderRadius: BorderRadius.circular(11),
-                          ),
-                          child: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 16),
+                      const SizedBox(width: 12),
+                      Icon(Icons.arrow_back_ios_new_rounded,
+                          color: AppColors.primary, size: 18),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Quay lại',
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      Container(
-                        width: 38, height: 38,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(11),
-                        ),
-                        child: const Icon(Icons.notifications_rounded, color: Colors.white, size: 20),
-                      ),
-                      const SizedBox(width: 10),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Thông báo',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.4,
-                              height: 1,
-                            ),
-                          ),
-                          Text(
-                            total == 0
-                                ? 'Không có thông báo'
-                                : '$total thông báo${unread > 0 ? ' · $unread chưa đọc' : ''}',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.75),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
-                      if (unread > 0)
-                        GestureDetector(
-                          onTap: () {
-                            final uid = context.read<AuthController>().currentUser?.id;
-                            if (uid != null) ctrl.markAllAsRead(uid);
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(24),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.15),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.done_all_rounded, size: 15, color: Color(0xFF2563EB)),
-                                SizedBox(width: 5),
-                                Text(
-                                  'Đọc tất cả',
-                                  style: TextStyle(
-                                    color: Color(0xFF2563EB),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
                     ],
                   ),
-                ],
+                ),
+              ),
+            const Spacer(),
+            // Title
+            Text(
+              'Thông báo',
+              style: TextStyle(
+                color: AppColors.primaryDark,
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.0,
               ),
             ),
+            const Spacer(),
+            // Mark-all action
+            if (unread > 0)
+              TextButton(
+                onPressed: () {
+                  final uid = context.read<AuthController>().currentUser?.id;
+                  if (uid != null) ctrl.markAllAsRead(uid);
+                },
+                child: Text(
+                  'Đọc tất cả',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              )
+            else
+              const SizedBox(width: 80),
           ],
         ),
       ),
