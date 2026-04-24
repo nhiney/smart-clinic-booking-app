@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class ActionItemData {
   final String label;
@@ -109,19 +110,19 @@ class _QuickActionsGridState extends State<QuickActionsGrid> {
         ActionItemData(
           assetPath: 'assets/icons/quick_actions/user_guide.png',
           label: 'Hướng dẫn',
-          onTap: () {},
+          onTap: () => GoRouter.of(context).push('/under-development?title=${Uri.encodeComponent('Hướng dẫn')}'),
           category: 'support',
         ),
         ActionItemData(
           assetPath: 'assets/icons/quick_actions/home_monitoring.png',
           label: 'Theo dõi sức\nkhoẻ tại nhà',
-          onTap: () {},
+          onTap: () => GoRouter.of(context).push('/under-development?title=${Uri.encodeComponent('Theo dõi sức khoẻ tại nhà')}'),
           category: 'medical',
         ),
         ActionItemData(
           assetPath: 'assets/icons/quick_actions/vaccination.png',
           label: 'Tiêm chủng',
-          onTap: () {},
+          onTap: () => GoRouter.of(context).push('/under-development?title=${Uri.encodeComponent('Tiêm chủng')}'),
           category: 'medical',
         ),
         ActionItemData(

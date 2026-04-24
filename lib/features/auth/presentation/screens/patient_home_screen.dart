@@ -178,39 +178,42 @@ class _PatientHomeScreenState extends ConsumerState<PatientHomeScreen>
   }
 
   Widget _buildPulsingFab() {
-    return AnimatedBuilder(
-      animation: _fabPulse,
-      builder: (context, _) {
-        return GestureDetector(
-          onTap: () => context.push('/ai/voice-assistant'),
-          child: Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                colors: [Color(0xFF7C3AED), Color(0xFF4F46E5)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+    return Transform.translate(
+      offset: const Offset(0, 14),
+      child: AnimatedBuilder(
+        animation: _fabPulse,
+        builder: (context, _) {
+          return GestureDetector(
+            onTap: () => context.push('/ai/voice-assistant'),
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF7C3AED), Color(0xFF4F46E5)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF7C3AED)
+                        .withOpacity(0.35 * (1 - _fabPulse.value)),
+                    spreadRadius: 10 * _fabPulse.value,
+                    blurRadius: 18 * _fabPulse.value,
+                  ),
+                  const BoxShadow(
+                    color: Color(0x447C3AED),
+                    blurRadius: 12,
+                    offset: Offset(0, 4),
+                  ),
+                ],
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF7C3AED)
-                      .withOpacity(0.35 * (1 - _fabPulse.value)),
-                  spreadRadius: 10 * _fabPulse.value,
-                  blurRadius: 18 * _fabPulse.value,
-                ),
-                const BoxShadow(
-                  color: Color(0x447C3AED),
-                  blurRadius: 12,
-                  offset: Offset(0, 4),
-                ),
-              ],
+              child: const Icon(Icons.mic_rounded, color: Colors.white, size: 24),
             ),
-            child: const Icon(Icons.mic_rounded, color: Colors.white, size: 26),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
@@ -221,17 +224,20 @@ class _PatientHomeScreenState extends ConsumerState<PatientHomeScreen>
       notchMargin: 8,
       color: Colors.white,
       elevation: 16,
-      child: SizedBox(
-        height: 60,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavItem(0, Icons.home_rounded, lang.localize('Trang chủ', 'Home')),
-            _buildNavItem(1, Icons.notifications_none_rounded, lang.localize('Thông báo', 'Notifications'), showBadge: _unreadCount > 0),
-            const SizedBox(width: 40), // Space for FAB
-            _buildNavItem(2, Icons.map_rounded, lang.localize('Bản đồ', 'Map')),
-            _buildNavItem(3, Icons.person_rounded, lang.localize('Cá nhân', 'Profile')),
-          ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        child: SizedBox(
+          height: 60,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildNavItem(0, Icons.home_rounded, lang.localize('Trang chủ', 'Home')),
+              _buildNavItem(1, Icons.notifications_none_rounded, lang.localize('Thông báo', 'Notifications'), showBadge: _unreadCount > 0),
+              const SizedBox(width: 44), // Balanced gap for FAB
+              _buildNavItem(2, Icons.map_rounded, lang.localize('Bản đồ', 'Map')),
+              _buildNavItem(3, Icons.person_rounded, lang.localize('Cá nhân', 'Profile')),
+            ],
+          ),
         ),
       ),
     );
@@ -623,7 +629,7 @@ class _BannerCarousel extends ConsumerWidget {
 
   List<_BannerData> _getBanners(AppLanguage lang) => [
     _BannerData(
-      gradient: [const Color(0xFF0277BD), const Color(0xFF039BE5)],
+      gradient: [const Color(0xFF1565C0), const Color(0xFF1E88E5), const Color(0xFF42A5F5)],
       icon: Icons.calendar_month_rounded,
       title: lang.localize('Đặt lịch khám ngay', 'Book your appointment'),
       subtitle: lang.localize('Tìm bác sĩ nhanh chóng', 'Find a doctor in seconds'),
@@ -631,7 +637,7 @@ class _BannerCarousel extends ConsumerWidget {
       route: '/doctor/search',
     ),
     _BannerData(
-      gradient: [const Color(0xFF00838F), const Color(0xFF26C6DA)],
+      gradient: [const Color(0xFF00695C), const Color(0xFF00897B), const Color(0xFF26A69A)],
       icon: Icons.health_and_safety_rounded,
       title: lang.localize('Hồ sơ sức khỏe', 'Your health records'),
       subtitle: lang.localize('Truy cập mọi lúc mọi nơi', 'Access anytime, anywhere'),
@@ -639,7 +645,7 @@ class _BannerCarousel extends ConsumerWidget {
       route: '/medical-records',
     ),
     _BannerData(
-      gradient: [const Color(0xFF6A1B9A), const Color(0xFFAB47BC)],
+      gradient: [const Color(0xFF4527A0), const Color(0xFF5E35B1), const Color(0xFF7E57C2)],
       icon: Icons.smart_toy_rounded,
       title: lang.localize('Trợ lý AI Y tế', 'AI Health Assistant'),
       subtitle: lang.localize('Hỏi đáp về sức khỏe của bạn', 'Ask anything about your health'),
@@ -655,7 +661,7 @@ class _BannerCarousel extends ConsumerWidget {
     return Column(
       children: [
         SizedBox(
-          height: 160,
+          height: 180,
           child: PageView.builder(
             controller: ctrl,
             onPageChanged: onChanged,
@@ -712,78 +718,140 @@ class _BannerCard extends StatelessWidget {
     return GestureDetector(
       onTap: () => context.push(data.route),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-        padding: const EdgeInsets.all(20),
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: data.gradient,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: data.gradient.first.withOpacity(0.3),
-              blurRadius: 16,
-              offset: const Offset(0, 8),
+              color: data.gradient.first.withOpacity(0.35),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
             ),
           ],
         ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    data.title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      height: 1.2,
-                    ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: Stack(
+            children: [
+              // Background Gradient
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: data.gradient,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    data.subtitle,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 13,
-                    ),
+                ),
+              ),
+              // Decorative Bubbles
+              Positioned(
+                right: -30,
+                top: -30,
+                child: Container(
+                  width: 150,
+                  height: 150,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.12),
                   ),
-                  const SizedBox(height: 14),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 7),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                          color: Colors.white.withOpacity(0.4)),
-                    ),
-                    child: Text(
-                      data.action,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
+                ),
+              ),
+              Positioned(
+                left: -20,
+                bottom: -40,
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.08),
+                  ),
+                ),
+              ),
+              // Content
+              Padding(
+                padding: const EdgeInsets.all(22),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            data.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 19,
+                              fontWeight: FontWeight.w800,
+                              height: 1.2,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            data.subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.85),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          // Premium Gradient Button
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(30),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.15),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(30),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                ),
+                                child: Text(
+                                  data.action,
+                                  style: TextStyle(
+                                    color: data.gradient.first,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 16),
+                    // Icon Container
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(color: Colors.white.withOpacity(0.2)),
+                      ),
+                      child: Icon(data.icon, color: Colors.white, size: 36),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Icon(data.icon, color: Colors.white, size: 36),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -902,7 +970,7 @@ class _QuickActionsGrid extends ConsumerWidget {
                     ),
                   );
                 },
-                child: const Icon(Icons.apps_rounded, color: _P.primary, size: 22),
+                child: const Icon(Icons.more_horiz_rounded, color: _P.primary, size: 26),
               ),
             ],
           ),
@@ -1252,6 +1320,7 @@ class _HealthStatsRow extends ConsumerWidget {
               Expanded(
                 child: _StatCard(
                   icon: Icons.medication_outlined,
+                  assetPath: 'assets/icons/quick_actions/invoice.png',
                   color: const Color(0xFFE91E63),
                   title: lang.localize('Đơn thuốc', 'Medications'),
                   subtitle: lang.localize('Nhấn để xem', 'Tap to view'),
@@ -1262,6 +1331,7 @@ class _HealthStatsRow extends ConsumerWidget {
               Expanded(
                 child: _StatCard(
                   icon: Icons.folder_shared_rounded,
+                  assetPath: 'assets/icons/quick_actions/medical_records.png',
                   color: const Color(0xFF7C3AED),
                   title: lang.localize('Hồ sơ', 'Records'),
                   subtitle: lang.localize('Nhấn để xem', 'Tap to view'),
@@ -1272,6 +1342,7 @@ class _HealthStatsRow extends ConsumerWidget {
               Expanded(
                 child: _StatCard(
                   icon: Icons.receipt_long_rounded,
+                  assetPath: 'assets/icons/quick_actions/invoice.png',
                   color: const Color(0xFF00897B),
                   title: lang.localize('Hóa đơn', 'Invoices'),
                   subtitle: lang.localize('Nhấn để xem', 'Tap to view'),
@@ -1288,6 +1359,7 @@ class _HealthStatsRow extends ConsumerWidget {
 
 class _StatCard extends StatelessWidget {
   final IconData icon;
+  final String? assetPath;
   final Color color;
   final String title;
   final String subtitle;
@@ -1295,6 +1367,7 @@ class _StatCard extends StatelessWidget {
 
   const _StatCard({
     required this.icon,
+    this.assetPath,
     required this.color,
     required this.title,
     required this.subtitle,
@@ -1322,12 +1395,14 @@ class _StatCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.10),
+                color: color.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: color, size: 20),
+              child: assetPath != null
+                  ? Image.asset(assetPath!, width: 28, height: 28)
+                  : Icon(icon, color: color, size: 20),
             ),
             const SizedBox(height: 10),
             Text(

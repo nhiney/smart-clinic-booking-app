@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class CareSection extends StatefulWidget {
   const CareSection({super.key});
@@ -45,7 +46,7 @@ class _CareSectionState extends State<CareSection> {
                 ),
               ),
               TextButton(
-                onPressed: () {},
+                onPressed: () => context.push('/under-development?title=${Uri.encodeComponent('Gói chăm sóc sức khoẻ')}'),
                 child: const Text(
                   'Xem thêm >',
                   style: TextStyle(

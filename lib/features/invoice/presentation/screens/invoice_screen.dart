@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart' as legacy_provider;
 import '../../../../core/theme/colors/app_colors.dart';
 import '../../../../core/widgets/branded_app_bar.dart';
@@ -147,7 +148,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () {},
+                          onPressed: () => context.push('/under-development?title=${Uri.encodeComponent('Chi tiết hóa đơn')}'),
                           icon: const Icon(Icons.description_outlined, size: 18),
                           label: const Text("Chi tiết"),
                           style: OutlinedButton.styleFrom(
@@ -161,7 +162,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed: () {},
+                          onPressed: () => context.push('/under-development?title=${Uri.encodeComponent(isPending ? 'Thanh toán hóa đơn' : 'Tải hóa đơn')}'),
                           icon: Icon(isPending ? Icons.payment_rounded : Icons.download_rounded, size: 18),
                           label: Text(isPending ? "Thanh toán" : "Tải về"),
                           style: ElevatedButton.styleFrom(

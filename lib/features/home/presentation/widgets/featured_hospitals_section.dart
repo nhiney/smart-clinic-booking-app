@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class HospitalInfo {
   final String name;
@@ -67,7 +68,7 @@ class FeaturedHospitalsSection extends StatelessWidget {
                 ),
               ),
               TextButton(
-                onPressed: () {},
+                onPressed: () => context.push('/under-development?title=${Uri.encodeComponent('Bệnh viện nổi bật')}'),
                 child: const Text(
                   'Xem thêm >',
                   style: TextStyle(
@@ -249,7 +250,7 @@ class _HospitalCard extends StatelessWidget {
                         ),
                       ),
                       ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () => context.push('/under-development?title=${Uri.encodeComponent('Đặt khám tại bệnh viện')}'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF0D62A2),
                           foregroundColor: Colors.white,

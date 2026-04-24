@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class HospitalBanner extends StatelessWidget {
   const HospitalBanner({super.key});
@@ -54,7 +55,7 @@ class HospitalBanner extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: () => context.push('/under-development?title=${Uri.encodeComponent('Giới thiệu bệnh viện')}'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: const Color(0xFF035EAA),

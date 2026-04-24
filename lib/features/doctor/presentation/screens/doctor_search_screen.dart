@@ -88,228 +88,152 @@ class _DoctorSearchScreenState extends State<DoctorSearchScreen> {
           ),
         ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            decoration: const BoxDecoration(
-              gradient: AppColors.primaryGradient,
-            ),
-            child: Column(
-              children: [
-                TextField(
-                  controller: _searchCtrl,
-                  onChanged: (v) =>
-                      context.read<DoctorSearchController>().onSearchChanged(v),
-                  decoration: InputDecoration(
-                    hintText: 'Tìm theo tên bác sĩ, chuyên khoa, phòng khám...',
-                    hintStyle: TextStyle(color: Colors.grey[400]),
-                    prefixIcon: const Icon(Icons.search),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: _locationCtrl,
-                  onChanged: (v) => context
-                      .read<DoctorSearchController>()
-                      .setLocationFilter(v),
-                  decoration: InputDecoration(
-                    hintText: 'Khu vực / địa chỉ (lọc theo vị trí)',
-                    hintStyle: TextStyle(color: Colors.grey[400]),
-                    prefixIcon: const Icon(Icons.place_outlined),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Consumer<DoctorSearchController>(
-            builder: (_, c, __) {
-              return Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      body: Consumer<DoctorSearchController>(
+        builder: (_, c, __) {
+          return CustomScrollView(
+            slivers: [
+              // 1. Search & Filter Header
+              SliverToBoxAdapter(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
-                            value: () {
-                              final s = c.specialtyFilter;
-                              if (s.isEmpty) return '';
-                              if (c.specialtyOptions.contains(s)) return s;
-                              return '';
-                            }(),
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                      decoration: const BoxDecoration(
+                        gradient: AppColors.primaryGradient,
+                      ),
+                      child: Column(
+                        children: [
+                          TextField(
+                            controller: _searchCtrl,
+                            onChanged: (v) => c.onSearchChanged(v),
                             decoration: InputDecoration(
-                              labelText: 'Chuyên khoa',
+                              hintText: 'Tìm bác sĩ, chuyên khoa...',
+                              hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                              prefixIcon: const Icon(Icons.search, size: 20),
                               filled: true,
                               fillColor: Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 0),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
+                                borderSide: BorderSide.none,
                               ),
                             ),
-                            isExpanded: true,
-                            items: [
-                              const DropdownMenuItem<String>(
-                                value: '',
-                                child: Text('Tất cả chuyên khoa'),
+                          ),
+                          const SizedBox(height: 10),
+                          TextField(
+                            controller: _locationCtrl,
+                            onChanged: (v) => c.setLocationFilter(v),
+                            decoration: InputDecoration(
+                              hintText: 'Khu vực / địa chỉ...',
+                              hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                              prefixIcon: const Icon(Icons.place_outlined, size: 20),
+                              filled: true,
+                              fillColor: Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
                               ),
-                              ...c.specialtyOptions.map(
-                                (s) => DropdownMenuItem<String>(
-                                  value: s,
-                                  child: Text(
-                                    s,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildCompactDropdown<String>(
+                                  label: 'Chuyên khoa',
+                                  value: () {
+                                    final s = c.specialtyFilter;
+                                    if (s.isEmpty) return '';
+                                    if (c.specialtyOptions.contains(s)) return s;
+                                    return '';
+                                  }(),
+                                  items: [
+                                    const DropdownMenuItem(value: '', child: Text('Tất cả')),
+                                    ...c.specialtyOptions.map((s) => DropdownMenuItem(value: s, child: Text(s))),
+                                  ],
+                                  onChanged: (v) => c.setSpecialty(v ?? ''),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: _buildCompactDropdown<DoctorCatalogSort>(
+                                  label: 'Sắp xếp',
+                                  value: c.sort,
+                                  items: DoctorCatalogSort.values.map((s) => DropdownMenuItem(value: s, child: Text(_sortLabel(s)))).toList(),
+                                  onChanged: (v) => v != null ? c.setSort(v) : null,
                                 ),
                               ),
                             ],
-                            onChanged: (v) => c.setSpecialty(v ?? ''),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: DropdownButtonFormField<DoctorCatalogSort>(
-                            value: c.sort,
-                            decoration: InputDecoration(
-                              labelText: 'Sắp xếp',
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Đánh giá tối thiểu',
+                            style: TextStyle(fontSize: 12, color: Colors.grey.shade700, fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 8),
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                DoctorFilterChip(label: 'Tất cả', selected: c.minRating == null, onTap: () => c.setMinRating(null)),
+                                const SizedBox(width: 8),
+                                DoctorFilterChip(label: '≥ 4.0', selected: c.minRating == 4.0, onTap: () => c.setMinRating(4.0)),
+                                const SizedBox(width: 8),
+                                DoctorFilterChip(label: '≥ 4.5', selected: c.minRating == 4.5, onTap: () => c.setMinRating(4.5)),
+                                const SizedBox(width: 8),
+                                DoctorFilterChip(label: '≥ 4.8', selected: c.minRating == 4.8, onTap: () => c.setMinRating(4.8)),
+                              ],
                             ),
-                            items: DoctorCatalogSort.values
-                                .map(
-                                  (s) => DropdownMenuItem(
-                                    value: s,
-                                    child: Text(
-                                      _sortLabel(s),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: (v) {
-                              if (v != null) c.setSort(v);
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Đánh giá tối thiểu',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          DoctorFilterChip(
-                            label: 'Tất cả',
-                            selected: c.minRating == null,
-                            onTap: () => c.setMinRating(null),
-                          ),
-                          const SizedBox(width: 8),
-                          DoctorFilterChip(
-                            label: '≥ 4.0',
-                            selected: c.minRating == 4.0,
-                            onTap: () => c.setMinRating(4.0),
-                          ),
-                          const SizedBox(width: 8),
-                          DoctorFilterChip(
-                            label: '≥ 4.5',
-                            selected: c.minRating == 4.5,
-                            onTap: () => c.setMinRating(4.5),
-                          ),
-                          const SizedBox(width: 8),
-                          DoctorFilterChip(
-                            label: '≥ 4.8',
-                            selected: c.minRating == 4.8,
-                            onTap: () => c.setMinRating(4.8),
                           ),
                         ],
                       ),
                     ),
                   ],
                 ),
-              );
-            },
-          ),
-          Expanded(
-            child: Consumer<DoctorSearchController>(
-              builder: (_, c, __) {
-                if (c.viewState == DoctorSearchViewState.loading &&
-                    c.doctors.isEmpty) {
-                  return const LoadingWidget(itemCount: 5);
-                }
+              ),
 
-                if (c.viewState == DoctorSearchViewState.error) {
-                  return EmptyStateWidget(
+              // 2. Main Content
+              if (c.viewState == DoctorSearchViewState.loading && c.doctors.isEmpty)
+                const SliverFillRemaining(child: LoadingWidget(itemCount: 5))
+              else if (c.viewState == DoctorSearchViewState.error)
+                SliverFillRemaining(
+                  child: EmptyStateWidget(
                     icon: Icons.wifi_off_outlined,
                     title: c.errorMessage ?? 'Đã xảy ra lỗi',
                     buttonText: 'Thử lại',
                     onButtonPressed: () => c.retry(),
-                  );
-                }
-
-                if (c.viewState == DoctorSearchViewState.empty ||
-                    (c.viewState == DoctorSearchViewState.loaded &&
-                        c.doctors.isEmpty)) {
-                  return const EmptyStateWidget(
+                  ),
+                )
+              else if (c.viewState == DoctorSearchViewState.empty || (c.viewState == DoctorSearchViewState.loaded && c.doctors.isEmpty))
+                const SliverFillRemaining(
+                  child: EmptyStateWidget(
                     icon: Icons.search_off_outlined,
                     title: 'Không tìm thấy bác sĩ',
                     subtitle: 'Thử đổi bộ lọc hoặc từ khóa tìm kiếm',
-                  );
-                }
-
-                return Stack(
-                  children: [
-                    ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                      itemCount: c.doctors.length,
-                      itemBuilder: (context, index) {
+                  ),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
                         final d = c.doctors[index];
                         return DoctorCard(
                           name: d.name.isNotEmpty ? d.name : 'Bác sĩ',
-                          specialty: d.specialty.isNotEmpty
-                              ? d.specialty
-                              : '—',
+                          specialty: d.specialty.isNotEmpty ? d.specialty : '—',
                           imageUrl: d.imageUrl,
                           rating: d.rating,
-                          hospital: d.displayClinic.isNotEmpty
-                              ? d.displayClinic
-                              : '—',
-                          totalReviews: d.totalReviews > 0
-                              ? d.totalReviews
-                              : null,
+                          hospital: d.displayClinic.isNotEmpty ? d.displayClinic : '—',
+                          totalReviews: d.totalReviews > 0 ? d.totalReviews : null,
                           distanceLabel: _distanceLabel(d),
                           onTap: () {
                             if (widget.pickForBooking) {
@@ -320,17 +244,36 @@ class _DoctorSearchScreenState extends State<DoctorSearchScreen> {
                           },
                         );
                       },
+                      childCount: c.doctors.length,
                     ),
-                    if (c.viewState == DoctorSearchViewState.loading &&
-                        c.doctors.isNotEmpty)
-                      const LinearProgressIndicator(minHeight: 2),
-                  ],
-                );
-              },
-            ),
-          ),
-        ],
+                  ),
+                ),
+            ],
+          );
+        },
       ),
+    );
+  }
+
+  Widget _buildCompactDropdown<T>({
+    required String label,
+    required T value,
+    required List<DropdownMenuItem<T>> items,
+    required ValueChanged<T?> onChanged,
+  }) {
+    return DropdownButtonFormField<T>(
+      value: value,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(fontSize: 12),
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+      isExpanded: true,
+      items: items,
+      onChanged: onChanged,
     );
   }
 }

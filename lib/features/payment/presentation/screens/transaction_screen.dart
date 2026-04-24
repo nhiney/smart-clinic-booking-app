@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart' as legacy_provider;
 import '../../../../core/theme/colors/app_colors.dart';
 import '../../../../core/theme/typography/app_text_styles.dart';
@@ -190,7 +191,7 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
                 ),
                 SizedBox(width: context.spacing.s),
                 OutlinedButton.icon(
-                  onPressed: () {}, // Detail view
+                  onPressed: () => context.push('/under-development?title=${Uri.encodeComponent('Chi tiết hóa đơn')}'),
                   icon: const Icon(Icons.receipt_long, size: 18),
                   label: const Text("Hóa đơn"),
                   style: OutlinedButton.styleFrom(

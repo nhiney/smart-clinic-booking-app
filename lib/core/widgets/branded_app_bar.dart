@@ -96,22 +96,22 @@ class BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
       bottom: bottom,
       title: (title != null || showLogo) ? Row(
         mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           if (showLogo) ...[
-            const ICareLogo(
-              size: 32,
-              showText: false,
-            ),
+            const ICareLogo(size: 32, showText: false),
             const SizedBox(width: 10),
           ],
           if (title != null)
-            Text(
-              title!,
-              style: context.textStyles.heading3.copyWith(
-                color: context.colors.primaryDark,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1.2,
+            Flexible(
+              child: Text(
+                title!,
+                style: context.textStyles.heading3.copyWith(
+                  color: context.colors.primaryDark,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.2,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             ),
         ],
