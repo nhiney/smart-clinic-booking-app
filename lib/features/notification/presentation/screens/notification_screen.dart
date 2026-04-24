@@ -94,7 +94,8 @@ extension _FilterX on _Filter {
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 class NotificationScreen extends StatefulWidget {
-  const NotificationScreen({super.key});
+  final VoidCallback? onGoHome;
+  const NotificationScreen({super.key, this.onGoHome});
 
   @override
   State<NotificationScreen> createState() => _NotificationScreenState();
@@ -133,7 +134,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            _buildHeader(ctrl),
+            _buildHeader(ctrl, widget.onGoHome),
             _buildFilterBar(),
             if (ctrl.isLoading)
               const SliverFillRemaining(child: LoadingWidget(itemCount: 5))
@@ -151,7 +152,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     );
   }
 
-  Widget _buildHeader(NotificationController ctrl) {
+  Widget _buildHeader(NotificationController ctrl, VoidCallback? onGoHome) {
     final unread = ctrl.unreadCount;
     final total  = ctrl.notifications.length;
 
@@ -193,18 +194,31 @@ class _NotificationScreenState extends State<NotificationScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Top row: icon + title + mark-all
+                  // Top row: back + icon + title + mark-all
                   Row(
                     children: [
+                      // Back button
+                      GestureDetector(
+                        onTap: onGoHome,
+                        child: Container(
+                          width: 38, height: 38,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(11),
+                          ),
+                          child: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 16),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
                       Container(
-                        width: 40, height: 40,
+                        width: 38, height: 38,
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(11),
                         ),
-                        child: const Icon(Icons.notifications_rounded, color: Colors.white, size: 22),
+                        child: const Icon(Icons.notifications_rounded, color: Colors.white, size: 20),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [

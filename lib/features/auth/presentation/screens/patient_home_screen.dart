@@ -162,7 +162,7 @@ class _PatientHomeScreenState extends ConsumerState<PatientHomeScreen>
         fabPulse: _fabPulse,
         onTabSwitch: (i) => setState(() => _tabIndex = i),
       ),
-      const NotificationScreen(),
+      NotificationScreen(onGoHome: () => setState(() => _tabIndex = 0)),
       const HospitalMapScreen(),
       const PatientProfileScreen(),
     ];
