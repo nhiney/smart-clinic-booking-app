@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/colors/app_colors.dart';
@@ -10,8 +11,6 @@ import '../../domain/entities/doctor_catalog_query.dart';
 import '../../domain/entities/doctor_entity.dart';
 import '../controllers/doctor_search_controller.dart';
 import '../widgets/doctor_filter_chip.dart';
-import 'doctor_detail_screen.dart';
-
 /// Patient flow: discover doctors in Firestore `doctors` with filters and sort.
 /// When [pickForBooking] is true, tapping a doctor pops with that [DoctorEntity].
 class DoctorSearchScreen extends StatefulWidget {
@@ -317,13 +316,7 @@ class _DoctorSearchScreenState extends State<DoctorSearchScreen> {
                               Navigator.pop(context, d);
                               return;
                             }
-                            Navigator.push<void>(
-                              context,
-                              MaterialPageRoute<void>(
-                                builder: (_) =>
-                                    DoctorDetailScreen(doctor: d),
-                              ),
-                            );
+                            context.push('/doctor/detail/${d.id}', extra: d);
                           },
                         );
                       },

@@ -309,7 +309,7 @@ class _BookingViewState extends State<_BookingView> {
                                     TextButton(
                                       onPressed: () =>
                                           Navigator.of(ctx).pop(),
-                                      child: const Text('OK'),
+                                      child: const Text('Đồng ý'),
                                     ),
                                   ],
                                 ),

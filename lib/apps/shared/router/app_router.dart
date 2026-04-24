@@ -28,6 +28,7 @@ import 'package:smart_clinic_booking/features/content/presentation/screens/conte
 import 'package:smart_clinic_booking/features/maps/presentation/screens/hospital_map_screen.dart';
 import 'package:smart_clinic_booking/features/maps/presentation/screens/hospital_detail_screen.dart';
 import 'package:smart_clinic_booking/features/maps/domain/entities/hospital_entity.dart';
+import 'package:smart_clinic_booking/features/review/presentation/screens/review_screen.dart';
 import 'package:smart_clinic_booking/features/auth/presentation/screens/otp_verification_screen.dart';
 import 'package:smart_clinic_booking/features/auth/presentation/screens/create_password_screen.dart';
 import 'package:smart_clinic_booking/features/auth/presentation/screens/account_qr_screen.dart';
@@ -37,7 +38,9 @@ import 'package:smart_clinic_booking/features/booking/presentation/screens/booki
 import 'package:smart_clinic_booking/features/checkin/presentation/screens/checkin_screen.dart';
 
 import 'package:smart_clinic_booking/features/payment/presentation/screens/payment_screen.dart';
+import 'package:smart_clinic_booking/features/payment/presentation/screens/payment_processing_screen.dart';
 import 'package:smart_clinic_booking/features/payment/presentation/screens/transaction_screen.dart';
+import 'package:smart_clinic_booking/features/payment/domain/entities/transaction_entity.dart';
 import 'package:smart_clinic_booking/features/medical_record/presentation/screens/medical_record_screen.dart';
 import 'package:smart_clinic_booking/features/profile/presentation/screens/patient_profile_screen.dart';
 import 'package:smart_clinic_booking/features/invoice/presentation/screens/invoice_screen.dart';
@@ -170,6 +173,10 @@ class AppRouter {
         return '/forbidden';
       }
       if (path.startsWith('/doctor') && role != 'doctor') {
+        // Allow patients to search and see doctor details
+        if (path == '/doctor/search' || path.startsWith('/doctor/detail/')) {
+          return null;
+        }
         return '/forbidden';
       }
       
@@ -349,12 +356,32 @@ class AppRouter {
         },
       ),
       GoRoute(
+        path: '/hospital/review/:hospitalId',
+        builder: (context, state) {
+          final hospitalId = state.pathParameters['hospitalId']!;
+          final hospitalName = state.extra as String? ?? '';
+          return ReviewScreen(hospitalId: hospitalId, hospitalName: hospitalName);
+        },
+      ),
+      GoRoute(
         path: '/payment',
         builder: (context, state) {
           final extras = state.extra as Map<String, dynamic>? ?? {};
           return PaymentScreen(
             amount: (extras['amount'] as num?)?.toDouble() ?? 0.0,
             description: extras['description'] as String? ?? 'Thanh toán dịch vụ',
+          );
+        },
+      ),
+      GoRoute(
+        path: '/payment/processing',
+        builder: (context, state) {
+          final extras = state.extra as Map<String, dynamic>? ?? {};
+          return PaymentProcessingScreen(
+            amount: (extras['amount'] as num?)?.toDouble() ?? 0.0,
+            method: extras['method'] as PaymentMethod? ?? PaymentMethod.vnpay,
+            description: extras['description'] as String? ?? '',
+            userId: extras['userId'] as String? ?? '',
           );
         },
       ),

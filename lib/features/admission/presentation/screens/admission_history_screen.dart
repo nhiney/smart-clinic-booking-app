@@ -252,7 +252,7 @@ class _StatusTimeline extends StatelessWidget {
           children: [
             Icon(Icons.cancel, color: Colors.red[700], size: 16),
             const SizedBox(width: 8),
-            Text('Request rejected by hospital',
+            Text('Yêu cầu đã bị từ chối',
                 style: TextStyle(color: Colors.red[700], fontSize: 13)),
           ],
         ),
@@ -404,7 +404,7 @@ class _DocumentsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Documents (${urls.length})',
+        Text('Tài liệu (${urls.length})',
             style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
         const SizedBox(height: 6),
         Wrap(
@@ -469,7 +469,7 @@ class _UploadButtonState extends ConsumerState<_UploadButton> {
       setState(() => _uploading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(ok ? 'Document uploaded' : 'Upload failed'),
+          content: Text(ok ? 'Tải lên thành công' : 'Tải lên thất bại'),
           backgroundColor: ok ? Colors.green : Colors.red,
         ),
       );
@@ -487,7 +487,7 @@ class _UploadButtonState extends ConsumerState<_UploadButton> {
               child: CircularProgressIndicator(strokeWidth: 2),
             )
           : const Icon(Icons.upload_file, size: 18),
-      label: Text(_uploading ? 'Uploading…' : 'Upload Supporting Document'),
+      label: Text(_uploading ? 'Đang tải lên…' : 'Tải lên tài liệu hỗ trợ'),
       style: OutlinedButton.styleFrom(
         foregroundColor: Colors.blue[700],
         side: BorderSide(color: Colors.blue[300]!),

@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import "package:smart_clinic_booking/apps/shared/di/injection.dart";
 import '../../../../core/theme/colors/app_colors.dart';
@@ -8,8 +9,6 @@ import '../../../../core/theme/typography/app_text_styles.dart';
 import '../../../../core/widgets/icare_logo.dart';
 import '../../domain/entities/doctor_entity.dart';
 import '../../domain/usecases/get_catalog_doctor_detail_usecase.dart';
-import '../../../booking/presentation/screens/booking_screen.dart';
-
 class DoctorDetailScreen extends StatefulWidget {
   final DoctorEntity? doctor;
   final String? doctorId;
@@ -276,11 +275,9 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                     height: 52,
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => BookingScreen(doctor: _doctor),
-                          ),
+                        context.push(
+                          '/patient/create-appointment',
+                          extra: {'doctor': _doctor},
                         );
                       },
                       icon: const Icon(Icons.calendar_today),

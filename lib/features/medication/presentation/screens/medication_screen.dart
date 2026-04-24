@@ -49,27 +49,27 @@ class _MedicationScreenState extends State<MedicationScreen> {
               children: [
                 Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)))),
                 const SizedBox(height: 20),
-                Text('Add Medication Reminder', style: context.textStyles.heading2),
+                Text('Thêm nhắc uống thuốc', style: context.textStyles.heading2),
                 const SizedBox(height: 20),
-                TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Medication name', prefixIcon: Icon(Icons.medication))),
+                TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Tên thuốc', prefixIcon: Icon(Icons.medication))),
                 const SizedBox(height: 14),
-                TextField(controller: dosageController, decoration: const InputDecoration(labelText: 'Dosage (e.g. 1 tablet)', prefixIcon: Icon(Icons.format_list_numbered))),
+                TextField(controller: dosageController, decoration: const InputDecoration(labelText: 'Liều lượng (VD: 1 viên)', prefixIcon: Icon(Icons.format_list_numbered))),
                 const SizedBox(height: 14),
                 DropdownButtonFormField<String>(
                   value: selectedFrequency,
-                  decoration: const InputDecoration(labelText: 'Frequency', prefixIcon: Icon(Icons.repeat)),
+                  decoration: const InputDecoration(labelText: 'Tần suất', prefixIcon: Icon(Icons.repeat)),
                   items: ['Mỗi ngày', '2 lần/ngày', '3 lần/ngày', 'Mỗi tuần'].map((f) => DropdownMenuItem(value: f, child: Text(f))).toList(),
                   onChanged: (val) => setModalState(() => selectedFrequency = val!),
                 ),
                 const SizedBox(height: 14),
                 DropdownButtonFormField<String>(
                   value: selectedTime,
-                  decoration: const InputDecoration(labelText: 'Time', prefixIcon: Icon(Icons.access_time)),
+                  decoration: const InputDecoration(labelText: 'Giờ uống', prefixIcon: Icon(Icons.access_time)),
                   items: ['06:00', '07:00', '08:00', '12:00', '18:00', '20:00', '22:00'].map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
                   onChanged: (val) => setModalState(() => selectedTime = val!),
                 ),
                 const SizedBox(height: 14),
-                TextField(controller: notesController, maxLines: 2, decoration: const InputDecoration(labelText: 'Notes', prefixIcon: Icon(Icons.note))),
+                TextField(controller: notesController, maxLines: 2, decoration: const InputDecoration(labelText: 'Ghi chú', prefixIcon: Icon(Icons.note))),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
@@ -93,7 +93,7 @@ class _MedicationScreenState extends State<MedicationScreen> {
                       if (mounted) Navigator.pop(context);
                     },
                     icon: const Icon(Icons.add),
-                    label: const Text('Add Medication'),
+                    label: const Text('Thêm thuốc'),
                   ),
                 ),
               ],
@@ -108,7 +108,7 @@ class _MedicationScreenState extends State<MedicationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.colors.background,
-      appBar: const BrandedAppBar(title: 'Medication Tracker'),
+      appBar: const BrandedAppBar(title: 'Theo dõi thuốc'),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddMedication,
         backgroundColor: context.colors.primary,
@@ -118,7 +118,7 @@ class _MedicationScreenState extends State<MedicationScreen> {
         builder: (_, controller, __) {
           if (controller.isLoading) return const LoadingWidget(itemCount: 3);
           if (controller.medications.isEmpty) {
-            return const EmptyStateWidget(icon: Icons.medication_outlined, title: 'No medications yet', subtitle: 'Tap + to add a new medication');
+            return const EmptyStateWidget(icon: Icons.medication_outlined, title: 'Chưa có thuốc nào', subtitle: 'Nhấn + để thêm thuốc mới');
           }
           return RefreshIndicator(
             onRefresh: () async {
@@ -164,12 +164,12 @@ class _MedicationScreenState extends State<MedicationScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('30-Day Adherence', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                const Text('Tuân thủ 30 ngày', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                 const SizedBox(height: 4),
                 LinearProgressIndicator(value: avg, backgroundColor: Colors.grey[200], valueColor: AlwaysStoppedAnimation<Color>(color), minHeight: 6),
                 const SizedBox(height: 4),
                 Text(
-                  pct >= 80 ? 'Great job! Keep it up.' : pct >= 50 ? 'Room to improve.' : 'Needs attention.',
+                  pct >= 80 ? 'Rất tốt! Hãy tiếp tục.' : pct >= 50 ? 'Cần cải thiện thêm.' : 'Cần chú ý hơn.',
                   style: TextStyle(fontSize: 12, color: color),
                 ),
               ],
@@ -236,7 +236,7 @@ class _MedicationCard extends StatelessWidget {
               children: [
                 Expanded(child: LinearProgressIndicator(value: adherence, backgroundColor: Colors.grey[200], minHeight: 5, borderRadius: BorderRadius.circular(4))),
                 const SizedBox(width: 8),
-                Text('${(adherence * 100).toInt()}% adherence', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                Text('${(adherence * 100).toInt()}% tuân thủ', style: const TextStyle(fontSize: 11, color: Colors.grey)),
               ],
             ),
           ],
@@ -249,13 +249,13 @@ class _MedicationCard extends StatelessWidget {
                     final ok = await controller.recordIntake(medicationId: medication.id, patientId: auth.currentUser?.id ?? '', wasTaken: true);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text(ok ? 'Marked as taken!' : 'Failed to record'),
+                        content: Text(ok ? 'Đã ghi nhận!' : 'Ghi nhận thất bại'),
                         backgroundColor: ok ? Colors.green : Colors.red,
                       ));
                     }
                   },
                   icon: const Icon(Icons.check, size: 16),
-                  label: const Text('Took it', style: TextStyle(fontSize: 12)),
+                  label: const Text('Đã uống', style: TextStyle(fontSize: 12)),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     foregroundColor: Colors.green,
@@ -270,7 +270,7 @@ class _MedicationCard extends StatelessWidget {
                     await controller.recordIntake(medicationId: medication.id, patientId: auth.currentUser?.id ?? '', wasTaken: false);
                   },
                   icon: const Icon(Icons.close, size: 16),
-                  label: const Text('Skipped', style: TextStyle(fontSize: 12)),
+                  label: const Text('Bỏ qua', style: TextStyle(fontSize: 12)),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     foregroundColor: Colors.orange,
@@ -282,7 +282,7 @@ class _MedicationCard extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
                 onPressed: () => controller.deleteMedication(medication.id),
-                tooltip: 'Delete',
+                tooltip: 'Xóa',
               ),
             ],
           ),
