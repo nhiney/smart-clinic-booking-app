@@ -44,6 +44,9 @@ import 'package:smart_clinic_booking/features/payment/presentation/screens/payme
 import 'package:smart_clinic_booking/features/payment/presentation/screens/transaction_screen.dart';
 import 'package:smart_clinic_booking/features/payment/domain/entities/transaction_entity.dart';
 import 'package:smart_clinic_booking/features/medical_record/presentation/screens/medical_record_screen.dart';
+import 'package:smart_clinic_booking/features/medical_record/presentation/screens/medical_record_detail_screen.dart';
+import 'package:smart_clinic_booking/features/medical_record/presentation/screens/add_medical_record_screen.dart';
+import 'package:smart_clinic_booking/features/medical_record/domain/entities/medical_record_entity.dart';
 import 'package:smart_clinic_booking/features/profile/presentation/screens/patient_profile_screen.dart';
 import 'package:smart_clinic_booking/features/invoice/presentation/screens/invoice_screen.dart';
 import 'package:smart_clinic_booking/features/appointment/presentation/screens/appointment_history_screen.dart';
@@ -386,6 +389,17 @@ class AppRouter {
       GoRoute(
         path: '/medical-records',
         builder: (context, state) => const MedicalRecordScreen(),
+      ),
+      GoRoute(
+        path: '/medical-records/add',
+        builder: (context, state) => const AddMedicalRecordScreen(),
+      ),
+      GoRoute(
+        path: '/medical-records/detail',
+        builder: (context, state) {
+          final record = state.extra as MedicalRecordEntity;
+          return MedicalRecordDetailScreen(record: record);
+        },
       ),
       GoRoute(
         path: '/invoices',

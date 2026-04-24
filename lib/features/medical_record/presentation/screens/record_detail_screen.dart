@@ -99,7 +99,7 @@ class RecordDetailScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadow.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 10,
           ),
         ],
@@ -157,7 +157,7 @@ class RecordDetailScreen extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.primarySurface,
+            color: AppColors.primaryLight,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
@@ -242,7 +242,7 @@ class RecordDetailScreen extends StatelessWidget {
       color: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: AppColors.divider.withOpacity(0.5)),
+        side: BorderSide(color: AppColors.gray200.withValues(alpha: 0.5)),
       ),
       child: ListTile(
         leading: Container(
@@ -275,7 +275,7 @@ class RecordDetailScreen extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(top: BorderSide(color: AppColors.divider)),
+        border: Border(top: BorderSide(color: AppColors.gray200)),
       ),
       child: SafeArea(
         child: ElevatedButton.icon(

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart' as legacy_provider;
 import 'package:file_picker/file_picker.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/widgets/branded_app_bar.dart';
 import '../../../../core/widgets/app_card.dart';
@@ -24,10 +25,19 @@ class MedicalRecordScreen extends ConsumerStatefulWidget {
 }
 
 class _MedicalRecordScreenState extends ConsumerState<MedicalRecordScreen> {
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _refreshRecords());
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   void _refreshRecords() {
@@ -37,32 +47,84 @@ class _MedicalRecordScreenState extends ConsumerState<MedicalRecordScreen> {
     }
   }
 
+  List<MedicalRecordEntity> _filtered(List<MedicalRecordEntity> records) {
+    if (_searchQuery.isEmpty) return records;
+    final q = _searchQuery.toLowerCase();
+    return records.where((r) =>
+        r.diagnosis.toLowerCase().contains(q) ||
+        r.doctor.toLowerCase().contains(q) ||
+        (r.prescription.toLowerCase().contains(q))).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(medicalRecordControllerProvider);
+    final filtered = _filtered(state.records);
+
     return Scaffold(
       backgroundColor: context.colors.background,
       appBar: const BrandedAppBar(
         title: 'Hồ sơ y tế',
         showBackButton: true,
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.push('/medical-records/add'),
+        backgroundColor: context.colors.primary,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('Thêm hồ sơ'),
+      ),
       body: state.isLoading
           ? const LoadingWidget(itemCount: 3)
-          : state.records.isEmpty
-              ? const EmptyStateWidget(
-                  title: 'Chưa có hồ sơ y tế.',
-                  icon: Icons.medical_services_outlined,
-                )
-              : RefreshIndicator(
-                  onRefresh: () async => _refreshRecords(),
-                  child: _buildTimeline(state.records),
+          : Column(
+              children: [
+                _buildSearchBar(),
+                Expanded(
+                  child: filtered.isEmpty
+                      ? EmptyStateWidget(
+                          title: _searchQuery.isEmpty ? 'Chưa có hồ sơ y tế.' : 'Không tìm thấy kết quả.',
+                          icon: Icons.medical_services_outlined,
+                        )
+                      : RefreshIndicator(
+                          onRefresh: () async => _refreshRecords(),
+                          child: _buildTimeline(filtered),
+                        ),
                 ),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(context.spacing.l, context.spacing.m, context.spacing.l, 0),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (v) => setState(() => _searchQuery = v.trim()),
+        decoration: InputDecoration(
+          hintText: 'Tìm chẩn đoán, bác sĩ...',
+          prefixIcon: const Icon(Icons.search_rounded, size: 20),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.clear_rounded, size: 18),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() => _searchQuery = '');
+                  },
+                )
+              : null,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+          filled: true,
+          fillColor: context.colors.surface,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        ),
+      ),
     );
   }
 
   Widget _buildTimeline(List<MedicalRecordEntity> records) {
     return ListView.builder(
-      padding: EdgeInsets.symmetric(horizontal: context.spacing.l, vertical: context.spacing.xl),
+      padding: EdgeInsets.fromLTRB(context.spacing.l, context.spacing.m, context.spacing.l, 100),
       itemCount: records.length,
       itemBuilder: (context, index) {
         final record = records[index];
@@ -73,7 +135,7 @@ class _MedicalRecordScreenState extends ConsumerState<MedicalRecordScreen> {
               _TimelineIndicator(isFirst: index == 0, isLast: index == records.length - 1),
               Expanded(
                 child: Padding(
-                  padding: EdgeInsets.only(bottom: context.spacing.xl),
+                  padding: EdgeInsets.only(bottom: context.spacing.l),
                   child: _RecordCard(record: record),
                 ),
               ),
@@ -96,20 +158,20 @@ class _TimelineIndicator extends StatelessWidget {
       width: 48,
       child: Column(
         children: [
-          Container(width: 2, height: 12, color: isFirst ? Colors.transparent : context.colors.divider.withOpacity(0.5)),
+          Container(width: 2, height: 12, color: isFirst ? Colors.transparent : context.colors.divider.withValues(alpha: 0.5)),
           Container(
             width: 24,
             height: 24,
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: context.colors.primary.withOpacity(0.1),
+              color: context.colors.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Container(
               decoration: BoxDecoration(
                 color: context.colors.primary,
                 shape: BoxShape.circle,
-                boxShadow: [BoxShadow(color: context.colors.primary.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2))],
+                boxShadow: [BoxShadow(color: context.colors.primary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2))],
               ),
             ),
           ),
@@ -122,7 +184,7 @@ class _TimelineIndicator extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [context.colors.divider.withOpacity(0.5), context.colors.divider.withOpacity(0.1)],
+                    colors: [context.colors.divider.withValues(alpha: 0.5), context.colors.divider.withValues(alpha: 0.1)],
                   ),
                 ),
               ),
@@ -142,14 +204,11 @@ class _RecordCard extends ConsumerStatefulWidget {
 }
 
 class _RecordCardState extends ConsumerState<_RecordCard> {
-  bool _attachmentsLoaded = false;
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(medicalRecordControllerProvider.notifier).loadAttachments(widget.record.id);
-      setState(() => _attachmentsLoaded = true);
     });
   }
 
@@ -235,80 +294,104 @@ class _RecordCardState extends ConsumerState<_RecordCard> {
     final state = ref.watch(medicalRecordControllerProvider);
     final attachments = state.attachments[widget.record.id] ?? [];
 
-    return AppCard(
-      padding: EdgeInsets.zero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHeader(),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildDoctorRow(),
-                const SizedBox(height: 12),
-                Text(widget.record.diagnosis, style: context.textStyles.heading3.copyWith(fontSize: 18)),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(Icons.medication_rounded, size: 14, color: context.colors.textSecondary),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        widget.record.prescription,
-                        style: context.textStyles.bodySmall.copyWith(color: context.colors.textSecondary),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+    return GestureDetector(
+      onTap: () => context.push('/medical-records/detail', extra: widget.record),
+      child: AppCard(
+        padding: EdgeInsets.zero,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildDoctorRow(),
+                  const SizedBox(height: 12),
+                  Text(widget.record.diagnosis, style: context.textStyles.heading3.copyWith(fontSize: 16)),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.medication_rounded, size: 14, color: context.colors.textSecondary),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          widget.record.prescription,
+                          style: context.textStyles.bodySmall.copyWith(color: context.colors.textSecondary),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
+                    ],
+                  ),
+                  if (widget.record.symptoms?.isNotEmpty == true) ...[
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: widget.record.symptoms!.take(3).map((s) => Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: context.colors.primary.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(s, style: TextStyle(fontSize: 11, color: context.colors.primary)),
+                          )).toList(),
                     ),
                   ],
-                ),
-                if (widget.record.notes?.isNotEmpty == true) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(color: context.colors.background, borderRadius: BorderRadius.circular(12)),
-                    child: Text(widget.record.notes!, style: context.textStyles.bodySmall.copyWith(fontStyle: FontStyle.italic, color: context.colors.textSecondary)),
-                  ),
+                  if (widget.record.notes?.isNotEmpty == true) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(color: context.colors.background, borderRadius: BorderRadius.circular(10)),
+                      child: Text(widget.record.notes!, style: context.textStyles.bodySmall.copyWith(fontStyle: FontStyle.italic, color: context.colors.textSecondary), maxLines: 2, overflow: TextOverflow.ellipsis),
+                    ),
+                  ],
+                  const SizedBox(height: 14),
+                  if (state.isUploading) ...[
+                    LinearProgressIndicator(value: state.uploadProgress),
+                    const SizedBox(height: 6),
+                    Text('Đang tải lên... ${(state.uploadProgress * 100).toInt()}%', style: context.textStyles.caption),
+                  ],
+                  _buildAttachmentRow(attachments),
+                  const SizedBox(height: 10),
+                  _buildActionRow(),
                 ],
-                const SizedBox(height: 16),
-                if (state.isUploading) ...[
-                  LinearProgressIndicator(value: state.uploadProgress),
-                  const SizedBox(height: 8),
-                  Text('Đang tải lên... ${(state.uploadProgress * 100).toInt()}%', style: context.textStyles.caption),
-                ],
-                _buildAttachmentSection(attachments),
-                const SizedBox(height: 12),
-                _buildActionRow(),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
         color: context.colors.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-        border: Border(bottom: BorderSide(color: context.colors.divider.withOpacity(0.5))),
+        border: Border(bottom: BorderSide(color: context.colors.divider.withValues(alpha: 0.5))),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             children: [
-              Icon(Icons.event_note_rounded, size: 16, color: context.colors.primary),
-              const SizedBox(width: 8),
+              Icon(Icons.event_note_rounded, size: 14, color: context.colors.primary),
+              const SizedBox(width: 6),
               Text(DateFormat('dd/MM/yyyy').format(widget.record.createdAt), style: context.textStyles.bodySmall.copyWith(fontWeight: FontWeight.w700)),
             ],
           ),
-          Text('#${widget.record.id.substring(0, 8).toUpperCase()}', style: context.textStyles.caption.copyWith(color: context.colors.textHint, letterSpacing: 1)),
+          Row(
+            children: [
+              Text('#${widget.record.id.substring(0, 8).toUpperCase()}', style: context.textStyles.caption.copyWith(color: context.colors.textHint, letterSpacing: 1)),
+              const SizedBox(width: 6),
+              Icon(Icons.chevron_right_rounded, size: 16, color: context.colors.textHint),
+            ],
+          ),
         ],
       ),
     );
@@ -319,7 +402,7 @@ class _RecordCardState extends ConsumerState<_RecordCard> {
       children: [
         CircleAvatar(
           radius: 12,
-          backgroundColor: context.colors.primary.withOpacity(0.1),
+          backgroundColor: context.colors.primary.withValues(alpha: 0.1),
           child: Icon(Icons.person_rounded, size: 14, color: context.colors.primary),
         ),
         const SizedBox(width: 8),
@@ -328,39 +411,13 @@ class _RecordCardState extends ConsumerState<_RecordCard> {
     );
   }
 
-  Widget _buildAttachmentSection(List<Attachment> attachments) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildAttachmentRow(List<Attachment> attachments) {
+    if (attachments.isEmpty) return const SizedBox.shrink();
+    return Row(
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('TỆP ĐÍNH KÈM', style: context.textStyles.caption.copyWith(color: context.colors.textHint, fontSize: 10, fontWeight: FontWeight.w700)),
-            GestureDetector(
-              onTap: _pickAndUpload,
-              child: Row(
-                children: [
-                  Icon(Icons.upload_file_rounded, size: 14, color: context.colors.primary),
-                  const SizedBox(width: 4),
-                  Text('Tải lên', style: context.textStyles.caption.copyWith(color: context.colors.primary, fontSize: 10, fontWeight: FontWeight.w700)),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        if (attachments.isEmpty)
-          Text('Không có tệp đính kèm', style: context.textStyles.caption.copyWith(color: context.colors.textHint))
-        else
-          SizedBox(
-            height: 80,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: attachments.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 12),
-              itemBuilder: (_, i) => _AttachmentCard(attachment: attachments[i]),
-            ),
-          ),
+        Icon(Icons.attach_file_rounded, size: 13, color: context.colors.textHint),
+        const SizedBox(width: 4),
+        Text('${attachments.length} tệp đính kèm', style: context.textStyles.caption.copyWith(color: context.colors.textHint)),
       ],
     );
   }
@@ -371,71 +428,43 @@ class _RecordCardState extends ConsumerState<_RecordCard> {
         Expanded(
           child: OutlinedButton.icon(
             onPressed: _showVersionHistory,
-            icon: const Icon(Icons.history_rounded, size: 16),
+            icon: const Icon(Icons.history_rounded, size: 14),
             label: const Text('Lịch sử', style: TextStyle(fontSize: 12)),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              side: BorderSide(color: context.colors.primary.withOpacity(0.5)),
+              side: BorderSide(color: context.colors.primary.withValues(alpha: 0.4)),
+              foregroundColor: context.colors.primary,
             ),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: _pickAndUpload,
+            icon: const Icon(Icons.upload_file_rounded, size: 14),
+            label: const Text('Tải lên', style: TextStyle(fontSize: 12)),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              side: BorderSide(color: context.colors.primary.withValues(alpha: 0.4)),
+              foregroundColor: context.colors.primary,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
         Expanded(
           child: OutlinedButton.icon(
             onPressed: _showShareDialog,
-            icon: const Icon(Icons.share_rounded, size: 16),
+            icon: const Icon(Icons.share_rounded, size: 14),
             label: const Text('Chia sẻ', style: TextStyle(fontSize: 12)),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              side: BorderSide(color: context.colors.primary.withOpacity(0.5)),
+              side: BorderSide(color: context.colors.primary.withValues(alpha: 0.4)),
+              foregroundColor: context.colors.primary,
             ),
           ),
         ),
       ],
     );
-  }
-}
-
-class _AttachmentCard extends StatelessWidget {
-  final Attachment attachment;
-  const _AttachmentCard({required this.attachment});
-
-  @override
-  Widget build(BuildContext context) {
-    final (icon, color) = _iconForType(attachment.fileType);
-    return Container(
-      width: 140,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.colors.divider.withOpacity(0.5)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(height: 8),
-          Text(attachment.name, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
-          Text(attachment.fileType, style: TextStyle(fontSize: 10, color: Colors.grey[500])),
-        ],
-      ),
-    );
-  }
-
-  (IconData, Color) _iconForType(String type) {
-    switch (type.toUpperCase()) {
-      case 'PDF':
-        return (Icons.picture_as_pdf_rounded, Colors.redAccent);
-      case 'DCM':
-        return (Icons.medical_information_rounded, Colors.purple);
-      default:
-        return (Icons.image_rounded, Colors.blueAccent);
-    }
   }
 }
 

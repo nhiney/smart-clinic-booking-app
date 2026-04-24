@@ -68,6 +68,12 @@ class MedicalRecordController extends StateNotifier<MedicalRecordState> {
     }
   }
 
+  Future<void> addRecord(MedicalRecordEntity record) async {
+    await repository.addMedicalRecord(record);
+    final updated = [record, ...state.records];
+    state = state.copyWith(records: updated);
+  }
+
   // ─── ATTACHMENTS ─────────────────────────────────────────────────────────
 
   Future<void> loadAttachments(String recordId) async {
