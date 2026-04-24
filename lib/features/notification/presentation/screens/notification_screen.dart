@@ -189,7 +189,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 22),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -269,35 +269,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
                         ),
                     ],
                   ),
-                  const SizedBox(height: 24),
-                  // Stats row: 3 frosted-glass cards
-                  Row(
-                    children: [
-                      _StatCard(
-                        value: total,
-                        label: 'Tổng',
-                        icon: Icons.inbox_rounded,
-                        iconBg: Colors.white.withValues(alpha: 0.2),
-                      ),
-                      const SizedBox(width: 12),
-                      _StatCard(
-                        value: unread,
-                        label: 'Chưa đọc',
-                        icon: Icons.mark_email_unread_rounded,
-                        iconBg: unread > 0
-                            ? const Color(0xFFFF3B30).withValues(alpha: 0.25)
-                            : Colors.white.withValues(alpha: 0.2),
-                        valueColor: unread > 0 ? const Color(0xFFFFE14D) : Colors.white,
-                      ),
-                      const SizedBox(width: 12),
-                      _StatCard(
-                        value: total - unread,
-                        label: 'Đã đọc',
-                        icon: Icons.mark_email_read_rounded,
-                        iconBg: Colors.white.withValues(alpha: 0.2),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),
@@ -311,72 +282,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
     return SliverPersistentHeader(
       pinned: true,
       delegate: _FilterDelegate(active: _filter, onSelect: (f) => setState(() => _filter = f)),
-    );
-  }
-}
-
-// ─── Stat card ────────────────────────────────────────────────────────────────
-
-class _StatCard extends StatelessWidget {
-  final int value;
-  final String label;
-  final IconData icon;
-  final Color iconBg;
-  final Color valueColor;
-
-  const _StatCard({
-    required this.value,
-    required this.label,
-    required this.icon,
-    required this.iconBg,
-    this.valueColor = Colors.white,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 34, height: 34,
-              decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(10)),
-              child: Icon(icon, color: Colors.white, size: 17),
-            ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '$value',
-                  style: TextStyle(
-                    color: valueColor,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    height: 1,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.72),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
