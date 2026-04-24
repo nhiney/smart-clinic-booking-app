@@ -172,7 +172,7 @@ class _RecordCardState extends ConsumerState<_RecordCard> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(success ? 'File uploaded successfully' : 'Upload failed'), backgroundColor: success ? Colors.green : Colors.red),
+        SnackBar(content: Text(success ? 'Tải lên tệp thành công' : 'Tải lên thất bại'), backgroundColor: success ? Colors.green : Colors.red),
       );
     }
   }
@@ -194,20 +194,20 @@ class _RecordCardState extends ConsumerState<_RecordCard> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Share Record'),
+        title: const Text('Chia sẻ hồ sơ'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Enter the User ID of the person you want to share with:'),
+            const Text('Nhập ID người dùng muốn chia sẻ:'),
             const SizedBox(height: 12),
             TextField(
               controller: controller,
-              decoration: const InputDecoration(labelText: 'User ID', border: OutlineInputBorder()),
+              decoration: const InputDecoration(labelText: 'ID người dùng', border: OutlineInputBorder()),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
           TextButton(
             onPressed: () async {
               if (controller.text.trim().isEmpty) return;
@@ -219,11 +219,11 @@ class _RecordCardState extends ConsumerState<_RecordCard> {
                   );
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(share != null ? 'Record shared successfully' : 'Failed to share record')),
+                  SnackBar(content: Text(share != null ? 'Chia sẻ hồ sơ thành công' : 'Chia sẻ thất bại')),
                 );
               }
             },
-            child: const Text('Share'),
+            child: const Text('Chia sẻ'),
           ),
         ],
       ),
@@ -277,7 +277,7 @@ class _RecordCardState extends ConsumerState<_RecordCard> {
                 if (state.isUploading) ...[
                   LinearProgressIndicator(value: state.uploadProgress),
                   const SizedBox(height: 8),
-                  Text('Uploading... ${(state.uploadProgress * 100).toInt()}%', style: context.textStyles.caption),
+                  Text('Đang tải lên... ${(state.uploadProgress * 100).toInt()}%', style: context.textStyles.caption),
                 ],
                 _buildAttachmentSection(attachments),
                 const SizedBox(height: 12),
@@ -335,14 +335,14 @@ class _RecordCardState extends ConsumerState<_RecordCard> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('ATTACHMENTS', style: context.textStyles.caption.copyWith(color: context.colors.textHint, fontSize: 10, fontWeight: FontWeight.w700)),
+            Text('TỆP ĐÍNH KÈM', style: context.textStyles.caption.copyWith(color: context.colors.textHint, fontSize: 10, fontWeight: FontWeight.w700)),
             GestureDetector(
               onTap: _pickAndUpload,
               child: Row(
                 children: [
                   Icon(Icons.upload_file_rounded, size: 14, color: context.colors.primary),
                   const SizedBox(width: 4),
-                  Text('Upload', style: context.textStyles.caption.copyWith(color: context.colors.primary, fontSize: 10, fontWeight: FontWeight.w700)),
+                  Text('Tải lên', style: context.textStyles.caption.copyWith(color: context.colors.primary, fontSize: 10, fontWeight: FontWeight.w700)),
                 ],
               ),
             ),
@@ -350,7 +350,7 @@ class _RecordCardState extends ConsumerState<_RecordCard> {
         ),
         const SizedBox(height: 12),
         if (attachments.isEmpty)
-          Text('No attachments', style: context.textStyles.caption.copyWith(color: context.colors.textHint))
+          Text('Không có tệp đính kèm', style: context.textStyles.caption.copyWith(color: context.colors.textHint))
         else
           SizedBox(
             height: 80,
@@ -372,7 +372,7 @@ class _RecordCardState extends ConsumerState<_RecordCard> {
           child: OutlinedButton.icon(
             onPressed: _showVersionHistory,
             icon: const Icon(Icons.history_rounded, size: 16),
-            label: const Text('History', style: TextStyle(fontSize: 12)),
+            label: const Text('Lịch sử', style: TextStyle(fontSize: 12)),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 8),
               side: BorderSide(color: context.colors.primary.withValues(alpha: 0.5)),
@@ -384,7 +384,7 @@ class _RecordCardState extends ConsumerState<_RecordCard> {
           child: OutlinedButton.icon(
             onPressed: _showShareDialog,
             icon: const Icon(Icons.share_rounded, size: 16),
-            label: const Text('Share', style: TextStyle(fontSize: 12)),
+            label: const Text('Chia sẻ', style: TextStyle(fontSize: 12)),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 8),
               side: BorderSide(color: context.colors.primary.withValues(alpha: 0.5)),
@@ -451,17 +451,17 @@ class _VersionHistorySheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Version History', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+          const Text('Lịch sử phiên bản', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
           const SizedBox(height: 16),
           if (versions.isEmpty)
-            const Padding(padding: EdgeInsets.all(16), child: Text('No versions found'))
+            const Padding(padding: EdgeInsets.all(16), child: Text('Không tìm thấy phiên bản nào'))
           else
             ...versions.map((v) => ListTile(
                   leading: CircleAvatar(
                     backgroundColor: Colors.blue[50],
                     child: Text('v${v.versionNumber}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.blue)),
                   ),
-                  title: Text(v.changeNote.isEmpty ? 'Version ${v.versionNumber}' : v.changeNote),
+                  title: Text(v.changeNote.isEmpty ? 'Phiên bản ${v.versionNumber}' : v.changeNote),
                   subtitle: Text(DateFormat('dd/MM/yyyy HH:mm').format(v.createdAt)),
                   dense: true,
                 )),

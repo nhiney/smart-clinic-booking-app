@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/colors/app_colors.dart';
@@ -9,7 +10,6 @@ import '../../../../shared/widgets/loading_widget.dart';
 import '../../../../core/widgets/branded_app_bar.dart';
 import '../../domain/entities/hospital_entity.dart';
 import '../controllers/hospital_map_controller.dart';
-import 'package:smart_clinic_booking/features/review/presentation/screens/review_screen.dart';
 
 class HospitalMapScreen extends ConsumerStatefulWidget {
   const HospitalMapScreen({super.key});
@@ -80,11 +80,12 @@ class _HospitalMapScreenState extends ConsumerState<HospitalMapScreen> {
   }
 
   void _showHospitalBottomSheet(HospitalEntity hospital) {
+    final router = GoRouter.of(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
+      builder: (sheetCtx) => Container(
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -139,15 +140,10 @@ class _HospitalMapScreenState extends ConsumerState<HospitalMapScreen> {
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ReviewScreen(
-                        hospitalId: hospital.id,
-                        hospitalName: hospital.name,
-                      ),
-                    ),
+                  Navigator.pop(sheetCtx);
+                  router.push(
+                    '/hospital/review/${hospital.id}',
+                    extra: hospital.name,
                   );
                 },
                 icon: const Icon(Icons.star_outline, color: AppColors.primary),

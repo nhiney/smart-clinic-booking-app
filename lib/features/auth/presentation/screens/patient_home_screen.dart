@@ -17,6 +17,8 @@ import 'package:smart_clinic_booking/features/content/presentation/controllers/c
 import 'package:smart_clinic_booking/features/home/domain/entities/health_article.dart';
 import 'package:smart_clinic_booking/features/maps/presentation/controllers/hospital_map_controller.dart';
 import 'package:smart_clinic_booking/features/maps/domain/entities/hospital_entity.dart';
+import 'package:smart_clinic_booking/features/doctor/presentation/controllers/featured_doctors_provider.dart';
+import 'package:smart_clinic_booking/features/doctor/domain/entities/doctor_entity.dart';
 import 'package:intl/intl.dart';
 
 // ── Brand palette ────────────────────────────────────────────────────────────
@@ -332,7 +334,7 @@ class _HomeTab extends StatelessWidget {
           ),
           _HealthStatsRow(),
           _FeaturedHospitals(),
-          _FeaturedDoctors(),
+          const _FeaturedDoctors(),
           _HealthNewsSection(),
           const SizedBox(height: 120),
         ],
@@ -541,13 +543,53 @@ class _SearchBar extends ConsumerWidget {
                   ),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: _P.surface,
-                  borderRadius: BorderRadius.circular(8),
+              GestureDetector(
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                    ),
+                    builder: (context) => Container(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Lọc tìm kiếm',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _P.primaryDark),
+                          ),
+                          const SizedBox(height: 20),
+                          ListTile(
+                            leading: const Icon(Icons.medical_services_outlined, color: _P.primary),
+                            title: const Text('Bác sĩ chuyên khoa'),
+                            onTap: () => Navigator.pop(context),
+                          ),
+                          ListTile(
+                            leading: const Icon(Icons.local_hospital_outlined, color: _P.primary),
+                            title: const Text('Bệnh viện / Phòng khám'),
+                            onTap: () => Navigator.pop(context),
+                          ),
+                          ListTile(
+                            leading: const Icon(Icons.history_edu_outlined, color: _P.primary),
+                            title: const Text('Gói khám sức khỏe'),
+                            onTap: () => Navigator.pop(context),
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _P.surface,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.tune_rounded, color: _P.primary, size: 18),
                 ),
-                child: const Icon(Icons.tune_rounded, color: _P.primary, size: 18),
               ),
             ],
           ),
@@ -741,18 +783,18 @@ class _BannerCard extends StatelessWidget {
 // ── Quick actions grid ───────────────────────────────────────────────────────
 class _QuickActionsGrid extends ConsumerWidget {
   List<_Action> _getItems(AppLanguage lang) => [
-    _Action(Icons.add_circle_outline_rounded, lang.localize('Đặt khám', 'Book Visit'), const Color(0xFF2196F3), '/doctor/search'),
-    _Action(Icons.history_rounded, lang.localize('Lịch sử', 'History'), const Color(0xFF7C3AED), '/appointments'),
-    _Action(Icons.receipt_long_rounded, lang.localize('Hóa đơn', 'Invoices'), const Color(0xFF00BFA5), '/invoices'),
-    _Action(Icons.medication_rounded, lang.localize('Đơn thuốc', 'Prescription'), const Color(0xFFE91E63), '/prescriptions'),
-    _Action(Icons.folder_open_rounded, lang.localize('Hồ sơ', 'Records'), const Color(0xFFFF6D00), '/medical-records'),
-    _Action(Icons.local_hospital_rounded, lang.localize('Nhập viện', 'Admission'), const Color(0xFF5C6BC0), null),
-    _Action(Icons.payments_outlined, lang.localize('Thanh toán', 'Payment'), const Color(0xFF43A047), '/payment'),
-    _Action(Icons.poll_outlined, lang.localize('Khảo sát', 'Survey'), const Color(0xFFFB8C00), '/surveys'),
-    _Action(Icons.headset_mic_rounded, lang.localize('Hỗ trợ', 'Support'), const Color(0xFF0288D1), '/support'),
-    _Action(Icons.smart_toy_outlined, lang.localize('AI Chat', 'AI Chat'), const Color(0xFF6D4C41), '/ai/voice-assistant'),
-    _Action(Icons.map_rounded, lang.localize('Bản đồ', 'Map'), const Color(0xFF00897B), '/maps'),
-    _Action(Icons.newspaper_rounded, lang.localize('Tin tức', 'News'), const Color(0xFF757575), '/news'),
+    _Action(Icons.add_circle_outline_rounded, lang.localize('Đặt khám', 'Book Visit'), const Color(0xFF2196F3), '/doctor/search', assetPath: 'assets/icons/quick_actions/book_appointment.png'),
+    _Action(Icons.history_rounded, lang.localize('Lịch sử', 'History'), const Color(0xFF7C3AED), '/appointments', assetPath: 'assets/icons/quick_actions/appointment_history.png'),
+    _Action(Icons.receipt_long_rounded, lang.localize('Hóa đơn', 'Invoices'), const Color(0xFF00BFA5), '/invoices', assetPath: 'assets/icons/quick_actions/invoice.png'),
+    _Action(Icons.medication_rounded, lang.localize('Đơn thuốc', 'Prescription'), const Color(0xFFE91E63), '/prescriptions', assetPath: 'assets/icons/quick_actions/invoice.png'),
+    _Action(Icons.folder_open_rounded, lang.localize('Hồ sơ', 'Records'), const Color(0xFFFF6D00), '/medical-records', assetPath: 'assets/icons/quick_actions/medical_records.png'),
+    _Action(Icons.local_hospital_rounded, lang.localize('Nhập viện', 'Admission'), const Color(0xFF5C6BC0), null, assetPath: 'assets/icons/quick_actions/inpatient_admission.png'),
+    _Action(Icons.payments_outlined, lang.localize('Thanh toán', 'Payment'), const Color(0xFF43A047), '/payment', assetPath: 'assets/icons/quick_actions/fee_payment.png'),
+    _Action(Icons.poll_outlined, lang.localize('Khảo sát', 'Survey'), const Color(0xFFFB8C00), '/surveys', assetPath: 'assets/icons/quick_actions/lab_results.png'),
+    _Action(Icons.headset_mic_rounded, lang.localize('Hỗ trợ', 'Support'), const Color(0xFF0288D1), '/support', assetPath: 'assets/icons/quick_actions/customer_support.png'),
+    _Action(Icons.smart_toy_outlined, lang.localize('AI Chat', 'AI Chat'), const Color(0xFF6D4C41), '/ai/voice-assistant', assetPath: 'assets/icons/quick_actions/chatbot.png'),
+    _Action(Icons.map_rounded, lang.localize('Bản đồ', 'Map'), const Color(0xFF00897B), '/maps', assetPath: 'assets/icons/quick_actions/home_monitoring.png'),
+    _Action(Icons.newspaper_rounded, lang.localize('Tin tức', 'News'), const Color(0xFF757575), '/news', assetPath: 'assets/icons/quick_actions/user_guide.png'),
   ];
 
   @override
@@ -813,7 +855,8 @@ class _Action {
   final String label;
   final Color color;
   final String? route;
-  const _Action(this.icon, this.label, this.color, this.route);
+  final String? assetPath;
+  const _Action(this.icon, this.label, this.color, this.route, {this.assetPath});
 }
 
 class _ActionCell extends StatelessWidget {
@@ -844,7 +887,9 @@ class _ActionCell extends StatelessWidget {
               color: item.color.withOpacity(0.10),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(item.icon, color: item.color, size: 24),
+            child: item.assetPath != null 
+              ? Image.asset(item.assetPath!, width: 24, height: 24, fit: BoxFit.contain)
+              : Icon(item.icon, color: item.color, size: 24),
           ),
           const SizedBox(height: 6),
           Text(
@@ -1490,57 +1535,12 @@ class _HospitalCard extends StatelessWidget {
 }
 
 // ── Featured doctors ─────────────────────────────────────────────────────────
-class _FeaturedDoctors extends StatefulWidget {
-  @override
-  State<_FeaturedDoctors> createState() => _FeaturedDoctorsState();
-}
-
-class _FeaturedDoctorsState extends State<_FeaturedDoctors> {
-  List<Map<String, dynamic>> _doctors = [];
-  bool _loading = true;
+class _FeaturedDoctors extends ConsumerWidget {
+  const _FeaturedDoctors();
 
   @override
-  void initState() {
-    super.initState();
-    _loadDoctors();
-  }
-
-  Future<void> _loadDoctors() async {
-    try {
-      final snap = await FirebaseFirestore.instance
-          .collection('users')
-          .where('role', isEqualTo: 'doctor')
-          .where('status', isEqualTo: 'active')
-          .limit(6)
-          .get();
-      if (mounted) {
-        setState(() {
-          _doctors = snap.docs
-              .map((d) => <String, dynamic>{
-                    'id': d.id,
-                    'name': d.data()['name'] ?? 'Doctor',
-                    'specialty': d.data()['specialty'] ?? 'General',
-                    'avatarUrl': d.data()['avatarUrl'] ?? '',
-                  })
-              .toList();
-        });
-      }
-    } catch (_) {
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final showFallback = _doctors.isEmpty && !_loading;
-    final fallbackDoctors = [
-      {'id': '1', 'name': 'Dr. Nguyen Van A', 'specialty': 'Cardiology', 'avatarUrl': 'https://i.pravatar.cc/150?u=d1'},
-      {'id': '2', 'name': 'Dr. Tran Thi B', 'specialty': 'Pediatrics', 'avatarUrl': 'https://i.pravatar.cc/150?u=d2'},
-      {'id': '3', 'name': 'Dr. Le Van C', 'specialty': 'Neurology', 'avatarUrl': 'https://i.pravatar.cc/150?u=d3'},
-      {'id': '4', 'name': 'Dr. Pham Thi D', 'specialty': 'Ophthalmology', 'avatarUrl': 'https://i.pravatar.cc/150?u=d4'},
-    ];
-    final list = showFallback ? fallbackDoctors : _doctors;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final doctorsAsync = ref.watch(featuredDoctorsProvider);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 24, 0, 0),
@@ -1553,7 +1553,7 @@ class _FeaturedDoctorsState extends State<_FeaturedDoctors> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Featured Doctors',
+                  'Bác sĩ nổi bật',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
@@ -1563,7 +1563,7 @@ class _FeaturedDoctorsState extends State<_FeaturedDoctors> {
                 GestureDetector(
                   onTap: () => context.push('/doctor/search'),
                   child: const Text(
-                    'See all',
+                    'Xem tất cả',
                     style: TextStyle(
                       color: _P.primary,
                       fontWeight: FontWeight.w700,
@@ -1575,82 +1575,115 @@ class _FeaturedDoctorsState extends State<_FeaturedDoctors> {
             ),
           ),
           const SizedBox(height: 14),
-          if (_loading)
-            const Center(
+          doctorsAsync.when(
+            loading: () => const Center(
               child: Padding(
                 padding: EdgeInsets.all(16),
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
-            )
-          else
-            SizedBox(
-              height: 110,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: list.length,
-                itemBuilder: (context, i) {
-                  final doc = list[i];
-                  return GestureDetector(
-                    onTap: () => context.push(
-                        '/doctor/detail/${doc['id']}'),
-                    child: Container(
-                      width: 90,
-                      margin: const EdgeInsets.only(right: 16),
-                      child: Column(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(3),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                  color: _P.primary.withOpacity(0.3),
-                                  width: 2),
-                            ),
-                            child: CircleAvatar(
-                              radius: 28,
-                              backgroundColor: _P.surface,
-                              backgroundImage: (doc['avatarUrl'] as String).isNotEmpty
-                                  ? NetworkImage(doc['avatarUrl'] as String)
-                                  : null,
-                              child: (doc['avatarUrl'] as String).isEmpty
-                                  ? const Icon(
-                                      Icons.person_rounded,
-                                      color: _P.primary,
-                                      size: 24)
-                                  : null,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            (doc['name'] as String).split(' ').last,
-                            textAlign: TextAlign.center,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: _P.textPrimary,
-                            ),
-                          ),
-                          Text(
-                            doc['specialty'] as String,
-                            textAlign: TextAlign.center,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: _P.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+            ),
+            error: (_, __) => const SizedBox.shrink(),
+            data: (doctors) {
+              if (doctors.isEmpty) return const SizedBox.shrink();
+              return SizedBox(
+                height: 170,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: doctors.length,
+                  itemBuilder: (context, i) =>
+                      _FeaturedDoctorItem(doctor: doctors[i]),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FeaturedDoctorItem extends StatelessWidget {
+  final DoctorEntity doctor;
+  const _FeaturedDoctorItem({required this.doctor});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/doctor/detail/${doctor.id}', extra: doctor),
+      child: Container(
+        width: 96,
+        margin: const EdgeInsets.only(right: 14),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: _P.primary.withValues(alpha: 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            CircleAvatar(
+              radius: 28,
+              backgroundColor: _P.surface,
+              backgroundImage: doctor.imageUrl.isNotEmpty
+                  ? NetworkImage(doctor.imageUrl)
+                  : null,
+              child: doctor.imageUrl.isEmpty
+                  ? const Icon(Icons.person_rounded, color: _P.primary, size: 24)
+                  : null,
+            ),
+            const SizedBox(height: 7),
+            Text(
+              doctor.name,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: _P.textPrimary,
+                height: 1.25,
               ),
             ),
-        ],
+            const SizedBox(height: 3),
+            Text(
+              doctor.specialty,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 10,
+                color: _P.primary.withValues(alpha: 0.85),
+              ),
+            ),
+            if (doctor.rating > 0) ...[
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.star_rounded, size: 11, color: Colors.amber),
+                  const SizedBox(width: 2),
+                  Text(
+                    doctor.rating.toStringAsFixed(1),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: _P.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
