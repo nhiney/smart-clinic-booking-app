@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:smart_clinic_booking/core/theme/colors/app_colors.dart';
 import 'package:smart_clinic_booking/core/widgets/branded_app_bar.dart';
 import 'package:smart_clinic_booking/features/content/presentation/controllers/content_controller.dart';
 import 'package:smart_clinic_booking/features/content/domain/entities/content_entities.dart';
+import 'package:smart_clinic_booking/features/content/presentation/screens/survey_form_screen.dart';
 
 class PricingScreen extends ConsumerWidget {
   const PricingScreen({super.key});
@@ -122,38 +124,123 @@ class _CategorySection extends StatelessWidget {
   }
 }
 
-class SurveyScreen extends ConsumerWidget {
+class SurveyScreen extends ConsumerStatefulWidget {
   const SurveyScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SurveyScreen> createState() => _SurveyScreenState();
+}
+
+class _SurveyScreenState extends ConsumerState<SurveyScreen> {
+  String _activeCategory = 'Tất cả';
+
+  static const _categories = [
+    'Tất cả',
+    'Dịch vụ',
+    'Bác sĩ',
+    'Cơ sở vật chất',
+    'Trải nghiệm',
+    'Dinh dưỡng',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
     final surveysAsync = ref.watch(surveyProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5FB),
-      appBar: const BrandedAppBar(title: 'Khảo sát sức khoẻ', showBackButton: true),
-      body: surveysAsync.when(
-        data: (surveys) {
-          if (surveys.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.poll_outlined, size: 60, color: Color(0xFFCBD5E1)),
-                  SizedBox(height: 12),
-                  Text('Chưa có khảo sát nào', style: TextStyle(color: Color(0xFF94A3B8))),
-                ],
+      backgroundColor: AppColors.background,
+      appBar: const BrandedAppBar(title: 'Khảo sát & Đánh giá', showBackButton: true),
+      body: Column(
+        children: [
+          // Filter chips
+          Container(
+            height: 52,
+            color: Colors.white,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              itemCount: _categories.length,
+              itemBuilder: (context, index) {
+                final cat = _categories[index];
+                final isActive = cat == _activeCategory;
+                return GestureDetector(
+                  onTap: () => setState(() => _activeCategory = cat),
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: isActive ? AppColors.primary : Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isActive ? AppColors.primary : Colors.grey.shade300,
+                      ),
+                      boxShadow: isActive
+                          ? [
+                              BoxShadow(
+                                color: AppColors.primary.withValues(alpha: 0.3),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Text(
+                      cat,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: isActive ? Colors.white : Colors.grey.shade600,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          // Survey list
+          Expanded(
+            child: surveysAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Lỗi tải khảo sát: $e'),
+                    const SizedBox(height: 12),
+                    ElevatedButton(
+                      onPressed: () => ref.read(surveyProvider.notifier).loadSurveys(),
+                      child: const Text('Thử lại'),
+                    ),
+                  ],
+                ),
               ),
-            );
-          }
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: surveys.length,
-            itemBuilder: (context, index) => _SurveyCard(survey: surveys[index], ref: ref),
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Lỗi: $e')),
+              data: (surveys) {
+                final filtered = _activeCategory == 'Tất cả'
+                    ? surveys
+                    : surveys.where((s) => s.category == _activeCategory).toList();
+
+                if (filtered.isEmpty) {
+                  return const Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.poll_outlined, size: 60, color: Color(0xFFCBD5E1)),
+                        SizedBox(height: 12),
+                        Text('Chưa có khảo sát nào', style: TextStyle(color: Color(0xFF94A3B8))),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: filtered.length,
+                  itemBuilder: (context, index) => _SurveyCard(survey: filtered[index]),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -161,92 +248,151 @@ class SurveyScreen extends ConsumerWidget {
 
 class _SurveyCard extends StatelessWidget {
   final Survey survey;
-  final WidgetRef ref;
-  const _SurveyCard({required this.survey, required this.ref});
+  const _SurveyCard({required this.survey});
+
+  static (Color, Color, IconData) _categoryStyle(String? category) {
+    switch (category) {
+      case 'Dịch vụ':
+        return (const Color(0xFF2563EB), const Color(0xFFDBEAFE), Icons.medical_services_outlined);
+      case 'Bác sĩ':
+        return (const Color(0xFF059669), const Color(0xFFD1FAE5), Icons.person_outlined);
+      case 'Cơ sở vật chất':
+        return (const Color(0xFFD97706), const Color(0xFFFEF3C7), Icons.apartment_outlined);
+      case 'Trải nghiệm':
+        return (const Color(0xFF7C3AED), const Color(0xFFEDE9FE), Icons.star_outline_rounded);
+      case 'Dinh dưỡng':
+        return (const Color(0xFFDB2777), const Color(0xFFFCE7F3), Icons.restaurant_outlined);
+      default:
+        return (AppColors.primary, const Color(0xFFDBEAFE), Icons.poll_outlined);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final totalVotes = survey.results.values.fold(0, (sum, v) => sum + v);
+    final (fgColor, bgColor, icon) = _categoryStyle(survey.category);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
+          // Top section
+          Padding(
             padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              color: Color(0xFFEFF6FF),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            ),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.poll_rounded, color: Color(0xFF0D62A2), size: 20),
-                const SizedBox(width: 10),
                 Expanded(
-                  child: Text(survey.title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF1E293B))),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (survey.category != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: bgColor,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            survey.category!,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: fgColor,
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: 6),
+                      Text(
+                        survey.title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        survey.description,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.grey, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: bgColor,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: fgColor, size: 20),
                 ),
               ],
             ),
           ),
+          const Divider(height: 1),
+          // Bottom section
           Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
               children: [
-                Text(survey.description, style: const TextStyle(color: Color(0xFF64748B), fontSize: 13)),
-                const SizedBox(height: 16),
-                ...survey.options.map((opt) {
-                  final votes = survey.results[opt.id] ?? 0;
-                  final percent = totalVotes > 0 ? votes / totalVotes : 0.0;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: InkWell(
-                      onTap: () => ref.read(surveyProvider.notifier).vote(survey.id, opt.id),
-                      borderRadius: BorderRadius.circular(10),
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
-                        ),
-                        child: Column(
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(child: Text(opt.text, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14))),
-                                Text(
-                                  '${(percent * 100).toStringAsFixed(0)}%',
-                                  style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF0D62A2), fontSize: 14),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: LinearProgressIndicator(
-                                value: percent,
-                                backgroundColor: const Color(0xFFE2E8F0),
-                                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF0D62A2)),
-                                minHeight: 6,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                }),
-                const SizedBox(height: 4),
+                const Icon(Icons.timer_outlined, size: 14, color: Colors.grey),
+                const SizedBox(width: 4),
                 Text(
-                  '$totalVotes lượt bình chọn',
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                  '${survey.estimatedMinutes} phút',
+                  style: const TextStyle(color: Colors.grey, fontSize: 13),
+                ),
+                const SizedBox(width: 12),
+                const Icon(Icons.help_outline, size: 14, color: Colors.grey),
+                const SizedBox(width: 4),
+                Text(
+                  '${survey.questions.length} câu',
+                  style: const TextStyle(color: Colors.grey, fontSize: 13),
+                ),
+                if (survey.responseCount > 0) ...[
+                  const SizedBox(width: 12),
+                  const Icon(Icons.people_outline, size: 14, color: Colors.grey),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${survey.responseCount} lượt',
+                    style: const TextStyle(color: Colors.grey, fontSize: 13),
+                  ),
+                ],
+                const Spacer(),
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => SurveyFormScreen(survey: survey),
+                      ),
+                    );
+                  },
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text(
+                    'Làm khảo sát →',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
                 ),
               ],
             ),

@@ -242,6 +242,28 @@ class ContentRepositoryImpl implements ContentRepository {
   }
 
   @override
+  Future<Either<Failure, void>> submitSurveyResponse({
+    required String surveyId,
+    required String userId,
+    required Map<String, dynamic> answers,
+  }) async {
+    try {
+      await _firestore.collection('survey_responses').add({
+        'surveyId': surveyId,
+        'userId': userId,
+        'answers': answers,
+        'submittedAt': FieldValue.serverTimestamp(),
+      });
+      await _firestore.collection('surveys').doc(surveyId).update({
+        'responseCount': FieldValue.increment(1),
+      });
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(message: 'Gửi khảo sát thất bại: $e'));
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> submitContactForm(String email, String message) async {
     try {
       await _firestore.collection('contact_requests').add({

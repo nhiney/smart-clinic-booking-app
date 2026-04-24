@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:smart_clinic_booking/features/content/domain/entities/content_entities.dart';
 import 'package:smart_clinic_booking/features/home/domain/entities/health_article.dart';
 
@@ -39,16 +38,33 @@ class SurveyModel extends Survey {
     required super.description,
     required super.options,
     required super.results,
+    super.questions,
+    super.category,
+    super.estimatedMinutes,
+    super.responseCount,
   });
 
   factory SurveyModel.fromFirestore(Map<String, dynamic> json, String id) {
-    final options = (json['options'] as List).map((o) => SurveyOption(
+    final options = (json['options'] as List? ?? []).map((o) => SurveyOption(
       id: o['id'] as String,
       text: o['text'] as String,
     )).toList();
-    
+
     final resultsRaw = json['results'] as Map<String, dynamic>? ?? {};
-    final results = resultsRaw.map((key, value) => MapEntry(key, value as int));
+    final results = resultsRaw.map((key, value) => MapEntry(key, (value as num).toInt()));
+
+    final questionsRaw = json['questions'] as List? ?? [];
+    final questions = questionsRaw.map((q) {
+      final qMap = q as Map<String, dynamic>;
+      return SurveyQuestion(
+        id: qMap['id'] as String,
+        text: qMap['text'] as String,
+        type: qMap['type'] as String,
+        options: (qMap['options'] as List?)?.map((e) => e.toString()).toList() ?? const [],
+        required: qMap['required'] as bool? ?? false,
+        maxRating: (qMap['maxRating'] as num?)?.toInt() ?? 5,
+      );
+    }).toList();
 
     return SurveyModel(
       id: id,
@@ -56,6 +72,10 @@ class SurveyModel extends Survey {
       description: json['description'] as String,
       options: options,
       results: results,
+      questions: questions,
+      category: json['category'] as String?,
+      estimatedMinutes: (json['estimatedMinutes'] as num?)?.toInt() ?? 3,
+      responseCount: (json['responseCount'] as num?)?.toInt() ?? 0,
     );
   }
 }
