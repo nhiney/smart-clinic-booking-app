@@ -62,30 +62,57 @@ final pricingProvider = FutureProvider<List<ServicePrice>>((ref) async {
 
 // --- Survey Provider ---
 
-class SurveyNotifier extends StateNotifier<AsyncValue<List<Survey>>> {
-  final ContentRepository repository;
-  SurveyNotifier(this.repository) : super(const AsyncValue.loading());
+class SurveyState {
+  final List<Survey> surveys;
+  final Set<String> respondedIds;
+  final bool isLoading;
+  final String? error;
 
-  Future<void> loadSurveys() async {
-    state = const AsyncValue.loading();
+  const SurveyState({
+    this.surveys = const [],
+    this.respondedIds = const {},
+    this.isLoading = false,
+    this.error,
+  });
+
+  List<Survey> get availableSurveys => surveys.where((s) => !respondedIds.contains(s.id)).toList();
+  List<Survey> get completedSurveys => surveys.where((s) => respondedIds.contains(s.id)).toList();
+}
+
+class SurveyNotifier extends StateNotifier<SurveyState> {
+  final ContentRepository repository;
+  SurveyNotifier(this.repository) : super(const SurveyState());
+
+  Future<void> loadSurveys({String? userId}) async {
+    state = SurveyState(isLoading: true, respondedIds: state.respondedIds, surveys: state.surveys);
+    
+    // Load surveys
     final result = await repository.getSurveys();
+    
+    // Optionally load responded IDs if userId provided
+    Set<String> respondedIds = state.respondedIds;
+    if (userId != null) {
+      final respondedResult = await repository.getUserRespondedSurveyIds(userId);
+      respondedResult.fold((_) {}, (ids) => respondedIds = ids.toSet());
+    }
+
     result.fold(
-      (failure) => state = AsyncValue.error(failure.message, StackTrace.current),
-      (surveys) => state = AsyncValue.data(surveys),
+      (failure) => state = SurveyState(error: failure.message, respondedIds: respondedIds, surveys: state.surveys),
+      (surveys) => state = SurveyState(surveys: surveys, respondedIds: respondedIds),
     );
   }
 
-  Future<bool> vote(String surveyId, String optionId) async {
+  Future<bool> vote(String surveyId, String optionId, {String? userId}) async {
     final result = await repository.submitSurveyVote(surveyId, optionId);
     return result.fold((l) => false, (r) {
-      loadSurveys(); // Refresh
+      loadSurveys(userId: userId); // Refresh
       return true;
     });
   }
 }
 
-final surveyProvider = StateNotifierProvider<SurveyNotifier, AsyncValue<List<Survey>>>((ref) {
-  return SurveyNotifier(ref.watch(contentRepositoryProvider))..loadSurveys();
+final surveyProvider = StateNotifierProvider<SurveyNotifier, SurveyState>((ref) {
+  return SurveyNotifier(ref.watch(contentRepositoryProvider));
 });
 
 // --- Contact Form Logic ---

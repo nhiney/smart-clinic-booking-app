@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -60,7 +61,7 @@ class _CategorySection extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0xFF0D62A2).withValues(alpha: 0.08),
+              color: const Color(0xFF0D62A2).withOpacity(0.08),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -72,7 +73,7 @@ class _CategorySection extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))],
             ),
             child: Column(
               children: items.asMap().entries.map((entry) {
@@ -144,111 +145,167 @@ class _SurveyScreenState extends ConsumerState<SurveyScreen> {
   ];
 
   @override
-  Widget build(BuildContext context) {
-    final surveysAsync = ref.watch(surveyProvider);
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      ref.read(surveyProvider.notifier).loadSurveys(userId: userId);
+    });
+  }
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: const BrandedAppBar(title: 'Khảo sát & Đánh giá', showBackButton: true),
-      body: Column(
-        children: [
-          // Filter chips
-          Container(
-            height: 52,
-            color: Colors.white,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              itemCount: _categories.length,
-              itemBuilder: (context, index) {
-                final cat = _categories[index];
-                final isActive = cat == _activeCategory;
-                return GestureDetector(
-                  onTap: () => setState(() => _activeCategory = cat),
-                  child: Container(
-                    margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: isActive ? AppColors.primary : Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: isActive ? AppColors.primary : Colors.grey.shade300,
-                      ),
-                      boxShadow: isActive
-                          ? [
-                              BoxShadow(
-                                color: AppColors.primary.withValues(alpha: 0.3),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                              ),
-                            ]
-                          : null,
+  @override
+  Widget build(BuildContext context) {
+    final surveyState = ref.watch(surveyProvider);
+
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: BrandedAppBar(
+          title: 'Khảo sát & Đánh giá',
+          showBackButton: true,
+          bottom: TabBar(
+            labelColor: AppColors.primary,
+            unselectedLabelColor: Colors.grey,
+            indicatorColor: AppColors.primary,
+            indicatorWeight: 3,
+            labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 15),
+            tabs: const [
+              Tab(text: 'Khảo sát mới'),
+              Tab(text: 'Lịch sử'),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            _buildSurveyList(surveyState, surveyState.availableSurveys),
+            _buildSurveyList(surveyState, surveyState.completedSurveys, isHistory: true),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSurveyList(SurveyState state, List<Survey> surveys, {bool isHistory = false}) {
+    if (state.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (state.error != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Lỗi: ${state.error}'),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: () {
+                final userId = FirebaseAuth.instance.currentUser?.uid;
+                ref.read(surveyProvider.notifier).loadSurveys(userId: userId);
+              },
+              child: const Text('Thử lại'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        // Filter chips
+        Container(
+          height: 52,
+          color: Colors.white,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            itemCount: _categories.length,
+            itemBuilder: (context, index) {
+              final cat = _categories[index];
+              final isActive = cat == _activeCategory;
+              return GestureDetector(
+                onTap: () => setState(() => _activeCategory = cat),
+                child: Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isActive ? AppColors.primary : Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isActive ? AppColors.primary : Colors.grey.shade300,
                     ),
-                    child: Text(
-                      cat,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: isActive ? Colors.white : Colors.grey.shade600,
-                      ),
+                    boxShadow: isActive
+                        ? [
+                            BoxShadow(
+                              color: AppColors.primary.withOpacity(0.3),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Text(
+                    cat,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: isActive ? Colors.white : Colors.grey.shade600,
                     ),
                   ),
-                );
-              },
-            ),
-          ),
-          // Survey list
-          Expanded(
-            child: surveysAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('Lỗi tải khảo sát: $e'),
-                    const SizedBox(height: 12),
-                    ElevatedButton(
-                      onPressed: () => ref.read(surveyProvider.notifier).loadSurveys(),
-                      child: const Text('Thử lại'),
-                    ),
-                  ],
                 ),
-              ),
-              data: (surveys) {
-                final filtered = _activeCategory == 'Tất cả'
-                    ? surveys
-                    : surveys.where((s) => s.category == _activeCategory).toList();
-
-                if (filtered.isEmpty) {
-                  return const Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.poll_outlined, size: 60, color: Color(0xFFCBD5E1)),
-                        SizedBox(height: 12),
-                        Text('Chưa có khảo sát nào', style: TextStyle(color: Color(0xFF94A3B8))),
-                      ],
-                    ),
-                  );
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: filtered.length,
-                  itemBuilder: (context, index) => _SurveyCard(survey: filtered[index]),
-                );
-              },
-            ),
+              );
+            },
           ),
-        ],
-      ),
+        ),
+        // Survey list
+        Expanded(
+          child: Builder(
+            builder: (context) {
+              final filtered = _activeCategory == 'Tất cả'
+                  ? surveys
+                  : surveys.where((s) => s.category == _activeCategory).toList();
+
+              if (filtered.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        isHistory ? Icons.history_rounded : Icons.poll_outlined,
+                        size: 60,
+                        color: const Color(0xFFCBD5E1),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        isHistory ? 'Chưa có lịch sử khảo sát' : 'Hiện không có khảo sát mới',
+                        style: const TextStyle(color: Color(0xFF94A3B8)),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: filtered.length,
+                itemBuilder: (context, index) => _SurveyCard(
+                  survey: filtered[index],
+                  isCompleted: isHistory,
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
 
 class _SurveyCard extends StatelessWidget {
   final Survey survey;
-  const _SurveyCard({required this.survey});
+  final bool isCompleted;
+  const _SurveyCard({required this.survey, this.isCompleted = false});
 
   static (Color, Color, IconData) _categoryStyle(String? category) {
     switch (category) {
@@ -278,7 +335,7 @@ class _SurveyCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -325,8 +382,6 @@ class _SurveyCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         survey.description,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(color: Colors.grey, fontSize: 13),
                       ),
                     ],
@@ -374,26 +429,50 @@ class _SurveyCard extends StatelessWidget {
                   ),
                 ],
                 const Spacer(),
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => SurveyFormScreen(survey: survey),
-                      ),
-                    );
-                  },
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                if (isCompleted)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.check_circle, color: Colors.green.shade600, size: 14),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Đã hoàn thành',
+                          style: TextStyle(
+                            color: Colors.green.shade700,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => SurveyFormScreen(survey: survey),
+                        ),
+                      );
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Text(
+                      'Làm khảo sát →',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                    ),
                   ),
-                  child: const Text(
-                    'Làm khảo sát →',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                  ),
-                ),
               ],
             ),
           ),
@@ -504,7 +583,7 @@ class _ContactFormScreenState extends ConsumerState<ContactFormScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(14),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8)],
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 8)],
                 ),
                 child: const Column(
                   children: [

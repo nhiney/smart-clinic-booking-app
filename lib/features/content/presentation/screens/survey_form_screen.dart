@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_clinic_booking/core/theme/colors/app_colors.dart';
@@ -46,36 +47,103 @@ class _SurveyFormScreenState extends ConsumerState<SurveyFormScreen> {
   }
 
   Future<void> _submit() async {
+    // Find the first unanswered required question to scroll to it
     if (!_validateRequiredAnswers()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Vui lòng trả lời các câu hỏi bắt buộc'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-    setState(() => _isSubmitting = true);
-    final userId = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
-    final result = await ref.read(contentRepositoryProvider).submitSurveyResponse(
-      surveyId: widget.survey.id,
-      userId: userId,
-      answers: _answers,
-    );
-    if (!mounted) return;
-    setState(() => _isSubmitting = false);
-    result.fold(
-      (failure) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(failure.message),
-            backgroundColor: Colors.red,
+          const SnackBar(
+            content: Text('Vui lòng trả lời đầy đủ các câu hỏi bắt buộc (*)'),
+            backgroundColor: Colors.orange,
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 3),
           ),
         );
-      },
-      (_) {
-        setState(() => _isSubmitted = true);
-      },
+      }
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        if (!mounted) return;
+        setState(() => _isSubmitting = false);
+        _showErrorDialog('Bạn cần đăng nhập để gửi khảo sát.');
+        return;
+      }
+
+      // Sanitize answers so Firestore can serialize them
+      final sanitizedAnswers = _answers.map((key, value) {
+        if (value is List) return MapEntry(key, List<String>.from(value));
+        return MapEntry(key, value);
+      });
+
+      debugPrint('[Survey] Submitting surveyId=${widget.survey.id} userId=${user.uid}');
+      debugPrint('[Survey] Answers: $sanitizedAnswers');
+
+      final result = await ref.read(contentRepositoryProvider).submitSurveyResponse(
+        surveyId: widget.survey.id,
+        userId: user.uid,
+        answers: sanitizedAnswers,
+      );
+
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+
+      result.fold(
+        (failure) {
+          debugPrint('[Survey] Submit failed: ${failure.message}');
+          _showErrorDialog(failure.message);
+        },
+        (_) {
+          debugPrint('[Survey] Submit success');
+          // Refresh the survey list to reflect completion
+          ref.read(surveyProvider.notifier).loadSurveys(userId: user.uid);
+          setState(() => _isSubmitted = true);
+        },
+      );
+    } catch (e, st) {
+      debugPrint('[Survey] Submit exception: $e\n$st');
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      _showErrorDialog('Đã xảy ra lỗi không mong đợi.\n$e');
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.error_outline_rounded, color: Colors.red, size: 22),
+            SizedBox(width: 8),
+            Text('Không thể gửi khảo sát',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Text(message,
+            style: const TextStyle(fontSize: 14, color: Color(0xFF475569))),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Đóng'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _submit();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Thử lại'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -84,14 +152,15 @@ class _SurveyFormScreenState extends ConsumerState<SurveyFormScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: BrandedAppBar(
-        title: widget.survey.title,
+        title: 'Khảo sát & Đánh giá',
         showBackButton: true,
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(4),
+          preferredSize: const Size.fromHeight(6),
           child: LinearProgressIndicator(
             value: _completionRatio,
             backgroundColor: Colors.grey.shade200,
             color: AppColors.primary,
+            minHeight: 6,
           ),
         ),
       ),
@@ -178,7 +247,7 @@ class _SurveyFormScreenState extends ConsumerState<SurveyFormScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: Colors.black.withOpacity(0.06),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -187,17 +256,46 @@ class _SurveyFormScreenState extends ConsumerState<SurveyFormScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (widget.survey.category != null)
-            _CategoryChip(category: widget.survey.category!),
-          if (widget.survey.category != null) const SizedBox(height: 10),
+          Row(
+            children: [
+              if (widget.survey.category != null) ...[
+                _CategoryChip(category: widget.survey.category!),
+                const SizedBox(width: 8),
+              ],
+              Expanded(
+                child: LinearProgressIndicator(
+                  value: _completionRatio,
+                  backgroundColor: Colors.grey.shade100,
+                  color: AppColors.primary,
+                  minHeight: 4,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '${(_completionRatio * 100).round()}%',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
           Text(
             widget.survey.title,
-            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1E293B),
+              height: 1.35,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             widget.survey.description,
-            style: const TextStyle(color: Colors.grey, fontSize: 14),
+            style: const TextStyle(color: Colors.grey, fontSize: 14, height: 1.4),
           ),
           const SizedBox(height: 12),
           Row(
@@ -231,7 +329,7 @@ class _SurveyFormScreenState extends ConsumerState<SurveyFormScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),

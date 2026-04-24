@@ -20,4 +20,5 @@ abstract class ContentRepository {
   Future<Either<Failure, void>> bookmarkArticle(String userId, String articleId);
   Future<Either<Failure, void>> removeBookmark(String userId, String articleId);
   Future<Either<Failure, List<String>>> getBookmarkedIds(String userId);
+  Future<Either<Failure, List<String>>> getUserRespondedSurveyIds(String userId);
 }

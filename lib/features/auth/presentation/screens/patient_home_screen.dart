@@ -14,6 +14,7 @@ import 'package:smart_clinic_booking/core/localization/language_controller.dart'
 import 'package:smart_clinic_booking/core/localization/app_language.dart';
 import 'package:smart_clinic_booking/core/widgets/icare_logo.dart';
 import 'package:smart_clinic_booking/features/content/presentation/controllers/content_controller.dart';
+import 'package:smart_clinic_booking/features/content/presentation/screens/survey_form_screen.dart';
 import 'package:smart_clinic_booking/features/home/domain/entities/health_article.dart';
 import 'package:smart_clinic_booking/features/maps/presentation/controllers/hospital_map_controller.dart';
 import 'package:smart_clinic_booking/features/maps/domain/entities/hospital_entity.dart';
@@ -80,6 +81,12 @@ class _PatientHomeScreenState extends ConsumerState<PatientHomeScreen>
     )..repeat();
     _loadUpcomingAppointments();
     _loadUnreadCount();
+    
+    // Load surveys with user response history
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      ref.read(surveyProvider.notifier).loadSurveys(userId: uid);
+    });
   }
 
   @override
@@ -348,6 +355,7 @@ class _HomeTab extends StatelessWidget {
             appointments: upcomingAppts,
             isLoading: loadingAppts,
           ),
+          _SurveysSection(),
           _HealthStatsRow(),
           _FeaturedHospitals(),
           const _FeaturedDoctors(),
@@ -903,6 +911,7 @@ class _QuickActionsGrid extends ConsumerWidget {
     _Action(Icons.local_hospital_rounded, lang.localize('Nhập viện', 'Admission'), const Color(0xFF5C6BC0), '/admission/history/me', assetPath: 'assets/icons/quick_actions/inpatient_admission.png'),
     _Action(Icons.payments_outlined, lang.localize('Thanh toán', 'Payment'), const Color(0xFF43A047), '/payment', assetPath: 'assets/icons/quick_actions/fee_payment.png'),
     _Action(Icons.poll_outlined, lang.localize('Khảo sát', 'Survey'), const Color(0xFFFB8C00), '/surveys', assetPath: 'assets/icons/quick_actions/lab_results.png'),
+    _Action(Icons.message_outlined, lang.localize('Góp ý', 'Feedback'), const Color(0xFFE91E63), '/contact', assetPath: 'assets/icons/quick_actions/customer_support.png'),
     _Action(Icons.headset_mic_rounded, lang.localize('Hỗ trợ', 'Support'), const Color(0xFF0288D1), '/support', assetPath: 'assets/icons/quick_actions/customer_support.png'),
     _Action(Icons.smart_toy_outlined, lang.localize('AI Chat', 'AI Chat'), const Color(0xFF6D4C41), '/ai/voice-assistant', assetPath: 'assets/icons/quick_actions/chatbot.png'),
     _Action(Icons.map_rounded, lang.localize('Bản đồ', 'Map'), const Color(0xFF00897B), '/maps', assetPath: 'assets/icons/quick_actions/home_monitoring.png'),
@@ -934,7 +943,7 @@ class _QuickActionsGrid extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                lang.localize('Truy cập nhanh', 'Quick Access'),
+                lang.localize('Chức năng', 'Functions'),
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
@@ -989,12 +998,12 @@ class _QuickActionsGrid extends ConsumerWidget {
                           Expanded(
                             child: GridView.builder(
                               padding: const EdgeInsets.all(24),
-                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 4,
-                                mainAxisSpacing: 24,
-                                crossAxisSpacing: 16,
-                                childAspectRatio: 0.8,
-                              ),
+                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  mainAxisSpacing: 24,
+                                  crossAxisSpacing: 16,
+                                  childAspectRatio: 0.85,
+                                ),
                               itemCount: items.length,
                               itemBuilder: (context, index) => _ActionCell(item: items[index]),
                             ),
@@ -1012,11 +1021,11 @@ class _QuickActionsGrid extends ConsumerWidget {
           GridView.count(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 4,
-            mainAxisSpacing: 20,
-            crossAxisSpacing: 12,
-            childAspectRatio: 0.85,
-            children: items.take(8)
+            crossAxisCount: 3,
+            mainAxisSpacing: 24,
+            crossAxisSpacing: 16,
+            childAspectRatio: 0.9,
+            children: items.take(9)
                 .map((item) => _ActionCell(item: item))
                 .toList(),
           ),
@@ -1056,23 +1065,23 @@ class _ActionCell extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: item.color.withOpacity(0.10),
-              borderRadius: BorderRadius.circular(14),
+              color: item.color.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(20),
             ),
             child: item.assetPath != null 
-              ? Image.asset(item.assetPath!, width: 24, height: 24, fit: BoxFit.contain)
-              : Icon(item.icon, color: item.color, size: 24),
+              ? Image.asset(item.assetPath!, width: 32, height: 32, fit: BoxFit.contain)
+              : Icon(item.icon, color: item.color, size: 32),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 10),
           Text(
             item.label,
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              fontSize: 10,
+              fontSize: 13,
               fontWeight: FontWeight.w600,
               color: _P.textPrimary,
               height: 1.2,
@@ -1822,7 +1831,7 @@ class _FeaturedDoctorItem extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: _P.primary.withValues(alpha: 0.06),
+              color: _P.primary.withOpacity(0.06),
               blurRadius: 8,
               offset: const Offset(0, 3),
             ),
@@ -1863,7 +1872,7 @@ class _FeaturedDoctorItem extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 10,
-                color: _P.primary.withValues(alpha: 0.85),
+                color: _P.primary.withOpacity(0.85),
               ),
             ),
             if (doctor.rating > 0) ...[
@@ -1888,6 +1897,179 @@ class _FeaturedDoctorItem extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+// ── Surveys section ──────────────────────────────────────────────────────────
+class _SurveysSection extends ConsumerWidget {
+  const _SurveysSection();
+
+  static (Color, Color) _categoryColors(String? category) {
+    switch (category) {
+      case 'Dịch vụ':
+        return (const Color(0xFF2563EB), const Color(0xFFDBEAFE));
+      case 'Bác sĩ':
+        return (const Color(0xFF059669), const Color(0xFFD1FAE5));
+      case 'Cơ sở vật chất':
+        return (const Color(0xFFD97706), const Color(0xFFFEF3C7));
+      case 'Trải nghiệm':
+        return (const Color(0xFF7C3AED), const Color(0xFFEDE9FE));
+      case 'Dinh dưỡng':
+        return (const Color(0xFFDB2777), const Color(0xFFFCE7F3));
+      default:
+        return (_P.primary, const Color(0xFFE0EAFF));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final surveyState = ref.watch(surveyProvider);
+    final surveys = surveyState.availableSurveys;
+
+    if (surveyState.isLoading && surveys.isEmpty) return const SizedBox.shrink();
+    if (surveys.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 24, 0, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Khảo sát & Đánh giá',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: _P.primaryDark,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => context.push('/surveys'),
+                      child: const Text(
+                        'Xem tất cả',
+                        style: TextStyle(
+                          color: _P.primary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                height: 168,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: surveys.length > 5 ? 5 : surveys.length,
+                  itemBuilder: (context, index) {
+                    final survey = surveys[index];
+                    final (fg, bg) = _categoryColors(survey.category);
+                    return GestureDetector(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => SurveyFormScreen(survey: survey),
+                        ),
+                      ),
+                      child: Container(
+                        width: 220,
+                        margin: const EdgeInsets.only(right: 14),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x0A000000),
+                              blurRadius: 12,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (survey.category != null)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: bg,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  survey.category!,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: fg,
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(height: 8),
+                            Text(
+                              survey.title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF1E293B),
+                                height: 1.3,
+                              ),
+                            ),
+                            const Spacer(),
+                            Row(
+                              children: [
+                                const Icon(Icons.timer_outlined, size: 13, color: Color(0xFF94A3B8)),
+                                const SizedBox(width: 3),
+                                Text(
+                                  '${survey.estimatedMinutes} phút',
+                                  style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                                ),
+                                const SizedBox(width: 10),
+                                const Icon(Icons.help_outline_rounded, size: 13, color: Color(0xFF94A3B8)),
+                                const SizedBox(width: 3),
+                                Text(
+                                  '${survey.questions.length} câu',
+                                  style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(vertical: 7),
+                              decoration: BoxDecoration(
+                                color: _P.primary.withOpacity(0.07),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Text(
+                                'Làm khảo sát →',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: _P.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
   }
 }
 
