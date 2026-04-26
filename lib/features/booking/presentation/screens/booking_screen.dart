@@ -6,7 +6,7 @@ import "package:smart_clinic_booking/shared/di/injection.dart";
 import '../../../../core/extensions/context_extension.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../doctor/domain/entities/doctor_entity.dart';
-import '../../../doctor/presentation/screens/doctor_search_screen.dart';
+import '../../../doctor/presentation/user/screens/doctor_search_screen.dart';
 import '../../domain/entities/booking_entity.dart';
 import '../../domain/usecases/check_slot_availability_usecase.dart';
 import '../../domain/usecases/confirm_booking_usecase.dart';

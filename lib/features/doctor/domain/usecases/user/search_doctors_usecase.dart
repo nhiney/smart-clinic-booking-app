@@ -1,5 +1,5 @@
-import '../entities/doctor_entity.dart';
-import '../repositories/doctor_repository.dart';
+import '../../entities/doctor_entity.dart';
+import '../../repositories/doctor_repository.dart';
 
 class SearchDoctorsUseCase {
   final DoctorRepository repository;

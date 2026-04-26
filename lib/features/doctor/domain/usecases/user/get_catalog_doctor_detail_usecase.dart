@@ -1,5 +1,5 @@
-import '../entities/doctor_entity.dart';
-import '../repositories/doctor_catalog_repository.dart';
+import '../../entities/doctor_entity.dart';
+import '../../repositories/doctor_catalog_repository.dart';
 
 class GetCatalogDoctorDetailUseCase {
   final DoctorCatalogRepository _repository;

@@ -49,8 +49,8 @@ import 'package:smart_clinic_booking/features/doctor/domain/repositories/doctor_
 import 'package:smart_clinic_booking/features/doctor/data/repositories/firestore_doctor_repository.dart';
 import 'package:smart_clinic_booking/features/doctor/data/repositories/doctor_catalog_repository_impl.dart';
 import 'package:smart_clinic_booking/features/doctor/data/datasources/doctor_remote_datasource.dart';
-import 'package:smart_clinic_booking/features/doctor/domain/usecases/get_catalog_doctors_usecase.dart';
-import 'package:smart_clinic_booking/features/doctor/domain/usecases/get_catalog_doctor_detail_usecase.dart';
+import 'package:smart_clinic_booking/features/doctor/domain/usecases/user/get_catalog_doctors_usecase.dart';
+import 'package:smart_clinic_booking/features/doctor/domain/usecases/user/get_catalog_doctor_detail_usecase.dart';
 import 'package:smart_clinic_booking/features/booking/data/datasources/booking_remote_datasource.dart';
 import 'package:smart_clinic_booking/features/booking/data/repositories/booking_repository_impl.dart';
 import 'package:smart_clinic_booking/features/booking/domain/repositories/booking_repository.dart';

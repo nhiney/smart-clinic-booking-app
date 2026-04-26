@@ -15,6 +15,7 @@ class HospitalEntity extends Equatable {
   final String? description;
   final String? phone;
   final String? workingHours;
+  final double? distance;
 
   const HospitalEntity({
     required this.id,
@@ -30,6 +31,7 @@ class HospitalEntity extends Equatable {
     this.description,
     this.phone,
     this.workingHours,
+    this.distance,
   });
 
   @override
@@ -47,5 +49,6 @@ class HospitalEntity extends Equatable {
         description,
         phone,
         workingHours,
+        distance,
       ];
 }

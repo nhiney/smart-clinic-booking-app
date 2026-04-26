@@ -33,10 +33,10 @@ import 'package:smart_clinic_booking/features/auth/data/datasources/auth_remote_
 
 // Doctor
 import 'package:smart_clinic_booking/features/doctor/domain/repositories/doctor_repository.dart';
-import 'package:smart_clinic_booking/features/doctor/data/datasources/doctor_remote_datasource.dart';
+// import 'package:smart_clinic_booking/features/doctor/data/datasources/doctor_remote_datasource.dart';
 import 'package:smart_clinic_booking/features/doctor/presentation/controllers/doctor_controller.dart';
-import 'package:smart_clinic_booking/features/doctor/presentation/controllers/doctor_search_controller.dart';
-import 'package:smart_clinic_booking/features/doctor/domain/usecases/get_catalog_doctors_usecase.dart';
+import 'package:smart_clinic_booking/features/doctor/presentation/user/controllers/doctor_search_controller.dart';
+import 'package:smart_clinic_booking/features/doctor/domain/usecases/user/get_catalog_doctors_usecase.dart';
 import 'package:smart_clinic_booking/core/services/file_storage_service.dart';
 
 // Admin

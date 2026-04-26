@@ -8,6 +8,7 @@ import '../../domain/services/location_service.dart';
 import '../../domain/services/distance_util.dart';
 import "package:smart_clinic_booking/shared/di/injection.dart";
 import '../../domain/repositories/maps_repository.dart';
+import '../../domain/usecases/get_hospitals_usecase.dart';
 import 'dart:async';
 
 class HospitalMapState {
@@ -48,11 +49,11 @@ class HospitalMapState {
 }
 
 class HospitalMapController extends StateNotifier<HospitalMapState> {
-  final MapsRepository repository;
+  final GetHospitalsUseCase getHospitals;
   final LocationService locationService;
   Timer? _debounce;
 
-  HospitalMapController({required this.repository, required this.locationService})
+  HospitalMapController({required this.getHospitals, required this.locationService})
       : super(const HospitalMapState()) {
     _initData();
   }
@@ -70,15 +71,36 @@ class HospitalMapController extends StateNotifier<HospitalMapState> {
       }
 
       // 2. Fetch Hospitals
-      final list = await repository.getHospitals();
+      var list = await getHospitals();
 
-      // 3. Sort by distance if we have location
+      // 3. Attach distances and sort by distance if we have location
       if (position != null) {
-        list.sort((a, b) {
-          final distA = DistanceUtil.calculateDistance(position!.latitude, position.longitude, a.lat, a.lng);
-          final distB = DistanceUtil.calculateDistance(position.latitude, position.longitude, b.lat, b.lng);
-          return distA.compareTo(distB);
-        });
+        list = list.map((h) {
+          final dist = DistanceUtil.calculateDistance(
+            position!.latitude,
+            position.longitude,
+            h.lat,
+            h.lng,
+          );
+          return HospitalModel(
+            id: h.id,
+            name: h.name,
+            address: h.address,
+            lat: h.lat,
+            lng: h.lng,
+            specialties: h.specialties,
+            rating: h.rating,
+            isOpen: h.isOpen,
+            featured: h.featured,
+            imageUrl: h.imageUrl,
+            description: h.description,
+            phone: h.phone,
+            workingHours: h.workingHours,
+            distance: dist,
+          );
+        }).toList();
+
+        list.sort((a, b) => (a.distance ?? 0).compareTo(b.distance ?? 0));
       }
 
       state = state.copyWith(
@@ -100,7 +122,7 @@ class HospitalMapController extends StateNotifier<HospitalMapState> {
     state = state.copyWith(isLoading: true);
     try {
       final position = await locationService.getCurrentLocation();
-      final list = await repository.getHospitals();
+      final list = await getHospitals();
 
       // Filter within 5km and Sort
       final nearby = list.where((h) {
@@ -161,7 +183,7 @@ class HospitalMapController extends StateNotifier<HospitalMapState> {
 // Provider
 final hospitalMapProvider = StateNotifierProvider<HospitalMapController, HospitalMapState>((ref) {
   return HospitalMapController(
-    repository: getIt<MapsRepository>(),
+    getHospitals: GetHospitalsUseCase(getIt<MapsRepository>()),
     locationService: LocationService(),
   );
 });

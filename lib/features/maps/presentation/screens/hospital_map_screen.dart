@@ -28,6 +28,22 @@ class _HospitalMapScreenState extends ConsumerState<HospitalMapScreen> {
   );
 
   @override
+  void initState() {
+    super.initState();
+    // Auto-focus on user location once it's acquired
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndFocusLocation();
+    });
+  }
+
+  void _checkAndFocusLocation() {
+    final state = ref.read(hospitalMapProvider);
+    if (state.userLocation != null) {
+      _animateToUserLocation();
+    }
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -63,17 +79,37 @@ class _HospitalMapScreenState extends ConsumerState<HospitalMapScreen> {
   }
 
   Set<Marker> _buildMarkers(HospitalMapState state) {
+    if (state.filteredHospitals.isEmpty) return {};
+
+    // Find the nearest hospital among filtered ones
+    HospitalEntity? nearest;
+    double minDistance = double.infinity;
+    for (final h in state.filteredHospitals) {
+      if (h.distance != null && h.distance! < minDistance) {
+        minDistance = h.distance!;
+        nearest = h;
+      }
+    }
+
     return state.filteredHospitals.map((hospital) {
       final isSelected = state.selectedHospital?.id == hospital.id;
+      final isNearest = nearest?.id == hospital.id;
+      
       return Marker(
         markerId: MarkerId(hospital.id),
         position: LatLng(hospital.lat, hospital.lng),
+        infoWindow: InfoWindow(
+          title: hospital.name,
+          snippet: '⭐ ${hospital.rating.toStringAsFixed(1)} | 📍 ${hospital.distance?.toStringAsFixed(1) ?? '—'} km',
+          onTap: () => _showHospitalBottomSheet(hospital),
+        ),
         icon: BitmapDescriptor.defaultMarkerWithHue(
-          isSelected ? BitmapDescriptor.hueRed : BitmapDescriptor.hueAzure,
+          isSelected 
+              ? BitmapDescriptor.hueRed 
+              : (isNearest ? BitmapDescriptor.hueGreen : BitmapDescriptor.hueAzure),
         ),
         onTap: () {
           ref.read(hospitalMapProvider.notifier).selectHospital(hospital);
-          _showHospitalBottomSheet(hospital);
         },
       );
     }).toSet();
@@ -107,6 +143,27 @@ class _HospitalMapScreenState extends ConsumerState<HospitalMapScreen> {
             const SizedBox(height: 8),
             Row(
               children: [
+                const Icon(Icons.star_rounded, size: 18, color: Colors.amber),
+                const SizedBox(width: 4),
+                Text(
+                  hospital.rating.toStringAsFixed(1),
+                  style: AppTextStyles.subtitle.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 12),
+                if (hospital.distance != null) ...[
+                  const Icon(Icons.near_me_outlined, size: 16, color: AppColors.primary),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${hospital.distance!.toStringAsFixed(1)} km',
+                    style: AppTextStyles.body.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 const Icon(Icons.location_on, size: 16, color: Colors.grey),
                 const SizedBox(width: 4),
                 Expanded(child: Text(hospital.address, style: AppTextStyles.body)),
@@ -125,11 +182,14 @@ class _HospitalMapScreenState extends ConsumerState<HospitalMapScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () => _routeToHospital(hospital),
-                icon: const Icon(Icons.directions, color: Colors.white,),
-                label: const Text("Chỉ đường", style: TextStyle(color: Colors.white),),
+                onPressed: () {
+                  Navigator.pop(sheetCtx);
+                  router.push('/hospital/detail/${hospital.id}', extra: hospital);
+                },
+                icon: const Icon(Icons.info_outline, color: Colors.white),
+                label: const Text("Xem chi tiết", style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: AppColors.secondary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
@@ -139,6 +199,20 @@ class _HospitalMapScreenState extends ConsumerState<HospitalMapScreen> {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
+                onPressed: () => _routeToHospital(hospital),
+                icon: const Icon(Icons.directions, color: AppColors.primary),
+                label: const Text("Chỉ đường", style: TextStyle(color: AppColors.primary)),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  side: const BorderSide(color: AppColors.primary),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton.icon(
                 onPressed: () {
                   Navigator.pop(sheetCtx);
                   router.push(
@@ -146,12 +220,10 @@ class _HospitalMapScreenState extends ConsumerState<HospitalMapScreen> {
                     extra: hospital.name,
                   );
                 },
-                icon: const Icon(Icons.star_outline, color: AppColors.primary),
-                label: const Text("Xem đánh giá & nhận xét", style: TextStyle(color: AppColors.primary)),
-                style: OutlinedButton.styleFrom(
+                icon: const Icon(Icons.star_outline, color: Colors.grey),
+                label: const Text("Xem đánh giá & nhận xét", style: TextStyle(color: Colors.grey)),
+                style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  side: const BorderSide(color: AppColors.primary),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
             ),
@@ -191,6 +263,13 @@ class _HospitalMapScreenState extends ConsumerState<HospitalMapScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(hospitalMapProvider);
+
+    // Listen for the first time location is acquired
+    ref.listen(hospitalMapProvider.select((s) => s.userLocation), (prev, next) {
+      if (prev == null && next != null) {
+        _animateToUserLocation();
+      }
+    });
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -361,16 +440,32 @@ class _HospitalMapScreenState extends ConsumerState<HospitalMapScreen> {
                                       Row(
                                         children: [
                                           const Icon(Icons.star_rounded, color: Colors.orange, size: 14),
-                                          const SizedBox(width: 4),
-                                          Text('4.8', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey[600])),
-                                          const SizedBox(width: 8),
-                                          Container(
-                                            height: 12,
-                                            width: 1,
-                                            color: Colors.grey[300],
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text('Đang mở cửa', style: TextStyle(fontSize: 12, color: Colors.green[600], fontWeight: FontWeight.w600)),
+                                           const SizedBox(width: 4),
+                                           Text(
+                                             hospital.rating.toStringAsFixed(1),
+                                             style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey[600]),
+                                           ),
+                                           const SizedBox(width: 8),
+                                           if (hospital.distance != null) ...[
+                                             Container(
+                                               height: 12,
+                                               width: 1,
+                                               color: Colors.grey[300],
+                                             ),
+                                             const SizedBox(width: 8),
+                                             Text(
+                                               '${hospital.distance!.toStringAsFixed(1)} km',
+                                               style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600),
+                                             ),
+                                           ],
+                                           const SizedBox(width: 8),
+                                           Container(
+                                             height: 12,
+                                             width: 1,
+                                             color: Colors.grey[300],
+                                           ),
+                                           const SizedBox(width: 8),
+                                           Text('Đang mở cửa', style: TextStyle(fontSize: 12, color: Colors.green[600], fontWeight: FontWeight.w600)),
                                         ],
                                       ),
                                       const SizedBox(height: 4),

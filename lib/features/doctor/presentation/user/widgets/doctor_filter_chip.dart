@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/colors/app_colors.dart';
+import '../../../../../core/theme/colors/app_colors.dart';
 
 /// Small selectable filter chip used on doctor search.
 class DoctorFilterChip extends StatelessWidget {

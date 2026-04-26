@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import "package:smart_clinic_booking/shared/di/injection.dart";
-import '../../../../core/theme/colors/app_colors.dart';
-import '../../../../core/theme/typography/app_text_styles.dart';
-import '../../../../core/widgets/icare_logo.dart';
-import '../../domain/entities/doctor_entity.dart';
-import '../../domain/usecases/get_catalog_doctor_detail_usecase.dart';
+import '../../../../../core/theme/colors/app_colors.dart';
+import '../../../../../core/theme/typography/app_text_styles.dart';
+import '../../../../../core/widgets/icare_logo.dart';
+import '../../../domain/entities/doctor_entity.dart';
+import '../../../domain/usecases/user/get_catalog_doctor_detail_usecase.dart';
 class DoctorDetailScreen extends StatefulWidget {
   final DoctorEntity? doctor;
   final String? doctorId;
@@ -265,6 +265,42 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                       ],
                     ),
                   ),
+                  if (_doctor.resumePdfUrl.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    Text("Hồ sơ năng lực (Resume)", style: AppTextStyles.heading3),
+                    const SizedBox(height: 8),
+                    InkWell(
+                      onTap: () {
+                        // In a real app, use url_launcher to open the PDF
+                        debugPrint('Downloading resume: ${_doctor.resumePdfUrl}');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Đang mở hồ sơ năng lực...')),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.picture_as_pdf_outlined, color: Colors.red),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Xem/Tải hồ sơ năng lực bác sĩ',
+                                style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary),
+                              ),
+                            ),
+                            Icon(Icons.download_outlined, color: AppColors.primary),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 24),
                   Text("Lịch làm việc", style: AppTextStyles.heading3),
                   const SizedBox(height: 8),

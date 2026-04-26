@@ -175,6 +175,12 @@ class DoctorRemoteDatasource {
           return da.compareTo(db);
         });
         break;
+      case DoctorCatalogSort.experienceDesc:
+        sorted.sort((a, b) => b.experience.compareTo(a.experience));
+        break;
+      case DoctorCatalogSort.experienceAsc:
+        sorted.sort((a, b) => a.experience.compareTo(b.experience));
+        break;
     }
     return sorted;
   }

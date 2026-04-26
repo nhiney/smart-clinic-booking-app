@@ -12,7 +12,6 @@ class MapsRepositoryImpl implements MapsRepository {
   @override
   Future<List<HospitalEntity>> getHospitals() async {
     try {
-      // 1. Try to fetch from Firestore
       final snapshot = await _firestore.collection('hospitals').get();
       final hospitals = snapshot.docs.map((doc) {
         final data = doc.data();
@@ -20,13 +19,51 @@ class MapsRepositoryImpl implements MapsRepository {
         return HospitalModel.fromJson(data);
       }).toList();
 
-      // 2. Cache the data to SQLite
       await _cacheHospitals(hospitals);
+      return hospitals;
+    } catch (e) {
+      return _getCachedHospitals();
+    }
+  }
+
+  @override
+  Future<List<HospitalEntity>> getHospitalsWithFilters({
+    String? specialty,
+    String? searchQuery,
+  }) async {
+    try {
+      Query<Map<String, dynamic>> query = _firestore.collection('hospitals');
+
+      if (specialty != null && specialty.isNotEmpty) {
+        query = query.where('specialties', arrayContains: specialty);
+      }
+
+      final snapshot = await query.get();
+      var hospitals = snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return HospitalModel.fromJson(data);
+      }).toList();
+
+      if (searchQuery != null && searchQuery.isNotEmpty) {
+        final lowerQuery = searchQuery.toLowerCase();
+        hospitals = hospitals
+            .where((h) => h.name.toLowerCase().contains(lowerQuery))
+            .toList();
+      }
 
       return hospitals;
     } catch (e) {
-      // 3. Fallback to SQLite if network fails
-      return _getCachedHospitals();
+      final all = await getHospitals();
+      var filtered = all;
+      if (specialty != null && specialty.isNotEmpty) {
+        filtered = filtered.where((h) => h.specialties.contains(specialty)).toList();
+      }
+      if (searchQuery != null && searchQuery.isNotEmpty) {
+        final lowerQuery = searchQuery.toLowerCase();
+        filtered = filtered.where((h) => h.name.toLowerCase().contains(lowerQuery)).toList();
+      }
+      return filtered;
     }
   }
 

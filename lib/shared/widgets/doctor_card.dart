@@ -12,6 +12,7 @@ class DoctorCard extends StatelessWidget {
   final int? totalReviews;
   /// e.g. "2.1 km" when user location is known.
   final String? distanceLabel;
+  final int? experienceYears;
   final VoidCallback? onTap;
 
   const DoctorCard({
@@ -23,6 +24,7 @@ class DoctorCard extends StatelessWidget {
     this.hospital = '',
     this.totalReviews,
     this.distanceLabel,
+    this.experienceYears,
     this.onTap,
   });
 
@@ -128,6 +130,23 @@ class DoctorCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           distanceLabel!,
+                          style: context.textStyles.caption,
+                        ),
+                      ],
+                    ),
+                  ],
+                  if (experienceYears != null) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.work_history_outlined,
+                          size: 14,
+                          color: context.colors.textHint,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$experienceYears năm kinh nghiệm',
                           style: context.textStyles.caption,
                         ),
                       ],

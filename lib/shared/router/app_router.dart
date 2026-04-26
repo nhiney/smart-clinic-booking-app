@@ -10,8 +10,8 @@ import 'package:smart_clinic_booking/features/auth/presentation/screens/sign_up_
 import 'package:smart_clinic_booking/features/auth/presentation/screens/patient_home_screen.dart';
 import 'package:smart_clinic_booking/features/admin/presentation/screens/admin_dashboard_screen.dart';
 import 'package:smart_clinic_booking/features/doctor/presentation/screens/doctor_home_screen.dart';
-import 'package:smart_clinic_booking/features/doctor/presentation/screens/doctor_search_screen.dart';
-import 'package:smart_clinic_booking/features/doctor/presentation/screens/doctor_detail_screen.dart';
+import 'package:smart_clinic_booking/features/doctor/presentation/user/screens/doctor_search_screen.dart';
+import 'package:smart_clinic_booking/features/doctor/presentation/user/screens/doctor_detail_screen.dart';
 import 'package:smart_clinic_booking/features/doctor/domain/entities/doctor_entity.dart';
 import 'package:smart_clinic_booking/features/admission/presentation/screens/admission_registration_screen.dart';
 import 'package:smart_clinic_booking/features/admission/presentation/screens/admission_history_screen.dart';
@@ -26,6 +26,7 @@ import 'package:smart_clinic_booking/features/support/presentation/screens/ticke
 import 'package:smart_clinic_booking/features/content/presentation/screens/news_screen.dart';
 import 'package:smart_clinic_booking/features/content/presentation/screens/content_screens.dart';
 import 'package:smart_clinic_booking/features/maps/presentation/screens/hospital_map_screen.dart';
+import 'package:smart_clinic_booking/features/maps/presentation/screens/hospital_list_screen.dart';
 import 'package:smart_clinic_booking/features/maps/presentation/screens/hospital_detail_screen.dart';
 import 'package:smart_clinic_booking/features/maps/domain/entities/hospital_entity.dart';
 import 'package:smart_clinic_booking/features/review/presentation/screens/review_screen.dart';
@@ -343,6 +344,10 @@ class AppRouter {
       GoRoute(
         path: '/maps',
         builder: (context, state) => const HospitalMapScreen(),
+      ),
+      GoRoute(
+        path: '/hospitals',
+        builder: (context, state) => const HospitalListScreen(),
       ),
       GoRoute(
         path: '/hospital/detail/:id',

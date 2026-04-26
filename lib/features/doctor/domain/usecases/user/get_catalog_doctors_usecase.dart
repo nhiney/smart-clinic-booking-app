@@ -1,6 +1,6 @@
-import '../entities/doctor_catalog_query.dart';
-import '../entities/doctor_entity.dart';
-import '../repositories/doctor_catalog_repository.dart';
+import '../../entities/doctor_catalog_query.dart';
+import '../../entities/doctor_entity.dart';
+import '../../repositories/doctor_catalog_repository.dart';
 
 class GetCatalogDoctorsUseCase {
   final DoctorCatalogRepository _repository;

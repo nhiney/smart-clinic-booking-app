@@ -27,18 +27,28 @@ class DoctorModel extends DoctorEntity {
 
   static List<DoctorScheduleDay> _parseSchedule(dynamic raw) {
     if (raw == null) return [];
-    if (raw is! List) return [];
     final out = <DoctorScheduleDay>[];
-    for (final item in raw) {
-      if (item is! Map) continue;
-      final m = Map<String, dynamic>.from(item);
-      final day = m['day']?.toString() ?? '';
-      final slotRaw = m['slots'];
-      final slots = slotRaw is List
-          ? slotRaw.map((e) => e.toString()).where((s) => s.isNotEmpty).toList()
-          : <String>[];
-      if (day.isEmpty) continue;
-      out.add(DoctorScheduleDay(day: day, slots: slots));
+
+    if (raw is List) {
+      for (final item in raw) {
+        if (item is! Map) continue;
+        final m = Map<String, dynamic>.from(item);
+        final day = m['day']?.toString() ?? '';
+        final slotRaw = m['slots'];
+        final slots = slotRaw is List
+            ? slotRaw.map((e) => e.toString()).where((s) => s.isNotEmpty).toList()
+            : <String>[];
+        if (day.isEmpty) continue;
+        out.add(DoctorScheduleDay(day: day, slots: slots));
+      }
+    } else if (raw is Map) {
+      final m = Map<String, dynamic>.from(raw);
+      m.forEach((day, slotsRaw) {
+        if (slotsRaw is List) {
+          final slots = slotsRaw.map((e) => e.toString()).where((s) => s.isNotEmpty).toList();
+          out.add(DoctorScheduleDay(day: day, slots: slots));
+        }
+      });
     }
     return out;
   }
