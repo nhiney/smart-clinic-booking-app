@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/extensions/context_extension.dart';
+import '../../../../../core/extensions/context_extension.dart';
 
 /// Giao diện tương ứng: tư vấn video (placeholder).
 class DoctorVideoConsultScreen extends StatelessWidget {

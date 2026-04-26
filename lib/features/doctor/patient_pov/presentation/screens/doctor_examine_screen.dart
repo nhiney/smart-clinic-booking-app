@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:smart_clinic_booking/l10n/app_localizations.dart';
 
-import '../../../../core/extensions/context_extension.dart';
-import '../../../appointment/domain/entities/appointment_entity.dart';
+import '../../../../../core/extensions/context_extension.dart';
+import '../../../../appointment/domain/entities/appointment_entity.dart';
+
+
 
 /// Phiên khám — mở từ lịch hoặc thao tác nhanh "Khám".
 class DoctorExamineScreen extends StatefulWidget {

@@ -3,7 +3,7 @@ import '../../domain/entities/health_summary.dart';
 import '../../domain/entities/medication_reminder.dart';
 import '../../domain/entities/health_article.dart';
 import '../../../appointment/domain/entities/appointment_entity.dart';
-import '../../../doctor/domain/entities/doctor_entity.dart';
+import '../../../doctor/patient_pov/domain/entities/doctor_entity.dart';
 
 // ─── Events ─────────────────────────────────────────────────────────────────
 

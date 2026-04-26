@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/extensions/context_extension.dart';
-import '../../../doctor/domain/entities/doctor_entity.dart';
+import '../../../doctor/patient_pov/domain/entities/doctor_entity.dart';
 
 class RecommendedDoctorsSection extends StatelessWidget {
   final List<DoctorEntity> doctors;

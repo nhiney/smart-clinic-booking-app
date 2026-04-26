@@ -8,7 +8,7 @@ import '../../domain/usecases/get_health_summary_usecase.dart';
 import '../../domain/usecases/get_health_news_usecase.dart';
 import '../../domain/usecases/medication_usecases.dart';
 import '../../../appointment/domain/usecases/get_appointments_usecase.dart';
-import '../../../doctor/domain/usecases/get_doctors_usecase.dart';
+import '../../../doctor/patient_pov//domain/usecases/get_doctors_usecase.dart';
 import 'home_bloc.dart';
 
 class HomeBlocHandler extends Bloc<HomeEvent, HomeState> {

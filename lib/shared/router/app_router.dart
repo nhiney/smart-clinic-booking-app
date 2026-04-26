@@ -9,10 +9,7 @@ import 'package:smart_clinic_booking/features/auth/presentation/screens/staff_lo
 import 'package:smart_clinic_booking/features/auth/presentation/screens/sign_up_screen.dart';
 import 'package:smart_clinic_booking/features/auth/presentation/screens/patient_home_screen.dart';
 import 'package:smart_clinic_booking/features/admin/presentation/screens/admin_dashboard_screen.dart';
-import 'package:smart_clinic_booking/features/doctor/presentation/screens/doctor_home_screen.dart';
-import 'package:smart_clinic_booking/features/doctor/presentation/screens/doctor_search_screen.dart';
-import 'package:smart_clinic_booking/features/doctor/presentation/screens/doctor_detail_screen.dart';
-import 'package:smart_clinic_booking/features/doctor/domain/entities/doctor_entity.dart';
+
 import 'package:smart_clinic_booking/features/admission/presentation/screens/admission_registration_screen.dart';
 import 'package:smart_clinic_booking/features/admission/presentation/screens/admission_history_screen.dart';
 import 'package:smart_clinic_booking/features/notification/presentation/screens/notification_screen.dart';
@@ -58,6 +55,11 @@ import 'package:smart_clinic_booking/features/review/presentation/screens/doctor
 import 'package:smart_clinic_booking/shared/widgets/under_development_screen.dart';
 
 import 'package:smart_clinic_booking/shared/screens/status_screens.dart';
+
+import '../../features/auth/presentation/screens/doctor_home_screen.dart';
+import '../../features/doctor/patient_pov/domain/entities/doctor_entity.dart';
+import '../../features/doctor/patient_pov/presentation/screens/doctor_detail_screen.dart';
+import '../../features/doctor/patient_pov/presentation/screens/doctor_search_screen.dart';
 
 // No longer need placeholders as we implemented the real screens
 class KycUploadScreen extends StatelessWidget {

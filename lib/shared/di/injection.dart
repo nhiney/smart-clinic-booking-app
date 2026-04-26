@@ -1,6 +1,13 @@
 import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
 
+import '../../features/doctor/patient_pov/data/datasources/doctor_remote_datasource.dart';
+import '../../features/doctor/patient_pov/data/repositories/doctor_catalog_repository_impl.dart';
+import '../../features/doctor/patient_pov/data/repositories/firestore_doctor_repository.dart';
+import '../../features/doctor/patient_pov/domain/repositories/doctor_catalog_repository.dart';
+import '../../features/doctor/patient_pov/domain/repositories/doctor_repository.dart';
+import '../../features/doctor/patient_pov/domain/usecases/get_catalog_doctor_detail_usecase.dart';
+import '../../features/doctor/patient_pov/domain/usecases/get_catalog_doctors_usecase.dart';
 import 'injection.config.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -44,13 +51,7 @@ import 'package:smart_clinic_booking/features/admission/domain/repositories/admi
 import 'package:smart_clinic_booking/core/services/notification_service.dart';
 import 'package:smart_clinic_booking/features/admin/domain/repositories/facility_repository.dart';
 import 'package:smart_clinic_booking/features/admin/data/repositories/firestore_facility_repository.dart';
-import 'package:smart_clinic_booking/features/doctor/domain/repositories/doctor_repository.dart';
-import 'package:smart_clinic_booking/features/doctor/domain/repositories/doctor_catalog_repository.dart';
-import 'package:smart_clinic_booking/features/doctor/data/repositories/firestore_doctor_repository.dart';
-import 'package:smart_clinic_booking/features/doctor/data/repositories/doctor_catalog_repository_impl.dart';
-import 'package:smart_clinic_booking/features/doctor/data/datasources/doctor_remote_datasource.dart';
-import 'package:smart_clinic_booking/features/doctor/domain/usecases/get_catalog_doctors_usecase.dart';
-import 'package:smart_clinic_booking/features/doctor/domain/usecases/get_catalog_doctor_detail_usecase.dart';
+
 import 'package:smart_clinic_booking/features/booking/data/datasources/booking_remote_datasource.dart';
 import 'package:smart_clinic_booking/features/booking/data/repositories/booking_repository_impl.dart';
 import 'package:smart_clinic_booking/features/booking/domain/repositories/booking_repository.dart';

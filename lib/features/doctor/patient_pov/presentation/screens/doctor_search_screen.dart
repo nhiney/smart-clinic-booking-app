@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../core/theme/colors/app_colors.dart';
-import '../../../../core/widgets/branded_app_bar.dart';
-import '../../../../shared/widgets/doctor_card.dart';
-import '../../../../shared/widgets/empty_state_widget.dart';
-import '../../../../shared/widgets/loading_widget.dart';
+import '../../../../../core/theme/colors/app_colors.dart';
+import '../../../../../core/widgets/branded_app_bar.dart';
+import '../../../../../shared/widgets/doctor_card.dart';
+import '../../../../../shared/widgets/empty_state_widget.dart';
+import '../../../../../shared/widgets/loading_widget.dart';
 import '../../domain/entities/doctor_catalog_query.dart';
 import '../../domain/entities/doctor_entity.dart';
 import '../controllers/doctor_search_controller.dart';

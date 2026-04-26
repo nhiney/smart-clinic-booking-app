@@ -24,14 +24,12 @@ import 'package:smart_clinic_booking/features/auth/domain/usecases/signin_with_p
     as _i1025;
 import 'package:smart_clinic_booking/features/auth/domain/usecases/verify_phone_usecase.dart'
     as _i454;
-import 'package:smart_clinic_booking/features/doctor/data/datasources/doctor_remote_datasource.dart'
-    as _i569;
-import 'package:smart_clinic_booking/features/doctor/data/repositories/doctor_repository_impl.dart'
-    as _i679;
-import 'package:smart_clinic_booking/features/doctor/domain/repositories/doctor_repository.dart'
-    as _i791;
-import 'package:smart_clinic_booking/features/doctor/domain/usecases/get_doctors_usecase.dart'
-    as _i812;
+
+import '../../features/doctor/patient_pov/data/datasources/doctor_remote_datasource.dart' as _i569;
+import '../../features/doctor/patient_pov/data/repositories/doctor_repository_impl.dart' as _i679;
+import '../../features/doctor/patient_pov/domain/repositories/doctor_repository.dart' as _i791;
+import '../../features/doctor/patient_pov/domain/usecases/get_doctors_usecase.dart' as _i812;
+
 
 extension GetItInjectableX on _i174.GetIt {
 // initializes the registration of main-scope dependencies inside of GetIt

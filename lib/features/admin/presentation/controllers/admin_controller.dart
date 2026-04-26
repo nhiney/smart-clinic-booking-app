@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/facility_entities.dart';
 import '../../domain/repositories/facility_repository.dart';
-import '../../../doctor/domain/entities/doctor_entity.dart';
-import '../../../doctor/domain/repositories/doctor_repository.dart';
+import '../../../doctor/patient_pov//domain/entities/doctor_entity.dart';
+import '../../../doctor/patient_pov//domain/repositories/doctor_repository.dart';
 import '../../../../core/services/seed_data_service.dart';
 import '../../../../core/utils/seed_hospital_data.dart';
 

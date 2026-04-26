@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../../../../core/extensions/context_extension.dart';
+import '../../../../appointment/domain/entities/appointment_entity.dart';
+import '../../../../appointment/presentation/screens/appointment_history_screen.dart';
+import '../../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../../medical_record/presentation/screens/medical_record_screen.dart';
 import '../controllers/doctor_controller.dart';
-import '../../../appointment/domain/entities/appointment_entity.dart';
-import '../../../appointment/presentation/screens/appointment_history_screen.dart';
-import '../../../auth/presentation/controllers/auth_controller.dart';
-import '../../../medical_record/presentation/screens/medical_record_screen.dart';
-import '../../../../core/extensions/context_extension.dart';
+
 import 'package:smart_clinic_booking/l10n/app_localizations.dart';
 import 'doctor_auxiliary_screens.dart';
 import 'doctor_examine_screen.dart';

@@ -18,9 +18,12 @@ import 'package:smart_clinic_booking/features/content/presentation/screens/surve
 import 'package:smart_clinic_booking/features/home/domain/entities/health_article.dart';
 import 'package:smart_clinic_booking/features/maps/presentation/controllers/hospital_map_controller.dart';
 import 'package:smart_clinic_booking/features/maps/domain/entities/hospital_entity.dart';
-import 'package:smart_clinic_booking/features/doctor/presentation/controllers/featured_doctors_provider.dart';
-import 'package:smart_clinic_booking/features/doctor/domain/entities/doctor_entity.dart';
+import 'package:smart_clinic_booking/features/doctor/patient_pov//presentation/screens/doctor_search_screen.dart';
+
 import 'package:intl/intl.dart';
+
+import '../../../doctor/patient_pov/domain/entities/doctor_entity.dart';
+import '../../../doctor/patient_pov/presentation/controllers/featured_doctors_provider.dart';
 
 // ── Brand palette ────────────────────────────────────────────────────────────
 class _P {

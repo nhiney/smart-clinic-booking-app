@@ -32,11 +32,7 @@ import 'package:smart_clinic_booking/features/auth/presentation/controllers/auth
 import 'package:smart_clinic_booking/features/auth/data/datasources/auth_remote_datasource.dart';
 
 // Doctor
-import 'package:smart_clinic_booking/features/doctor/domain/repositories/doctor_repository.dart';
-import 'package:smart_clinic_booking/features/doctor/data/datasources/doctor_remote_datasource.dart';
-import 'package:smart_clinic_booking/features/doctor/presentation/controllers/doctor_controller.dart';
-import 'package:smart_clinic_booking/features/doctor/presentation/controllers/doctor_search_controller.dart';
-import 'package:smart_clinic_booking/features/doctor/domain/usecases/get_catalog_doctors_usecase.dart';
+
 import 'package:smart_clinic_booking/core/services/file_storage_service.dart';
 
 // Admin
@@ -68,7 +64,7 @@ import 'package:smart_clinic_booking/features/notification/presentation/controll
 
 // Screens
 import 'package:smart_clinic_booking/features/appointment/domain/usecases/get_appointments_usecase.dart';
-import 'package:smart_clinic_booking/features/doctor/domain/usecases/get_doctors_usecase.dart';
+
 
 // Home
 import 'package:smart_clinic_booking/features/home/presentation/bloc/home_bloc_handler.dart';
@@ -78,6 +74,12 @@ import 'package:smart_clinic_booking/features/home/domain/usecases/get_health_su
 import 'package:smart_clinic_booking/features/home/domain/usecases/medication_usecases.dart';
 import 'package:smart_clinic_booking/features/home/domain/usecases/get_health_news_usecase.dart';
 import 'package:smart_clinic_booking/core/services/seed_data_service.dart';
+
+import 'features/doctor/patient_pov/domain/repositories/doctor_repository.dart';
+import 'features/doctor/patient_pov/domain/usecases/get_catalog_doctors_usecase.dart';
+import 'features/doctor/patient_pov/domain/usecases/get_doctors_usecase.dart';
+import 'features/doctor/patient_pov/presentation/controllers/doctor_controller.dart';
+import 'features/doctor/patient_pov/presentation/controllers/doctor_search_controller.dart';
 
 
 Future<void> main() async {

@@ -8,8 +8,8 @@ import '../../domain/entities/clinic_room_entity.dart';
 import '../../data/models/hospital_model.dart';
 import '../../data/models/department_model.dart';
 import '../../data/models/clinic_room_model.dart';
-import '../../../doctor/domain/entities/doctor_entity.dart';
-import '../../../doctor/data/models/doctor_model.dart';
+import '../../../doctor/patient_pov/domain/entities/doctor_entity.dart';
+import '../../../doctor/patient_pov/data/models/doctor_model.dart';
 
 final hospitalByIdProvider = FutureProvider.family<HospitalEntity?, String>((ref, hospitalId) async {
   debugPrint('[HospitalDetail] Fetching hospital $hospitalId');

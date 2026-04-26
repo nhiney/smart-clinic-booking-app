@@ -4,9 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import "package:smart_clinic_booking/shared/di/injection.dart";
-import '../../../../core/theme/colors/app_colors.dart';
-import '../../../../core/theme/typography/app_text_styles.dart';
-import '../../../../core/widgets/icare_logo.dart';
+
+import '../../../../../core/theme/colors/app_colors.dart';
+import '../../../../../core/theme/typography/app_text_styles.dart';
+import '../../../../../core/widgets/icare_logo.dart';
 import '../../domain/entities/doctor_entity.dart';
 import '../../domain/usecases/get_catalog_doctor_detail_usecase.dart';
 class DoctorDetailScreen extends StatefulWidget {
@@ -90,12 +91,12 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                   onPressed: _hydrateFromRemote,
                 ),
             ],
-            title: const Row(
+            title: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 ICareLogo(size: 28, showText: false, isLight: true),
-                SizedBox(width: 8),
-                Text(
+                const SizedBox(width: 8),
+                const Text(
                   "ICARE",
                   style: TextStyle(
                     color: Colors.white,

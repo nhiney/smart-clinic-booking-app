@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import '../../domain/entities/doctor_entity.dart';
-import '../../domain/repositories/doctor_repository.dart';
-import '../../../appointment/domain/repositories/appointment_repository.dart';
-import '../../../appointment/domain/entities/appointment_entity.dart';
-import '../../../../core/services/file_storage_service.dart';
+import '../../../../../core/services/file_storage_service.dart';
+import '../../../patient_pov/domain/entities/doctor_entity.dart';
+import '../../../patient_pov/domain/repositories/doctor_repository.dart';
+import '../../../../appointment/domain/repositories/appointment_repository.dart';
+import '../../../../appointment/domain/entities/appointment_entity.dart';
 
 class DoctorController extends ChangeNotifier {
   final DoctorRepository doctorRepository;

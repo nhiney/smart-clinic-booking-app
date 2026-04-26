@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_clinic_booking/l10n/app_localizations.dart';
 
-import '../../../../core/extensions/context_extension.dart';
-import '../../../auth/presentation/controllers/auth_controller.dart';
+
+import '../../../../../core/extensions/context_extension.dart';
+import '../../../../auth/presentation/controllers/auth_controller.dart';
 import '../controllers/doctor_controller.dart';
 
 /// Tab Cá nhân — thông tin bác sĩ và đăng xuất.

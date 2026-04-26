@@ -9,7 +9,7 @@ import '../../domain/entities/hospital_entity.dart';
 import '../../domain/entities/department_entity.dart';
 import '../../domain/entities/clinic_room_entity.dart';
 import '../controllers/hospital_detail_controller.dart';
-import '../../../doctor/domain/entities/doctor_entity.dart';
+import '../../../doctor/patient_pov/domain/entities/doctor_entity.dart';
 
 // ─────────────────────────── icon helper ────────────────────────────────────
 

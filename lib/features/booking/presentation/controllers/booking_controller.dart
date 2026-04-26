@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-import '../../../doctor/domain/entities/doctor_entity.dart';
+import '../../../doctor/patient_pov/domain/entities/doctor_entity.dart';
 import '../../domain/entities/booking_entity.dart';
 import '../../domain/usecases/check_slot_availability_usecase.dart';
 import '../../domain/usecases/confirm_booking_usecase.dart';

@@ -1,6 +1,6 @@
 import 'package:intl/intl.dart';
 
-import '../../../doctor/domain/entities/doctor_entity.dart';
+import '../../../doctor/patient_pov//domain/entities/doctor_entity.dart';
 
 /// Resolves candidate time labels for a calendar day from doctor schedule.
 List<String> resolveTimeSlotsForDate(DoctorEntity? doctor, DateTime date) {
