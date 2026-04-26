@@ -3,8 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
-import '../../../../core/theme/colors/app_colors.dart';
-import '../../../../core/theme/typography/app_text_styles.dart';
+import '../../../../core/extensions/context_extension.dart';
 import '../../domain/entities/hospital_entity.dart';
 import '../../domain/entities/department_entity.dart';
 import '../../domain/entities/clinic_room_entity.dart';
@@ -31,16 +30,16 @@ IconData _deptIcon(String name) {
   return map[name] ?? Icons.local_hospital_rounded;
 }
 
-Color _roomStatusColor(String status) {
+Color _roomStatusColor(BuildContext context, String status) {
   switch (status) {
     case 'available':
-      return AppColors.success;
+      return context.colors.success;
     case 'occupied':
-      return AppColors.warning;
+      return context.colors.warning;
     case 'closed':
-      return AppColors.error;
+      return context.colors.error;
     default:
-      return AppColors.textHint;
+      return context.colors.textHint;
   }
 }
 
@@ -73,11 +72,11 @@ class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
-      color: Colors.white,
+      color: context.colors.surface,
       child: Column(
         children: [
           tabBar,
-          const Divider(height: 1, thickness: 1, color: AppColors.divider),
+          Divider(height: 1, thickness: 1, color: context.colors.divider),
         ],
       ),
     );
@@ -130,11 +129,11 @@ class _HospitalDetailScreenState extends ConsumerState<HospitalDetailScreen>
       final asyncHospital = ref.watch(hospitalByIdProvider(widget.hospitalId));
       return asyncHospital.when(
         loading: () => Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: context.colors.background,
           appBar: AppBar(
-            backgroundColor: Colors.white,
+            backgroundColor: context.colors.surface,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+              icon: Icon(Icons.arrow_back, color: context.colors.textPrimary),
               onPressed: () => context.pop(),
             ),
           ),
@@ -174,9 +173,9 @@ class _HospitalDetailScreenState extends ConsumerState<HospitalDetailScreen>
     final imageUrl = h.imageUrl?.isNotEmpty == true ? h.imageUrl! : _defaultImage;
     final tabBar = TabBar(
       controller: _tabController,
-      labelColor: AppColors.primary,
-      unselectedLabelColor: AppColors.textSecondary,
-      indicatorColor: AppColors.primary,
+      labelColor: context.colors.primary,
+      unselectedLabelColor: context.colors.textSecondary,
+      indicatorColor: context.colors.primary,
       indicatorWeight: 3,
       labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
       tabs: const [
@@ -186,20 +185,20 @@ class _HospitalDetailScreenState extends ConsumerState<HospitalDetailScreen>
     );
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
             SliverAppBar(
               expandedHeight: 240,
               pinned: true,
-              backgroundColor: AppColors.primary,
+              backgroundColor: context.colors.primary,
               flexibleSpace: FlexibleSpaceBar(
                 background: CachedNetworkImage(
                   imageUrl: imageUrl,
                   fit: BoxFit.cover,
-                  placeholder: (_, __) => Container(color: AppColors.divider),
-                  errorWidget: (_, __, ___) => Container(color: AppColors.divider),
+                  placeholder: (_, __) => Container(color: context.colors.divider),
+                  errorWidget: (_, __, ___) => Container(color: context.colors.divider),
                 ),
               ),
               leading: Padding(
@@ -207,7 +206,7 @@ class _HospitalDetailScreenState extends ConsumerState<HospitalDetailScreen>
                 child: CircleAvatar(
                   backgroundColor: Colors.white.withOpacity(0.9),
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
+                    icon: Icon(Icons.arrow_back, color: context.colors.textPrimary, size: 20),
                     onPressed: () => context.pop(),
                   ),
                 ),
@@ -216,7 +215,7 @@ class _HospitalDetailScreenState extends ConsumerState<HospitalDetailScreen>
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: CircleAvatar(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: context.colors.primary,
                     child: IconButton(
                       icon: const Icon(Icons.calendar_today_rounded, color: Colors.white, size: 18),
                       onPressed: () => context.push('/patient/create-appointment'),
@@ -262,10 +261,10 @@ class _HospitalDetailScreenState extends ConsumerState<HospitalDetailScreen>
             child: ElevatedButton(
               onPressed: () => context.push('/patient/create-appointment'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: context.colors.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: context.radius.sRadius,
                 ),
               ),
               child: const Text(
@@ -291,7 +290,7 @@ class _HospitalInfoHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final h = hospital;
     return Container(
-      color: Colors.white,
+      color: context.colors.surface,
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -300,7 +299,7 @@ class _HospitalInfoHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Text(h.name, style: AppTextStyles.heading2),
+                child: Text(h.name, style: context.textStyles.heading2),
               ),
               const SizedBox(width: 8),
               _RatingBadge(rating: h.rating),
@@ -334,8 +333,8 @@ class _RatingBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.primarySurface,
-        borderRadius: BorderRadius.circular(12),
+        color: context.colors.primary.withOpacity(0.1),
+        borderRadius: context.radius.sRadius,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -344,9 +343,9 @@ class _RatingBadge extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             rating.toStringAsFixed(1),
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: AppColors.primary,
+              color: context.colors.primary,
               fontSize: 13,
             ),
           ),
@@ -366,23 +365,23 @@ class _OpenBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: isOpen
-            ? AppColors.success.withOpacity(0.12)
-            : AppColors.error.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(8),
+            ? context.colors.success.withOpacity(0.12)
+            : context.colors.error.withOpacity(0.12),
+        borderRadius: context.radius.xsRadius,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             isOpen ? Icons.check_circle_rounded : Icons.cancel_rounded,
-            color: isOpen ? AppColors.success : AppColors.error,
+            color: isOpen ? context.colors.success : context.colors.error,
             size: 14,
           ),
           const SizedBox(width: 4),
           Text(
             isOpen ? 'Đang mở cửa' : 'Đã đóng cửa',
             style: TextStyle(
-              color: isOpen ? AppColors.success : AppColors.error,
+              color: isOpen ? context.colors.success : context.colors.error,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
@@ -403,12 +402,12 @@ class _InfoRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: AppColors.primary),
+        Icon(icon, size: 18, color: context.colors.primary),
         const SizedBox(width: 10),
         Expanded(
           child: Text(
             text,
-            style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
+            style: context.textStyles.body.copyWith(color: context.colors.textSecondary),
           ),
         ),
       ],
@@ -429,19 +428,19 @@ class _OverviewTab extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
       children: [
-        const Text('Giới thiệu', style: AppTextStyles.heading3),
+        Text('Giới thiệu', style: context.textStyles.heading3),
         const SizedBox(height: 8),
         Text(
           h.description?.isNotEmpty == true
               ? h.description!
               : 'Bệnh viện ${h.name} là một trong những cơ sở y tế hàng đầu, cung cấp các dịch vụ chăm sóc sức khỏe chất lượng cao cho cộng đồng.',
-          style: AppTextStyles.body.copyWith(
-            color: AppColors.textSecondary,
+          style: context.textStyles.body.copyWith(
+            color: context.colors.textSecondary,
             height: 1.6,
           ),
         ),
         const SizedBox(height: 24),
-        const Text('Chuyên khoa', style: AppTextStyles.heading3),
+        Text('Chuyên khoa', style: context.textStyles.heading3),
         const SizedBox(height: 12),
         Wrap(
           spacing: 8,
@@ -449,7 +448,7 @@ class _OverviewTab extends StatelessWidget {
           children: h.specialties.map((s) => _SpecialtyChip(label: s)).toList(),
         ),
         const SizedBox(height: 24),
-        const Text('Liên hệ', style: AppTextStyles.heading3),
+        Text('Liên hệ', style: context.textStyles.heading3),
         const SizedBox(height: 12),
         if (h.phone?.isNotEmpty == true) ...[
           _ContactRow(icon: Icons.phone_rounded, label: h.phone!),
@@ -472,14 +471,14 @@ class _SpecialtyChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        border: Border.all(color: AppColors.divider),
-        borderRadius: BorderRadius.circular(20),
+        color: context.colors.surface,
+        border: Border.all(color: context.colors.divider),
+        borderRadius: context.radius.xlRadius,
       ),
       child: Text(
         label,
-        style: AppTextStyles.bodySmall.copyWith(
-          color: AppColors.textPrimary,
+        style: context.textStyles.bodySmall.copyWith(
+          color: context.colors.textPrimary,
           fontWeight: FontWeight.w500,
         ),
       ),
@@ -496,10 +495,10 @@ class _ContactRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: AppColors.primary),
+        Icon(icon, size: 18, color: context.colors.primary),
         const SizedBox(width: 10),
         Expanded(
-          child: Text(label, style: AppTextStyles.body.copyWith(color: AppColors.textSecondary)),
+          child: Text(label, style: context.textStyles.body.copyWith(color: context.colors.textSecondary)),
         ),
       ],
     );
@@ -524,11 +523,11 @@ class _DepartmentsTab extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 40),
+              Icon(Icons.error_outline_rounded, color: context.colors.error, size: 40),
               const SizedBox(height: 12),
               Text('Không thể tải danh sách khoa.\n$e',
                   textAlign: TextAlign.center,
-                  style: AppTextStyles.body.copyWith(color: AppColors.textSecondary)),
+                  style: context.textStyles.body.copyWith(color: context.colors.textSecondary)),
             ],
           ),
         ),
@@ -539,11 +538,11 @@ class _DepartmentsTab extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.domain_disabled_rounded, color: AppColors.textHint, size: 48),
+                Icon(Icons.domain_disabled_rounded, color: context.colors.textHint, size: 48),
                 const SizedBox(height: 12),
                 Text(
                   'Chưa có thông tin khoa phòng.',
-                  style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
+                  style: context.textStyles.body.copyWith(color: context.colors.textSecondary),
                 ),
               ],
             ),
@@ -580,19 +579,19 @@ class _DepartmentExpansionTile extends ConsumerWidget {
       margin: EdgeInsets.zero,
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: AppColors.divider),
+        borderRadius: context.radius.mRadius,
+        side: BorderSide(color: context.colors.divider),
       ),
       child: ExpansionTile(
         leading: CircleAvatar(
-          backgroundColor: AppColors.primarySurface,
-          child: Icon(_deptIcon(department.iconName), color: AppColors.primary, size: 22),
+          backgroundColor: context.colors.primary.withOpacity(0.1),
+          child: Icon(_deptIcon(department.iconName), color: context.colors.primary, size: 22),
         ),
-        title: Text(department.name, style: AppTextStyles.subtitle),
+        title: Text(department.name, style: context.textStyles.subtitle),
         subtitle: department.doctorCount > 0
             ? Text(
                 '${department.doctorCount} bác sĩ',
-                style: AppTextStyles.bodySmall,
+                style: context.textStyles.bodySmall,
               )
             : null,
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -601,7 +600,7 @@ class _DepartmentExpansionTile extends ConsumerWidget {
           if (department.description.isNotEmpty) ...[
             Text(
               department.description,
-              style: AppTextStyles.body.copyWith(color: AppColors.textSecondary, height: 1.5),
+              style: context.textStyles.body.copyWith(color: context.colors.textSecondary, height: 1.5),
             ),
             const SizedBox(height: 16),
           ],
@@ -630,7 +629,7 @@ class _DoctorSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Bác sĩ', style: AppTextStyles.heading3),
+        Text('Bác sĩ', style: context.textStyles.heading3),
         const SizedBox(height: 10),
         asyncDoctors.when(
           loading: () => const SizedBox(
@@ -639,13 +638,13 @@ class _DoctorSection extends ConsumerWidget {
           ),
           error: (e, _) => Text(
             'Không thể tải danh sách bác sĩ.',
-            style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
+            style: context.textStyles.bodySmall.copyWith(color: context.colors.error),
           ),
           data: (doctors) {
             if (doctors.isEmpty) {
               return Text(
                 'Chưa có bác sĩ trong khoa này.',
-                style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                style: context.textStyles.bodySmall.copyWith(color: context.colors.textSecondary),
               );
             }
             return SizedBox(
@@ -683,8 +682,8 @@ class _DoctorCard extends StatelessWidget {
       child: Container(
         width: 80,
         decoration: BoxDecoration(
-          color: AppColors.primarySurface,
-          borderRadius: BorderRadius.circular(12),
+          color: context.colors.primary.withOpacity(0.1),
+          borderRadius: context.radius.mRadius,
         ),
         padding: const EdgeInsets.all(8),
         child: Column(
@@ -692,19 +691,19 @@ class _DoctorCard extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 26,
-              backgroundColor: AppColors.divider,
+              backgroundColor: context.colors.divider,
               backgroundImage: doctor.imageUrl.isNotEmpty
                   ? CachedNetworkImageProvider(doctor.imageUrl)
                   : null,
               child: doctor.imageUrl.isEmpty
-                  ? const Icon(Icons.person_rounded, color: AppColors.textHint, size: 28)
+                  ? Icon(Icons.person_rounded, color: context.colors.textHint, size: 28)
                   : null,
             ),
             const SizedBox(height: 6),
             Text(
               doctor.name,
-              style: AppTextStyles.caption.copyWith(
-                color: AppColors.textPrimary,
+              style: context.textStyles.caption.copyWith(
+                color: context.colors.textPrimary,
                 fontWeight: FontWeight.w600,
               ),
               textAlign: TextAlign.center,
@@ -733,7 +732,7 @@ class _RoomsSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Phòng khám', style: AppTextStyles.heading3),
+        Text('Phòng khám', style: context.textStyles.heading3),
         const SizedBox(height: 10),
         asyncRooms.when(
           loading: () => const SizedBox(
@@ -742,13 +741,13 @@ class _RoomsSection extends ConsumerWidget {
           ),
           error: (e, _) => Text(
             'Không thể tải danh sách phòng.',
-            style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
+            style: context.textStyles.bodySmall.copyWith(color: context.colors.error),
           ),
           data: (rooms) {
             if (rooms.isEmpty) {
               return Text(
                 'Chưa có thông tin phòng khám.',
-                style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                style: context.textStyles.bodySmall.copyWith(color: context.colors.textSecondary),
               );
             }
             return Wrap(
@@ -770,7 +769,7 @@ class _RoomChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = _roomStatusColor(room.status);
+    final color = _roomStatusColor(context, room.status);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -784,16 +783,16 @@ class _RoomChip extends StatelessWidget {
         children: [
           Text(
             room.name,
-            style: AppTextStyles.bodySmall.copyWith(
+            style: context.textStyles.bodySmall.copyWith(
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: context.colors.textPrimary,
             ),
           ),
           if (room.floor.isNotEmpty) ...[
             const SizedBox(height: 2),
             Text(
               room.floor,
-              style: AppTextStyles.caption,
+              style: context.textStyles.caption,
             ),
           ],
           const SizedBox(height: 4),
@@ -808,7 +807,7 @@ class _RoomChip extends StatelessWidget {
               const SizedBox(width: 4),
               Text(
                 _roomStatusLabel(room.status),
-                style: AppTextStyles.caption.copyWith(
+                style: context.textStyles.caption.copyWith(
                   color: color,
                   fontWeight: FontWeight.w600,
                 ),

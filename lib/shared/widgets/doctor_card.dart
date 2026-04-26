@@ -1,7 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import '../../core/theme/colors/app_colors.dart';
-import '../../core/theme/typography/app_text_styles.dart';
+import '../../core/extensions/context_extension.dart';
 
 class DoctorCard extends StatelessWidget {
   final String name;
@@ -35,13 +34,13 @@ class DoctorCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.cardBackground,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: const [
+          color: context.colors.card,
+          borderRadius: context.radius.mRadius,
+          boxShadow: [
             BoxShadow(
-              color: AppColors.shadow,
+              color: context.colors.shadow,
               blurRadius: 10,
-              offset: Offset(0, 4),
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -52,12 +51,12 @@ class DoctorCard extends StatelessWidget {
               width: 70,
               height: 70,
               decoration: BoxDecoration(
-                color: AppColors.primarySurface,
-                borderRadius: BorderRadius.circular(14),
+                color: context.colors.primary.withOpacity(0.1),
+                borderRadius: context.radius.sRadius,
               ),
               child: imageUrl.isNotEmpty
                   ? ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: context.radius.sRadius,
                       child: CachedNetworkImage(
                         imageUrl: imageUrl,
                         fit: BoxFit.cover,
@@ -65,17 +64,17 @@ class DoctorCard extends StatelessWidget {
                           padding: EdgeInsets.all(20),
                           child: CircularProgressIndicator(strokeWidth: 2),
                         ),
-                        errorWidget: (_, __, ___) => const Icon(
+                        errorWidget: (_, __, ___) => Icon(
                           Icons.person,
                           size: 36,
-                          color: AppColors.primary,
+                          color: context.colors.primary,
                         ),
                       ),
                     )
-                  : const Icon(
+                  : Icon(
                       Icons.person,
                       size: 36,
-                      color: AppColors.primary,
+                      color: context.colors.primary,
                     ),
             ),
             const SizedBox(width: 14),
@@ -86,31 +85,31 @@ class DoctorCard extends StatelessWidget {
                 children: [
                   Text(
                     name,
-                    style: AppTextStyles.subtitle,
+                    style: context.textStyles.subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Text(
                     specialty,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.primary,
+                    style: context.textStyles.bodySmall.copyWith(
+                      color: context.colors.primary,
                     ),
                   ),
                   const SizedBox(height: 4),
                   if (hospital.isNotEmpty)
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.local_hospital,
                           size: 14,
-                          color: AppColors.textHint,
+                          color: context.colors.textHint,
                         ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
                             hospital,
-                            style: AppTextStyles.caption,
+                            style: context.textStyles.caption,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -121,15 +120,15 @@ class DoctorCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.near_me_outlined,
                           size: 14,
-                          color: AppColors.textHint,
+                          color: context.colors.textHint,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           distanceLabel!,
-                          style: AppTextStyles.caption,
+                          style: context.textStyles.caption,
                         ),
                       ],
                     ),
@@ -142,11 +141,11 @@ class DoctorCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.star, size: 16, color: AppColors.warning),
+                    const Icon(Icons.star, size: 16, color: Colors.amber),
                     const SizedBox(width: 2),
                     Text(
                       rating.toStringAsFixed(1),
-                      style: AppTextStyles.bodySmall.copyWith(
+                      style: context.textStyles.bodySmall.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -156,14 +155,14 @@ class DoctorCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     '($totalReviews)',
-                    style: AppTextStyles.caption.copyWith(fontSize: 10),
+                    style: context.textStyles.caption.copyWith(fontSize: 10),
                   ),
                 ],
                 const SizedBox(height: 8),
-                const Icon(
+                Icon(
                   Icons.arrow_forward_ios,
                   size: 14,
-                  color: AppColors.textHint,
+                  color: context.colors.textHint,
                 ),
               ],
             ),

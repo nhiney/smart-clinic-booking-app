@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart' as legacy;
-import 'package:smart_clinic_booking/core/widgets/branded_app_bar.dart';
+import 'package:smart_clinic_booking/core/theme/colors/app_colors.dart';
+import 'package:smart_clinic_booking/core/theme/typography/app_text_styles.dart';
+import 'package:smart_clinic_booking/core/extensions/context_extension.dart';
 import 'package:smart_clinic_booking/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:smart_clinic_booking/features/content/domain/entities/content_entities.dart';
 import 'package:smart_clinic_booking/features/content/presentation/controllers/content_controller.dart';
+import 'package:smart_clinic_booking/shared/widgets/glass_morphic_container.dart';
 
 class HealthLibraryScreen extends ConsumerStatefulWidget {
   const HealthLibraryScreen({super.key});
@@ -18,7 +21,6 @@ class _HealthLibraryScreenState extends ConsumerState<HealthLibraryScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _searchController = TextEditingController();
-  bool _searching = false;
   String _query = '';
 
   static const _categories = [
@@ -31,8 +33,6 @@ class _HealthLibraryScreenState extends ConsumerState<HealthLibraryScreen>
     'Hô hấp',
     'Nhi khoa',
   ];
-
-  static const _kPrimary = Color(0xFF0D62A2);
 
   @override
   void initState() {
@@ -77,12 +77,61 @@ class _HealthLibraryScreenState extends ConsumerState<HealthLibraryScreen>
     final auth = legacy.Provider.of<AuthController>(context, listen: false);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5FB),
-      appBar: BrandedAppBar(
-        title: 'Thư viện sức khoẻ',
-        showBackButton: true,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
+      backgroundColor: context.colors.background,
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          _buildSliverAppBar(context),
+          SliverToBoxAdapter(child: _buildSearchBar(context)),
+          if (state.isLoading)
+            const SliverFillRemaining(child: Center(child: CircularProgressIndicator()))
+          else if (state.error != null)
+            SliverFillRemaining(child: _buildEmpty(context, 'Không thể tải bài viết', Icons.error_outline_rounded))
+          else
+            _buildSliverArticleList(context, state, auth),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSliverAppBar(BuildContext context) {
+    return SliverAppBar(
+      expandedHeight: 180,
+      pinned: true,
+      backgroundColor: context.colors.primary,
+      elevation: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+        onPressed: () => Navigator.pop(context),
+      ),
+      flexibleSpace: FlexibleSpaceBar(
+        title: Text(
+          'Thư viện sức khoẻ',
+          style: context.textStyles.bodyBold.copyWith(color: Colors.white),
+        ),
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [context.colors.primary, context.colors.primaryDark],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                right: -20,
+                bottom: -20,
+                child: Icon(Icons.library_books_rounded, size: 140, color: Colors.white.withOpacity(0.1)),
+              ),
+            ],
+          ),
+        ),
+      ),
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(48),
+        child: Container(
+          color: Colors.transparent,
           child: TabBar(
             controller: _tabController,
             isScrollable: true,
@@ -90,43 +139,30 @@ class _HealthLibraryScreenState extends ConsumerState<HealthLibraryScreen>
             unselectedLabelColor: Colors.white70,
             indicatorColor: Colors.white,
             indicatorWeight: 3,
-            labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
             tabAlignment: TabAlignment.start,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
             onTap: (_) => setState(() {}),
             tabs: _categories.map((c) => Tab(text: c)).toList(),
           ),
         ),
       ),
-      body: Column(
-        children: [
-          // Search bar
-          _buildSearchBar(),
-          // Articles
-          Expanded(
-            child: state.isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : state.error != null
-                    ? _buildEmpty('Không thể tải bài viết', Icons.error_outline)
-                    : _buildArticleList(state, auth),
-          ),
-        ],
-      ),
     );
   }
 
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
       child: TextField(
         controller: _searchController,
         onChanged: (v) => setState(() => _query = v),
         decoration: InputDecoration(
           hintText: 'Tìm kiếm bài viết sức khoẻ...',
-          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-          prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF94A3B8)),
+          hintStyle: context.textStyles.bodySmall.copyWith(color: context.colors.textHint),
+          prefixIcon: Icon(Icons.search_rounded, color: context.colors.primary, size: 22),
           suffixIcon: _query.isNotEmpty
               ? IconButton(
-                  icon: const Icon(Icons.close_rounded, size: 18, color: Color(0xFF94A3B8)),
+                  icon: Icon(Icons.close_rounded, size: 18, color: context.colors.textHint),
                   onPressed: () {
                     _searchController.clear();
                     setState(() => _query = '');
@@ -134,56 +170,65 @@ class _HealthLibraryScreenState extends ConsumerState<HealthLibraryScreen>
                 )
               : null,
           filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(vertical: 12),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: _kPrimary, width: 1.5),
+          fillColor: context.colors.surface,
+          contentPadding: const EdgeInsets.symmetric(vertical: 14),
+          border: OutlineInputBorder(
+            borderRadius: context.radius.mRadius,
+            borderSide: BorderSide(color: context.colors.divider),
           ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: context.radius.mRadius,
+            borderSide: BorderSide(color: context.colors.divider),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: context.radius.mRadius,
+            borderSide: BorderSide(color: context.colors.primary, width: 1.5),
+          ),
+        ),
+        style: context.textStyles.body,
+      ),
+    );
+  }
+
+  Widget _buildSliverArticleList(BuildContext context, LibraryState state, AuthController auth) {
+    final articles = _filtered(state.articles);
+    if (articles.isEmpty) {
+      return SliverFillRemaining(child: _buildEmpty(context, 'Không có bài viết nào', Icons.article_outlined));
+    }
+
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, i) {
+            final article = articles[i];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 20),
+              child: _ArticleCard(
+                article: article,
+                onBookmark: () {
+                  final uid = auth.currentUser?.id;
+                  if (uid != null) {
+                    ref.read(healthLibraryProvider.notifier).toggleBookmark(uid, article.id);
+                  }
+                },
+              ),
+            );
+          },
+          childCount: articles.length,
         ),
       ),
     );
   }
 
-  Widget _buildArticleList(LibraryState state, AuthController auth) {
-    final articles = _filtered(state.articles);
-    if (articles.isEmpty) return _buildEmpty('Không có bài viết nào', Icons.article_outlined);
-    return RefreshIndicator(
-      onRefresh: () async {
-        await ref.read(healthLibraryProvider.notifier).loadArticles(
-          category: _selectedCategory.isEmpty ? null : _selectedCategory,
-          searchQuery: _query.isEmpty ? null : _query,
-        );
-      },
-      child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-        itemCount: articles.length,
-        itemBuilder: (context, i) {
-          final article = articles[i];
-          return _ArticleCard(
-            article: article,
-            onBookmark: () {
-              final uid = auth.currentUser?.id;
-              if (uid != null) {
-                ref.read(healthLibraryProvider.notifier).toggleBookmark(uid, article.id);
-              }
-            },
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildEmpty(String message, IconData icon) {
+  Widget _buildEmpty(BuildContext context, String message, IconData icon) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 60, color: Colors.grey.shade300),
-          const SizedBox(height: 12),
-          Text(message, style: TextStyle(color: Colors.grey.shade500, fontSize: 15)),
+          Icon(icon, size: 60, color: context.colors.textHint.withOpacity(0.5)),
+          const SizedBox(height: 16),
+          Text(message, style: context.textStyles.body.copyWith(color: context.colors.textSecondary)),
         ],
       ),
     );
@@ -201,33 +246,31 @@ class _ArticleCard extends StatelessWidget {
     return GestureDetector(
       onTap: () => _showDetail(context),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 14),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
+          color: context.colors.surface,
+          borderRadius: context.radius.mRadius,
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 3)),
+            BoxShadow(color: context.colors.primary.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image
             if (article.imageUrl != null)
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+                borderRadius: BorderRadius.vertical(top: context.radius.mRadius.topLeft),
                 child: Image.network(
                   article.imageUrl!,
-                  height: 160,
+                  height: 180,
                   width: double.infinity,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _placeholderImage(),
+                  errorBuilder: (_, __, ___) => _placeholderImage(context),
                 ),
               )
             else
-              _placeholderImage(),
+              _placeholderImage(context),
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -235,52 +278,53 @@ class _ArticleCard extends StatelessWidget {
                     children: [
                       _CategoryChip(article.category),
                       const Spacer(),
-                      GestureDetector(
-                        onTap: onBookmark,
-                        child: Icon(
+                      IconButton(
+                        onPressed: onBookmark,
+                        icon: Icon(
                           article.isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-                          size: 20,
-                          color: article.isBookmarked ? const Color(0xFF0D62A2) : Colors.grey.shade400,
+                          size: 24,
+                          color: article.isBookmarked ? context.colors.primary : context.colors.textHint,
                         ),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Text(
                     article.title,
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF1E293B), height: 1.3),
+                    style: context.textStyles.bodyBold.copyWith(fontSize: 16, height: 1.3),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     article.content,
-                    style: const TextStyle(fontSize: 13, color: Color(0xFF64748B), height: 1.4),
+                    style: context.textStyles.bodySmall.copyWith(color: context.colors.textSecondary, height: 1.5),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 16),
                   Row(
                     children: [
-                      const Icon(Icons.access_time_rounded, size: 13, color: Color(0xFF94A3B8)),
-                      const SizedBox(width: 4),
+                      Icon(Icons.calendar_today_rounded, size: 14, color: context.colors.textHint),
+                      const SizedBox(width: 6),
                       Text(
                         DateFormat('dd/MM/yyyy').format(article.publishedAt),
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                        style: context.textStyles.bodySmall.copyWith(color: context.colors.textHint),
                       ),
                       const Spacer(),
                       if (article.tags.isNotEmpty)
-                        ...article.tags.take(2).map((t) => Padding(
-                          padding: const EdgeInsets.only(left: 4),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEFF6FF),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(t, style: const TextStyle(fontSize: 10, color: Color(0xFF0D62A2), fontWeight: FontWeight.w500)),
-                          ),
-                        )),
+                        ...article.tags.take(1).map((t) => Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: context.colors.primary.withOpacity(0.05),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(t,
+                                  style: context.textStyles.bodySmall
+                                      .copyWith(color: context.colors.primary, fontSize: 10, fontWeight: FontWeight.bold)),
+                            )),
                     ],
                   ),
                 ],
@@ -292,15 +336,15 @@ class _ArticleCard extends StatelessWidget {
     );
   }
 
-  Widget _placeholderImage() {
+  Widget _placeholderImage(BuildContext context) {
     return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+      borderRadius: BorderRadius.vertical(top: context.radius.mRadius.topLeft),
       child: Container(
         height: 120,
         width: double.infinity,
-        color: const Color(0xFFEFF6FF),
-        child: const Center(
-          child: Icon(Icons.health_and_safety_rounded, size: 48, color: Color(0xFF93C5FD)),
+        color: context.colors.primary.withOpacity(0.05),
+        child: Center(
+          child: Icon(Icons.health_and_safety_rounded, size: 48, color: context.colors.primary.withOpacity(0.2)),
         ),
       ),
     );
@@ -332,14 +376,14 @@ class _CategoryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = _colors[label] ?? const Color(0xFF0D62A2);
+    final color = _colors[label] ?? context.colors.primary;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color)),
+      child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
     );
   }
 }
@@ -355,76 +399,78 @@ class _ArticleDetailSheet extends StatelessWidget {
       minChildSize: 0.5,
       maxChildSize: 0.95,
       builder: (_, controller) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: context.colors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           children: [
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Container(
               width: 40,
               height: 4,
-              decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+              decoration: BoxDecoration(color: context.colors.divider, borderRadius: BorderRadius.circular(2)),
             ),
             Expanded(
               child: SingleChildScrollView(
                 controller: controller,
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (article.imageUrl != null)
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: context.radius.mRadius,
                         child: Image.network(
                           article.imageUrl!,
-                          height: 200,
+                          height: 220,
                           width: double.infinity,
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                         ),
                       ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     _CategoryChip(article.category),
+                    const SizedBox(height: 16),
+                    Text(article.title, style: context.textStyles.heading3.copyWith(fontSize: 22, height: 1.3)),
                     const SizedBox(height: 12),
-                    Text(article.title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, height: 1.3, color: Color(0xFF1E293B))),
-                    const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Icon(Icons.calendar_today_rounded, size: 13, color: Color(0xFF94A3B8)),
-                        const SizedBox(width: 4),
+                        Icon(Icons.calendar_today_rounded, size: 14, color: context.colors.textHint),
+                        const SizedBox(width: 6),
                         Text(
                           DateFormat('dd/MM/yyyy').format(article.publishedAt),
-                          style: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                          style: context.textStyles.bodySmall.copyWith(color: context.colors.textHint),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 24),
                     const Divider(),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 24),
                     Text(
                       article.content,
-                      style: const TextStyle(fontSize: 15, height: 1.7, color: Color(0xFF334155)),
+                      style: context.textStyles.body.copyWith(height: 1.8, color: context.colors.textPrimary.withOpacity(0.8)),
                     ),
                     if (article.tags.isNotEmpty) ...[
-                      const SizedBox(height: 24),
-                      const Text('Từ khoá', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF475569))),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 32),
+                      Text('Từ khoá liên quan', style: context.textStyles.bodyBold),
+                      const SizedBox(height: 12),
                       Wrap(
-                        spacing: 8,
-                        runSpacing: 6,
-                        children: article.tags.map((t) => Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEFF6FF),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(t, style: const TextStyle(fontSize: 12, color: Color(0xFF0D62A2))),
-                        )).toList(),
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: article.tags
+                            .map((t) => Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: context.colors.primary.withOpacity(0.05),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(t, style: context.textStyles.bodySmall.copyWith(color: context.colors.primary)),
+                                ))
+                            .toList(),
                       ),
                     ],
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 60),
                   ],
                 ),
               ),
@@ -435,3 +481,4 @@ class _ArticleDetailSheet extends StatelessWidget {
     );
   }
 }
+

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/colors/app_colors.dart';
 import '../../../../core/theme/typography/app_text_styles.dart';
+import '../../../../core/extensions/context_extension.dart';
 import '../../domain/entities/health_summary.dart';
 
 /// Section 5: Health Summary — 4 metric cards in a 2x2 grid.
@@ -18,44 +19,64 @@ class HealthSummarySection extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Row(
             children: [
-              Expanded(child: Text('Sức khỏe của bạn', style: AppTextStyles.heading3)),
-              Text(
-                'Cập nhật ${_formatDate(summary.lastUpdated)}',
-                style: AppTextStyles.caption,
+              Expanded(
+                child: Text(
+                  'Sức khỏe của bạn',
+                  style: context.textStyles.bodyBold.copyWith(fontSize: 18, color: context.colors.primaryDark),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: context.colors.primary.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'Cập nhật ${_formatDate(summary.lastUpdated)}',
+                  style: context.textStyles.bodySmall.copyWith(
+                    color: context.colors.primary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 11,
+                  ),
+                ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: GridView.count(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             crossAxisCount: 2,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 1.6,
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 16,
+            childAspectRatio: 1.4,
             children: [
               _MetricCard(
                 metric: summary.heartRate,
                 color: const Color(0xFFFF6B6B),
                 icon: Icons.favorite_rounded,
+                bgColor: const Color(0xFFFFF5F5),
               ),
               _MetricCard(
                 metric: summary.bloodPressure,
                 color: const Color(0xFF7B61FF),
                 icon: Icons.monitor_heart_rounded,
+                bgColor: const Color(0xFFF7F5FF),
               ),
               _MetricCard(
                 metric: summary.bloodSugar,
                 color: const Color(0xFFFFA41B),
                 icon: Icons.water_drop_rounded,
+                bgColor: const Color(0xFFFFFBF0),
               ),
               _MetricCard(
                 metric: summary.bmi,
                 color: const Color(0xFF00B8A9),
                 icon: Icons.scale_rounded,
+                bgColor: const Color(0xFFF0FBFA),
               ),
             ],
           ),
@@ -76,19 +97,32 @@ class HealthSummarySection extends StatelessWidget {
 class _MetricCard extends StatelessWidget {
   final HealthMetric metric;
   final Color color;
+  final Color bgColor;
   final IconData icon;
 
-  const _MetricCard({required this.metric, required this.color, required this.icon});
+  const _MetricCard({
+    required this.metric,
+    required this.color,
+    required this.bgColor,
+    required this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [BoxShadow(color: AppColors.shadow, blurRadius: 8)],
+        color: context.colors.surface,
+        borderRadius: context.radius.mRadius,
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.08),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+        border: Border.all(color: color.withOpacity(0.05), width: 1.5),
       ),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -97,40 +131,51 @@ class _MetricCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                width: 32,
-                height: 32,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: bgColor,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, color: color, size: 18),
+                child: Icon(icon, color: color, size: 20),
               ),
-              _StatusDot(status: metric.status),
+              _StatusIndicator(status: metric.status),
             ],
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              RichText(
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: metric.value,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: color,
-                      ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    metric.value,
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: context.colors.textPrimary,
+                      letterSpacing: -0.5,
                     ),
-                    TextSpan(
-                      text: ' ${metric.unit}',
-                      style: AppTextStyles.caption,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    metric.unit,
+                    style: context.textStyles.bodySmall.copyWith(
+                      color: context.colors.textSecondary,
+                      fontWeight: FontWeight.w600,
                     ),
-                  ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                metric.label,
+                style: context.textStyles.bodySmall.copyWith(
+                  color: context.colors.textSecondary,
+                  fontSize: 12,
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(metric.label, style: AppTextStyles.caption),
             ],
           ),
         ],
@@ -139,28 +184,46 @@ class _MetricCard extends StatelessWidget {
   }
 }
 
-class _StatusDot extends StatelessWidget {
+class _StatusIndicator extends StatelessWidget {
   final HealthStatus status;
 
-  const _StatusDot({required this.status});
+  const _StatusIndicator({required this.status});
 
   @override
   Widget build(BuildContext context) {
-    Color dotColor;
+    String label;
+    Color color;
+
     switch (status) {
       case HealthStatus.normal:
-        dotColor = AppColors.success;
+        label = 'Ổn định';
+        color = const Color(0xFF4CAF50);
       case HealthStatus.warning:
-        dotColor = AppColors.warning;
+        label = 'Cảnh báo';
+        color = const Color(0xFFFF9800);
       case HealthStatus.critical:
-        dotColor = AppColors.error;
+        label = 'Nguy hiểm';
+        color = const Color(0xFFF44336);
       case HealthStatus.unknown:
-        dotColor = AppColors.textHint;
+        label = '--';
+        color = Colors.grey;
     }
+
     return Container(
-      width: 8,
-      height: 8,
-      decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 9,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
     );
   }
 }
+

@@ -66,6 +66,12 @@ class AppColorTokens {
   final Color info;
   final Color infoLight;
   final Color infoSurface;
+  
+  // ─── Status: Appointment/Booking ────────────────────────────────────────
+  final Color statusPending;
+  final Color statusConfirmed;
+  final Color statusCompleted;
+  final Color statusCancelled;
 
   // ─── Navigation Bar ─────────────────────────────────────────────────────
   final Color navSelected;
@@ -127,6 +133,10 @@ class AppColorTokens {
     required this.overlay,
     required this.primaryGradient,
     required this.surfaceGradient,
+    required this.statusPending,
+    required this.statusConfirmed,
+    required this.statusCompleted,
+    required this.statusCancelled,
   });
 
   // ─── LIGHT THEME ────────────────────────────────────────────────────────
@@ -185,6 +195,10 @@ class AppColorTokens {
 
         primaryGradient: AppColors.primaryGradient,
         surfaceGradient: AppColors.surfaceGradient,
+        statusPending:   AppColors.statusPending,
+        statusConfirmed: AppColors.statusConfirmed,
+        statusCompleted: AppColors.statusCompleted,
+        statusCancelled: AppColors.statusCancelled,
       );
 
   // ─── DARK THEME ─────────────────────────────────────────────────────────
@@ -247,5 +261,9 @@ class AppColorTokens {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
+        statusPending:   AppColors.amber500,
+        statusConfirmed: AppColors.green500,
+        statusCompleted: AppColors.blue400,
+        statusCancelled: AppColors.red500,
       );
 }

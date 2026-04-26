@@ -3,8 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import "package:smart_clinic_booking/shared/di/injection.dart";
-import '../../../../core/theme/colors/app_colors.dart';
-import '../../../../core/theme/typography/app_text_styles.dart';
+import '../../../../core/extensions/context_extension.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../doctor/domain/entities/doctor_entity.dart';
 import '../../../doctor/presentation/screens/doctor_search_screen.dart';
@@ -18,9 +17,7 @@ import '../../domain/usecases/release_slot_lock_usecase.dart';
 import '../../domain/usecases/reschedule_booking_usecase.dart';
 import '../controllers/booking_controller.dart';
 import 'package:smart_clinic_booking/features/checkin/presentation/screens/appointment_qr_screen.dart';
-
-/// Đặt lịch khám — Firestore `bookings` + `slots` (khóa 5 phút, transaction khi xác nhận).
-import '../../../../core/widgets/branded_app_bar.dart';
+import 'package:smart_clinic_booking/shared/widgets/glass_morphic_container.dart';
 
 class BookingScreen extends StatelessWidget {
   const BookingScreen({super.key, this.doctor});
@@ -104,289 +101,501 @@ class _BookingViewState extends State<_BookingView> {
     _specialtyCtrl.text = picked.specialty;
   }
 
-  Future<void> _pickDate() async {
-    final c = context.read<BookingController>();
-    final d = await showDatePicker(
-      context: context,
-      initialDate: c.selectedDate,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 90)),
-    );
-    if (d != null && mounted) {
-      await c.onDateChanged(d);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: const BrandedAppBar(
-        title: 'Đặt lịch khám',
-        showBackButton: true,
-      ),
-      body: Consumer<BookingController>(
-        builder: (_, c, __) {
-          if (c.specialtyText != _lastSpecialty) {
-            _lastSpecialty = c.specialtyText;
-            if (_specialtyCtrl.text != c.specialtyText) {
-              _specialtyCtrl.text = c.specialtyText;
-            }
-          }
-          if (c.flowState == BookingFlowState.loading &&
-              c.doctor == null &&
-              c.slotAvailability.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
+    final c = context.watch<BookingController>();
+    if (c.specialtyText != _lastSpecialty) {
+      _lastSpecialty = c.specialtyText;
+      if (_specialtyCtrl.text != c.specialtyText) {
+        _specialtyCtrl.text = c.specialtyText;
+      }
+    }
 
-          return CustomScrollView(
+    return Scaffold(
+      backgroundColor: context.colors.background,
+      body: Stack(
+        children: [
+          CustomScrollView(
+            physics: const BouncingScrollPhysics(),
             slivers: [
+              _buildSliverAppBar(context, c),
               SliverPadding(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 120),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     if (c.doctor == null) ...[
-                      Text('Chọn bác sĩ', style: AppTextStyles.heading3),
-                      const SizedBox(height: 8),
-                      OutlinedButton.icon(
-                        onPressed: _pickDoctor,
-                        icon: const Icon(Icons.person_search),
-                        label: const Text('Tìm và chọn bác sĩ'),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                      ),
+                      _buildSectionTitle(context, 'Bác sĩ & Chuyên khoa'),
+                      const SizedBox(height: 12),
+                      _buildPickDoctorButton(context),
                       const SizedBox(height: 24),
-                    ] else ...[
-                      _DoctorSummaryCard(doctor: c.doctor!),
-                      const SizedBox(height: 20),
                     ],
-                    Text('Loại đặt lịch', style: AppTextStyles.heading3),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
+                    _buildSectionTitle(context, 'Thông tin đặt lịch'),
+                    const SizedBox(height: 16),
+                    _buildDropdown(
+                      context,
+                      label: 'Loại dịch vụ',
                       value: c.selectedType,
-                      decoration: _fieldDecoration(),
                       items: MedicalBookingTypes.values
                           .map((t) => DropdownMenuItem(value: t, child: Text(_typeLabel(t))))
                           .toList(),
                       onChanged: (v) => v != null ? c.setBookingType(v) : null,
                     ),
                     const SizedBox(height: 16),
-                    Text('Khoa khám', style: AppTextStyles.heading3),
-                    const SizedBox(height: 8),
-                    TextField(
+                    _buildTextField(
+                      context,
+                      label: 'Khoa khám',
                       controller: _specialtyCtrl,
                       onChanged: c.setSpecialty,
-                      decoration: _fieldDecoration().copyWith(
-                        hintText: 'Ví dụ: Tim mạch',
-                      ),
+                      hint: 'Ví dụ: Tim mạch',
+                      icon: Icons.medical_services_outlined,
                     ),
-                    const SizedBox(height: 16),
-                    Text('Ngày khám', style: AppTextStyles.heading3),
-                    const SizedBox(height: 8),
-                    GestureDetector(
-                      onTap: _pickDate,
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppColors.cardBackground,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.divider),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.calendar_today, color: AppColors.primary, size: 20),
-                            const SizedBox(width: 12),
-                            Text(
-                              DateFormat('EEEE, dd/MM/yyyy', 'vi').format(c.selectedDate),
-                              style: AppTextStyles.subtitle,
-                            ),
-                            const Spacer(),
-                            const Icon(Icons.arrow_drop_down, color: AppColors.textHint),
-                          ],
-                        ),
-                      ),
+                    const SizedBox(height: 24),
+                    _buildSectionTitle(context, 'Chọn ngày khám'),
+                    const SizedBox(height: 12),
+                    _HorizontalDatePicker(
+                      selectedDate: c.selectedDate,
+                      onDateSelected: (d) => c.onDateChanged(d),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 24),
                     Row(
                       children: [
-                        Text('Khung giờ', style: AppTextStyles.heading3),
+                        _buildSectionTitle(context, 'Chọn khung giờ'),
                         const Spacer(),
                         if (c.flowState == BookingFlowState.slotLoading)
                           const SizedBox(
-                            width: 18,
-                            height: 18,
+                            width: 16,
+                            height: 16,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     if (c.doctor == null)
-                      Text(
-                        'Chọn bác sĩ để xem lịch trống.',
-                        style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
-                      )
+                      _buildInfoNote(context, 'Vui lòng chọn bác sĩ để xem lịch trống.')
                     else
                       _SlotSelectionGrid(controller: c),
-                    const SizedBox(height: 16),
-                    if (c.lockedTimeSlot != null)
-                      Text(
-                        'Đang giữ khung ${c.lockedTimeSlot} (tối đa 5 phút).',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    const SizedBox(height: 16),
-                    Text('Triệu chứng / ghi chú', style: AppTextStyles.heading3),
-                    const SizedBox(height: 8),
-                    TextField(
+                    const SizedBox(height: 24),
+                    _buildSectionTitle(context, 'Triệu chứng & Ghi chú'),
+                    const SizedBox(height: 12),
+                    _buildTextField(
+                      context,
+                      label: 'Mô tả triệu chứng',
                       controller: _symptomsCtrl,
                       onChanged: c.setSymptoms,
+                      hint: 'Nhập tình trạng sức khỏe của bạn...',
                       maxLines: 3,
-                      decoration: _fieldDecoration().copyWith(
-                        hintText: 'Mô tả triệu chứng...',
-                      ),
+                      icon: Icons.notes_rounded,
                     ),
                     if (c.errorMessage != null) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        c.errorMessage!,
-                        style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
-                      ),
+                      const SizedBox(height: 16),
+                      _buildErrorNote(context, c.errorMessage!),
                     ],
-                    const SizedBox(height: 32),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 54,
-                      child: ElevatedButton.icon(
-                        onPressed: (c.doctor == null ||
-                                c.flowState == BookingFlowState.bookingProcessing ||
-                                c.flowState == BookingFlowState.slotLoading)
-                            ? null
-                            : () async {
-                                await c.confirmBooking();
-                                if (!context.mounted) return;
-                                final bc = context.read<BookingController>();
-                                if (bc.flowState == BookingFlowState.success) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Đặt lịch thành công! Mã QR check-in đã được tạo.'),
-                                      backgroundColor: AppColors.success,
-                                    ),
-                                  );
-                                  if (context.mounted && bc.lastBooking != null) {
-                                    await Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => AppointmentQrScreen(
-                                          booking: bc.lastBooking!,
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                  if (context.mounted) Navigator.of(context).pop();
-                                } else if (bc.flowState == BookingFlowState.error && bc.errorMessage != null) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(bc.errorMessage!), backgroundColor: AppColors.error),
-                                  );
-                                }
-                              },
-                        icon: c.flowState == BookingFlowState.bookingProcessing
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                              )
-                            : const Icon(Icons.check_circle_outline),
-                        label: Text(
-                          c.flowState == BookingFlowState.bookingProcessing ? 'Đang xác nhận...' : 'Xác nhận đặt lịch',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
                   ]),
                 ),
               ),
             ],
-          );
-        },
+          ),
+          _buildBottomAction(context, c),
+        ],
       ),
     );
   }
 
+  Widget _buildSliverAppBar(BuildContext context, BookingController c) {
+    return SliverAppBar(
+      expandedHeight: 200,
+      pinned: true,
+      stretch: true,
+      backgroundColor: context.colors.primary,
+      elevation: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+        onPressed: () => Navigator.pop(context),
+      ),
+      flexibleSpace: FlexibleSpaceBar(
+        stretchModes: const [StretchMode.zoomBackground],
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [context.colors.primary, context.colors.primaryDark],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+            ),
+            Positioned(
+              right: -50,
+              top: -50,
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.1),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 80, 24, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    'Đăng ký khám bệnh',
+                    style: context.textStyles.heading2.copyWith(color: Colors.white),
+                  ),
+                  const SizedBox(height: 8),
+                  if (c.doctor != null)
+                    Row(
+                      children: [
+                        const Icon(Icons.person_pin_rounded, color: Colors.white70, size: 16),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Bác sĩ: ${c.doctor!.name}',
+                          style: context.textStyles.bodySmall.copyWith(color: Colors.white70),
+                        ),
+                      ],
+                    )
+                  else
+                    Text(
+                      'Hoàn thành các bước để đặt lịch',
+                      style: context.textStyles.bodySmall.copyWith(color: Colors.white70),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-  InputDecoration _fieldDecoration() {
+  Widget _buildSectionTitle(BuildContext context, String title) {
+    return Text(
+      title,
+      style: context.textStyles.bodyBold.copyWith(
+        color: context.colors.primaryDark,
+        fontSize: 16,
+      ),
+    );
+  }
+
+  Widget _buildPickDoctorButton(BuildContext context) {
+    return InkWell(
+      onTap: _pickDoctor,
+      borderRadius: context.radius.mRadius,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: context.colors.surface,
+          borderRadius: context.radius.mRadius,
+          border: Border.all(color: context.colors.primary.withOpacity(0.2)),
+          boxShadow: [
+            BoxShadow(color: context.colors.primary.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: context.colors.primary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.person_search_rounded, color: context.colors.primary, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Tìm bác sĩ theo yêu cầu', style: context.textStyles.bodyBold),
+                  Text('Chọn bác sĩ phù hợp với chuyên khoa', style: context.textStyles.bodySmall),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded, color: context.colors.textHint),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDropdown(
+    BuildContext context, {
+    required String label,
+    required String value,
+    required List<DropdownMenuItem<String>> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: context.textStyles.bodySmall.copyWith(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: value,
+          decoration: _fieldDecoration(context),
+          items: items,
+          onChanged: onChanged,
+          style: context.textStyles.body,
+          icon: Icon(Icons.keyboard_arrow_down_rounded, color: context.colors.primary),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextField(
+    BuildContext context, {
+    required String label,
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    int maxLines = 1,
+    ValueChanged<String>? onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: context.textStyles.bodySmall.copyWith(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          onChanged: onChanged,
+          maxLines: maxLines,
+          decoration: _fieldDecoration(context).copyWith(
+            hintText: hint,
+            prefixIcon: Icon(icon, color: context.colors.primary, size: 20),
+          ),
+          style: context.textStyles.body,
+        ),
+      ],
+    );
+  }
+
+  InputDecoration _fieldDecoration(BuildContext context) {
     return InputDecoration(
       filled: true,
-      fillColor: AppColors.cardBackground,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+      fillColor: context.colors.surface,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: context.radius.mRadius,
+        borderSide: BorderSide(color: context.colors.divider),
+      ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: AppColors.divider),
+        borderRadius: context.radius.mRadius,
+        borderSide: BorderSide(color: context.colors.divider),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: context.radius.mRadius,
+        borderSide: BorderSide(color: context.colors.primary, width: 1.5),
+      ),
+    );
+  }
+
+  Widget _buildInfoNote(BuildContext context, String note) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: context.colors.primary.withOpacity(0.05),
+        borderRadius: context.radius.sRadius,
+        border: Border.all(color: context.colors.primary.withOpacity(0.1)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline_rounded, color: context.colors.primary, size: 18),
+          const SizedBox(width: 12),
+          Expanded(child: Text(note, style: context.textStyles.bodySmall)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorNote(BuildContext context, String error) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: context.colors.error.withOpacity(0.05),
+        borderRadius: context.radius.sRadius,
+        border: Border.all(color: context.colors.error.withOpacity(0.1)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline_rounded, color: context.colors.error, size: 18),
+          const SizedBox(width: 12),
+          Expanded(child: Text(error, style: context.textStyles.bodySmall.copyWith(color: context.colors.error))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomAction(BuildContext context, BookingController c) {
+    final canConfirm = c.doctor != null &&
+        c.flowState != BookingFlowState.bookingProcessing &&
+        c.flowState != BookingFlowState.slotLoading &&
+        c.lockedTimeSlot != null;
+
+    return Positioned(
+      bottom: 0,
+      left: 0,
+      right: 0,
+      child: GlassMorphicContainer(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (c.lockedTimeSlot != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.timer_outlined, color: context.colors.primary, size: 16),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Đang giữ khung ${c.lockedTimeSlot} (tối đa 5 phút)',
+                      style: context.textStyles.bodySmall.copyWith(
+                        color: context.colors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            SizedBox(
+              width: double.infinity,
+              height: 54,
+              child: ElevatedButton(
+                onPressed: canConfirm
+                    ? () async {
+                        await c.confirmBooking();
+                        if (!context.mounted) return;
+                        final bc = context.read<BookingController>();
+                        if (bc.flowState == BookingFlowState.success) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('Đặt lịch thành công! Mã QR check-in đã được tạo.'),
+                              backgroundColor: context.colors.success,
+                            ),
+                          );
+                          if (context.mounted && bc.lastBooking != null) {
+                            await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => AppointmentQrScreen(
+                                  booking: bc.lastBooking!,
+                                ),
+                              ),
+                            );
+                          }
+                          if (context.mounted) Navigator.of(context).pop();
+                        } else if (bc.flowState == BookingFlowState.error && bc.errorMessage != null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(bc.errorMessage!), backgroundColor: context.colors.error),
+                          );
+                        }
+                      }
+                    : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: context.colors.primary,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: context.colors.textHint.withOpacity(0.3),
+                  shape: RoundedRectangleBorder(borderRadius: context.radius.mRadius),
+                  elevation: 0,
+                ),
+                child: c.flowState == BookingFlowState.bookingProcessing
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : Text(
+                        'Xác nhận đặt lịch',
+                        style: context.textStyles.bodyBold.copyWith(color: Colors.white),
+                      ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _DoctorSummaryCard extends StatelessWidget {
-  const _DoctorSummaryCard({required this.doctor});
+class _HorizontalDatePicker extends StatelessWidget {
+  final DateTime selectedDate;
+  final ValueChanged<DateTime> onDateSelected;
 
-  final DoctorEntity doctor;
+  const _HorizontalDatePicker({
+    required this.selectedDate,
+    required this.onDateSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(color: AppColors.shadow, blurRadius: 8),
-        ],
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 28,
-            backgroundColor: AppColors.primarySurface,
-            child: const Icon(Icons.person, color: AppColors.primary, size: 30),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(doctor.name, style: AppTextStyles.subtitle),
-                Text(doctor.specialty, style: AppTextStyles.bodySmall),
-                Text(
-                  doctor.displayClinic,
-                  style: AppTextStyles.caption,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+    final dates = List.generate(30, (i) => DateTime.now().add(Duration(days: i)));
+
+    return SizedBox(
+      height: 90,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: dates.length,
+        itemBuilder: (context, index) {
+          final date = dates[index];
+          final isSelected = DateUtils.isSameDay(date, selectedDate);
+          final dayName = DateFormat('EEE', 'vi').format(date).toUpperCase();
+          final dayNum = DateFormat('dd').format(date);
+
+          return GestureDetector(
+            onTap: () => onDateSelected(date),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 65,
+              margin: const EdgeInsets.only(right: 12),
+              decoration: BoxDecoration(
+                color: isSelected ? context.colors.primary : context.colors.surface,
+                borderRadius: context.radius.mRadius,
+                border: Border.all(
+                  color: isSelected ? context.colors.primary : context.colors.divider,
+                  width: isSelected ? 1.5 : 1,
                 ),
-              ],
+                boxShadow: isSelected
+                    ? [BoxShadow(color: context.colors.primary.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))]
+                    : null,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    dayName,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected ? Colors.white70 : context.colors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    dayNum,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: isSelected ? Colors.white : context.colors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          TextButton(
-            onPressed: () async {
-              final picked = await Navigator.of(context).push<DoctorEntity>(
-                MaterialPageRoute(
-                  builder: (_) => const DoctorSearchScreen(pickForBooking: true),
-                ),
-              );
-              if (picked != null && context.mounted) {
-                context.read<BookingController>().setDoctor(picked);
-              }
-            },
-            child: const Text('Đổi'),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -401,139 +610,171 @@ class _SlotSelectionGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final slots = controller.timeSlots;
     if (slots.isEmpty) {
-      return Text(
-        'Không có khung giờ cho ngày này.',
-        style:
-            AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: context.colors.surface,
+          borderRadius: context.radius.mRadius,
+          border: Border.all(color: context.colors.divider),
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.event_busy_rounded, color: context.colors.textHint, size: 40),
+            const SizedBox(height: 12),
+            Text(
+              'Không có khung giờ cho ngày này.',
+              style: context.textStyles.bodySmall.copyWith(color: context.colors.textSecondary),
+            ),
+          ],
+        ),
       );
     }
 
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: slots.map((slot) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        childAspectRatio: 2.2,
+      ),
+      itemCount: slots.length,
+      itemBuilder: (context, index) {
+        final slot = slots[index];
         final av = controller.slotAvailability[slot];
         final booked = av?.kind == SlotAvailabilityKind.booked;
         final lockedOther = av?.kind == SlotAvailabilityKind.lockedByOther;
         final lockedSelf = av?.kind == SlotAvailabilityKind.lockedBySelf ||
             controller.lockedTimeSlot == slot;
         final enabled = controller.isSlotSelectable(slot) || lockedSelf;
-        final status = controller.slotStatusLabel(slot);
 
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: (!enabled && !booked && !lockedOther)
-                    ? null
-                    : () {
-                        if (booked || lockedOther) {
-                          showModalBottomSheet<void>(
-                            context: context,
-                            builder: (ctx) => Padding(
-                              padding: const EdgeInsets.all(20),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Text(
-                                    booked
-                                        ? 'Khung giờ đã đặt'
-                                        : 'Khung giờ đang được người khác giữ',
-                                    style: AppTextStyles.subtitle,
-                                  ),
-                                  const SizedBox(height: 12),
-                                  if (booked)
-                                    ElevatedButton(
-                                      onPressed: () async {
-                                        Navigator.pop(ctx);
-                                        await controller
-                                            .joinWaitlistForSlot(slot);
-                                        if (context.mounted) {
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Đã thêm bạn vào danh sách chờ.',
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      },
-                                      child: const Text('Tham gia danh sách chờ'),
-                                    )
-                                  else
-                                    Text(
-                                      'Vui lòng chọn khung giờ khác hoặc thử lại sau.',
-                                      style: AppTextStyles.bodySmall,
-                                    ),
-                                  const SizedBox(height: 12),
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(ctx),
-                                    child: const Text('Đóng'),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                          return;
-                        }
-                        controller.selectTimeSlot(slot);
-                      },
-                borderRadius: BorderRadius.circular(12),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: (!enabled && !booked && !lockedOther)
+                ? null
+                : () {
+                    if (booked || lockedOther) {
+                      _showSlotInfo(context, controller, slot, booked);
+                      return;
+                    }
+                    controller.selectTimeSlot(slot);
+                  },
+            borderRadius: context.radius.sRadius,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              decoration: BoxDecoration(
+                color: lockedSelf
+                    ? context.colors.primary
+                    : (booked || lockedOther)
+                        ? context.colors.divider.withOpacity(0.3)
+                        : context.colors.surface,
+                borderRadius: context.radius.sRadius,
+                border: Border.all(
+                  color: lockedSelf
+                      ? context.colors.primary
+                      : context.colors.divider,
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  slot,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
                     color: lockedSelf
-                        ? AppColors.primary
+                        ? Colors.white
                         : (booked || lockedOther)
-                            ? AppColors.divider.withOpacity(0.35)
-                            : AppColors.cardBackground,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: lockedSelf
-                          ? AppColors.primary
-                          : AppColors.divider,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        slot,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: lockedSelf
-                              ? Colors.white
-                              : (booked || lockedOther)
-                                  ? AppColors.textHint
-                                  : AppColors.textPrimary,
-                        ),
-                      ),
-                      if (status != null)
-                        Text(
-                          status,
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: lockedSelf
-                                ? Colors.white70
-                                : AppColors.textHint,
-                          ),
-                        ),
-                    ],
+                            ? context.colors.textHint
+                            : context.colors.textPrimary,
                   ),
                 ),
               ),
             ),
-          ],
+          ),
         );
-      }).toList(),
+      },
+    );
+  }
+
+  void _showSlotInfo(BuildContext context, BookingController controller, String slot, bool booked) {
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: booked ? Colors.red.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    booked ? Icons.event_busy_rounded : Icons.lock_clock_rounded,
+                    color: booked ? Colors.red : Colors.orange,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    booked ? 'Khung giờ đã đầy' : 'Đang được xử lý',
+                    style: context.textStyles.bodyBold.copyWith(fontSize: 18),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Text(
+              booked
+                  ? 'Khung giờ này đã có bệnh nhân đặt lịch. Bạn có muốn tham gia danh sách chờ để nhận thông báo nếu có người hủy không?'
+                  : 'Khung giờ này đang có người khác giữ chỗ để thực hiện thanh toán. Vui lòng quay lại sau ít phút.',
+              style: context.textStyles.body,
+            ),
+            const SizedBox(height: 32),
+            if (booked)
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.pop(ctx);
+                  await controller.joinWaitlistForSlot(slot);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Đã thêm bạn vào danh sách chờ.')),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: context.colors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: context.radius.mRadius),
+                ),
+                child: const Text('Tham gia danh sách chờ', style: TextStyle(fontWeight: FontWeight.bold)),
+              )
+            else
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: context.colors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: context.radius.mRadius),
+                ),
+                child: const Text('Đã hiểu', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
+
