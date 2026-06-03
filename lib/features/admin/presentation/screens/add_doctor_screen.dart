@@ -9,7 +9,6 @@ import '../../domain/entities/facility_entities.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../auth/data/models/user_model.dart';
 
-
 class AddDoctorScreen extends StatefulWidget {
   const AddDoctorScreen({super.key});
 
@@ -83,6 +82,7 @@ class _AddDoctorScreenState extends State<AddDoctorScreen> {
               const SizedBox(height: 16),
               
               DropdownButtonFormField<Hospital>(
+                isExpanded: true,
                 value: _selectedHospital,
                 decoration: InputDecoration(
                   labelText: 'Bệnh viện',
@@ -90,7 +90,11 @@ class _AddDoctorScreenState extends State<AddDoctorScreen> {
                 ),
                 items: controller.hospitals.map((h) => DropdownMenuItem(
                   value: h,
-                  child: Text(h.name),
+                  child: Text(
+                    h.name,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
                 )).toList(),
                 onChanged: (h) {
                   setState(() {
@@ -105,6 +109,7 @@ class _AddDoctorScreenState extends State<AddDoctorScreen> {
               const SizedBox(height: 16),
               
               DropdownButtonFormField<Department>(
+                isExpanded: true,
                 value: _selectedDepartment,
                 decoration: InputDecoration(
                   labelText: 'Khoa chuyên môn',
@@ -112,7 +117,11 @@ class _AddDoctorScreenState extends State<AddDoctorScreen> {
                 ),
                 items: controller.selectedDepartments.map((d) => DropdownMenuItem(
                   value: d,
-                  child: Text(d.name),
+                  child: Text(
+                    d.name,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
                 )).toList(),
                 onChanged: (d) => setState(() => _selectedDepartment = d),
                 validator: (v) => v == null ? 'Vui lòng chọn khoa' : null,
@@ -187,19 +196,15 @@ class _AddDoctorScreenState extends State<AddDoctorScreen> {
     );
 
     if (mounted && newUser != null) {
-      // Generate QR Token for the NEW doctor (not current Admin)
       final qrData = await authController.createQrLoginToken(
         targetUid: newUser.id,
         persistent: true,
       );
 
       if (mounted && qrData != null) {
-        // Show success and move to QR screen
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Tạo tài khoản bác sĩ thành công!')),
         );
-        
-        // Navigate to QR screen so Admin can save it for the doctor
         context.go('/account-qr', extra: qrData);
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

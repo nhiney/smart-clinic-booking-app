@@ -11,6 +11,8 @@ class AdminStatisticsScreen extends StatefulWidget {
 }
 
 class _AdminStatisticsScreenState extends State<AdminStatisticsScreen> {
+  String _selectedPeriod = "7 ngày";
+
   @override
   void initState() {
     super.initState();
@@ -29,7 +31,7 @@ class _AdminStatisticsScreenState extends State<AdminStatisticsScreen> {
       backgroundColor: const Color(0xFFF8F9FA),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 90.0),
+          padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 90.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -40,7 +42,8 @@ class _AdminStatisticsScreenState extends State<AdminStatisticsScreen> {
               _buildMainChartCard(
                 appointmentsCount: controller.totalAppointmentsCount,
                 newAppointments: controller.newAppointmentsThisWeek,
-                chartSpots: _getWeeklyUsageSpots(controller),
+                chartSpots: controller.getWeeklyAppointmentSpots(),
+                growthRate: controller.appointmentGrowthRate,
               ),
               const SizedBox(height: 20),
               GridView.count(
@@ -53,7 +56,7 @@ class _AdminStatisticsScreenState extends State<AdminStatisticsScreen> {
                 children: [
                   _buildStatCard(
                     title: "BỆNH VIỆN",
-                    value: "12",
+                    value: controller.hospitals.length.toString(),
                     increment: "+1",
                     icon: Icons.store_outlined,
                     iconColor: const Color(0xFF1E88E5),
@@ -145,6 +148,7 @@ class _AdminStatisticsScreenState extends State<AdminStatisticsScreen> {
   Widget _buildFilterTabs(AdminController controller) {
     final now = DateTime.now();
     final String timestamp = "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
+    final List<String> periods = ["7 ngày", "30 ngày", "Quý", "Năm"];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -184,31 +188,39 @@ class _AdminStatisticsScreenState extends State<AdminStatisticsScreen> {
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildTabItem("7 ngày", isSelected: true),
-              _buildTabItem("30 ngày"),
-              _buildTabItem("Quý"),
-              _buildTabItem("Năm"),
-            ],
+            children: periods.map((period) {
+              return _buildTabItem(
+                period, 
+                isSelected: _selectedPeriod == period,
+                onTap: () {
+                  setState(() {
+                    _selectedPeriod = period;
+                  });
+                },
+              );
+            }).toList(),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildTabItem(String text, {bool isSelected = false}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFF0A192F) : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-          color: isSelected ? Colors.white : Colors.black54,
+  Widget _buildTabItem(String text, {required bool isSelected, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF0A192F) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            color: isSelected ? Colors.white : Colors.black54,
+          ),
         ),
       ),
     );
@@ -218,68 +230,139 @@ class _AdminStatisticsScreenState extends State<AdminStatisticsScreen> {
     required int appointmentsCount, 
     required int newAppointments, 
     required List<FlSpot> chartSpots,
+    required double growthRate,
   }) {
+    final DateTime now = DateTime.now();
+    final List<String> weekdayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+    List<String> dynamicDays = [];
+    
+    for (int i = 0; i < 7; i++) {
+      DateTime day = now.add(Duration(days: i));
+      dynamicDays.add(weekdayNames[day.weekday % 7]);
+    }
+
     return Container(
       width: double.infinity,
-      height: 240,
+      height: 260,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF0B1E36), Color(0xFF15447C)],
+          colors: [Color(0xFF07162C), Color(0xFF1B4985)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: const Color(0xFF15447C).withOpacity(0.25), blurRadius: 20, offset: const Offset(0, 10)),
+          BoxShadow(
+            color: const Color(0xFF0A192F).withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
         ],
       ),
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("TỔNG LỊCH HẸN • HỆ THỐNG", style: TextStyle(fontSize: 11, color: Colors.white60, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                Text(
+                  "TỔNG LỊCH HẸN • ${_selectedPeriod.toUpperCase()}", 
+                  style: const TextStyle(fontSize: 11, color: Colors.white60, fontWeight: FontWeight.w800, letterSpacing: 0.8),
+                ),
                 const SizedBox(height: 4),
                 Text(
                   appointmentsCount.toString(),
-                  style: const TextStyle(fontSize: 44, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: -1),
+                  style: const TextStyle(fontSize: 48, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: -1),
                 ),
+                const SizedBox(height: 6),
                 Row(
                   children: [
-                    const Icon(Icons.arrow_drop_up_rounded, color: Colors.greenAccent, size: 24),
-                    const Text("Tăng trưởng", style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 13)),
-                    Text("  +$newAppointments lịch mới tuần này", style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: growthRate >= 0 ? Colors.white.withOpacity(0.12) : Colors.redAccent.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            growthRate >= 0 ? Icons.arrow_drop_up_rounded : Icons.arrow_drop_down_rounded, 
+                            color: growthRate >= 0 ? Colors.white : Colors.redAccent, 
+                            size: 18,
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            "${growthRate.abs().toStringAsFixed(1)}%", 
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      "${growthRate >= 0 ? '+' : ''}$newAppointments vs kỳ trước", 
+                      style: const TextStyle(color: Colors.white60, fontSize: 12, fontWeight: FontWeight.w500),
+                    ),
                   ],
                 ),
               ],
             ),
           ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 100,
-            child: LineChart(
-              LineChartData(
-                gridData: const FlGridData(show: false),
-                titlesData: const FlTitlesData(show: false),
-                borderData: FlBorderData(show: false),
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: chartSpots,
-                    isCurved: true,
-                    color: Colors.white,
-                    barWidth: 3,
-                    isStrokeCapRound: true,
-                    dotData: const FlDotData(show: false),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      color: Colors.white.withOpacity(0.08),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 20),
+              child: LineChart(
+                LineChartData(
+                  gridData: const FlGridData(show: false),
+                  borderData: FlBorderData(show: false),
+                  titlesData: FlTitlesData(
+                    show: true,
+                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 22,
+                        interval: 1,
+                        getTitlesWidget: (value, meta) {
+                          int index = value.toInt();
+                          if (index >= 0 && index < dynamicDays.length) {
+                            return SideTitleWidget(
+                              meta: meta,
+                              space: 4,
+                              child: Text(
+                                dynamicDays[index],
+                                style: const TextStyle(color: Colors.white38, fontWeight: FontWeight.bold, fontSize: 12),
+                              ),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
                     ),
                   ),
-                ],
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: chartSpots,
+                      isCurved: true,
+                      color: Colors.white,
+                      barWidth: 3,
+                      isStrokeCapRound: true,
+                      dotData: const FlDotData(show: false),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        gradient: LinearGradient(
+                          colors: [Colors.white.withOpacity(0.18), Colors.white.withOpacity(0.00)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -315,8 +398,11 @@ class _AdminStatisticsScreenState extends State<AdminStatisticsScreen> {
               Icon(icon, color: iconColor, size: 20),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF0A192F))),
+          const SizedBox(height: 2),
+          Text(
+            value, 
+            style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: Color(0xFF0A192F), letterSpacing: -0.5),
+          ),
           const Spacer(),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -357,21 +443,5 @@ class _AdminStatisticsScreenState extends State<AdminStatisticsScreen> {
         ],
       ),
     );
-  }
-
-  List<FlSpot> _getWeeklyUsageSpots(AdminController controller) {
-    if (controller.totalAppointmentsCount == 0) {
-      return [const FlSpot(0, 0), const FlSpot(6, 0)];
-    }
-    double base = controller.totalAppointmentsCount.toDouble();
-    return [
-      FlSpot(0, base * 0.2),
-      FlSpot(1, base * 0.15),
-      FlSpot(2, base * 0.3),
-      FlSpot(3, base * 0.25),
-      FlSpot(4, base * 0.4),
-      FlSpot(5, base * 0.5),
-      FlSpot(6, base * 0.45),
-    ];
   }
 }

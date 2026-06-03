@@ -5,12 +5,16 @@ class Hospital extends Equatable {
   final String name;
   final String address;
   final String logoUrl;
+  final double rating;
+  final bool isOpen;
 
   const Hospital({
     required this.id,
     required this.name,
     this.address = '',
     this.logoUrl = '',
+    this.rating = 5.0,
+    this.isOpen = true,
   });
 
   Map<String, dynamic> toMap() {
@@ -19,6 +23,8 @@ class Hospital extends Equatable {
       'name': name,
       'address': address,
       'logoUrl': logoUrl,
+      'rating': rating,
+      'isOpen': isOpen,
     };
   }
 
@@ -28,11 +34,13 @@ class Hospital extends Equatable {
       name: map['name'] ?? '',
       address: map['address'] ?? '',
       logoUrl: map['logoUrl'] ?? '',
+      rating: (map['rating'] ?? 5.0).toDouble(),
+      isOpen: map['isOpen'] ?? true,
     );
   }
 
   @override
-  List<Object?> get props => [id, name, address, logoUrl];
+  List<Object?> get props => [id, name, address, logoUrl, rating, isOpen];
 }
 
 class Department extends Equatable {
@@ -74,7 +82,7 @@ class Room extends Equatable {
   final String id;
   final String departmentId;
   final String name;
-  final String type; // e.g., 'Examination', 'Emergency', 'ICU'
+  final String type;
 
   const Room({
     required this.id,
@@ -109,7 +117,7 @@ class Device extends Equatable {
   final String id;
   final String roomId;
   final String name;
-  final String status; // 'active', 'maintenance', 'inactive'
+  final String status;
 
   const Device({
     required this.id,
