@@ -126,7 +126,13 @@ class _DepartmentManagementScreenState extends State<DepartmentManagementScreen>
                   minimumSize: const Size(0, 30),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                child: Text('Gán Bác sĩ', style: context.textStyles.bodySmall.copyWith(color: context.colors.primary, fontSize: 10)),
+                child: Text(
+                  'Gán Bác sĩ',
+                  style: context.textStyles.bodySmall.copyWith(
+                    color: context.colors.primary,
+                    fontSize: 10,
+                  ),
+                ),
               ),
             ],
           ),

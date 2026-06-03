@@ -73,16 +73,23 @@ Future<void> configureDependencies() async {
   // Replace these with @lazySingleton annotations in the future if preferred.
 
   // App Config Service (Dynamic Settings)
+  if (!getIt.isRegistered<AppConfigService>()) {
   getIt.registerLazySingleton(() => AppConfigService());
+  }
 
   // Appointment
-  getIt.registerLazySingleton(() => AppointmentRemoteDatasource());
+  if(!getIt.isRegistered<AppointmentRemoteDatasource>()){
+    getIt.registerLazySingleton(() => AppointmentRemoteDatasource());
+  }
   getIt.registerLazySingleton<AppointmentRepository>(() => AppointmentRepositoryImpl(getIt<AppointmentRemoteDatasource>()));
   getIt.registerLazySingleton(() => GetAppointmentsUseCase(getIt<AppointmentRepository>()));
   getIt.registerLazySingleton(() => CreateAppointmentUseCase(getIt<AppointmentRepository>()));
   getIt.registerLazySingleton(() => CancelAppointmentUseCase(getIt<AppointmentRepository>()));
 
   // Medical Record
+  if(!getIt.isRegistered<SQLiteHelper>()){
+    getIt.registerLazySingleton(() => SQLiteHelper);
+  }
   getIt.registerLazySingleton(() => SQLiteHelper.instance);
   getIt.registerLazySingleton<MedicalRecordRemoteDataSource>(() => MedicalRecordRemoteDataSourceImpl(FirebaseFirestore.instance));
   getIt.registerLazySingleton<MedicalRecordLocalDataSource>(() => MedicalRecordLocalDataSourceImpl(getIt<SQLiteHelper>()));
@@ -92,26 +99,36 @@ Future<void> configureDependencies() async {
       ));
 
   // Medication
-  getIt.registerLazySingleton(() => MedicationRemoteDatasource());
+  if(!getIt.isRegistered<MedicationRemoteDatasource>()){
+    getIt.registerLazySingleton(() => MedicationRemoteDatasource());
+  }
   getIt.registerLazySingleton<MedicationRepository>(() => MedicationRepositoryImpl(getIt<MedicationRemoteDatasource>()));
   getIt.registerLazySingleton(() => GetMedicationsUseCase(getIt<MedicationRepository>()));
 
   // Profile
-  getIt.registerLazySingleton(() => ProfileRemoteDatasource());
+  if(!getIt.isRegistered<ProfileRemoteDatasource>()){
+    getIt.registerLazySingleton(() => ProfileRemoteDatasource());
+  }
   getIt.registerLazySingleton<ProfileRepository>(() => ProfileRepositoryImpl(getIt<ProfileRemoteDatasource>()));
   getIt.registerLazySingleton(() => GetPatientProfile(getIt<ProfileRepository>()));
   getIt.registerLazySingleton(() => UpdatePatientProfile(getIt<ProfileRepository>()));
 
   // Maps
-  getIt.registerLazySingleton<MapsRepository>(() => MapsRepositoryImpl());
+  if(!getIt.isRegistered<MapsRepository>()){
+    getIt.registerLazySingleton<MapsRepository>(() => MapsRepositoryImpl());
+  }
 
   // Notification
-  getIt.registerLazySingleton(() => NotificationRemoteDatasource());
+  if(!getIt.isRegistered<NotificationRemoteDatasource>()){
+    getIt.registerLazySingleton(() => NotificationRemoteDatasource());
+  }
   getIt.registerLazySingleton<NotificationRepository>(() => NotificationRepositoryImpl(getIt<NotificationRemoteDatasource>()));
   getIt.registerLazySingleton(() => SmartNotificationService());
 
   // Admission
-  getIt.registerLazySingleton(() => AdmissionRemoteDataSource());
+  if(!getIt.isRegistered<AdmissionRemoteDataSource>()){
+    getIt.registerLazySingleton(() => AdmissionRemoteDataSource());
+  }
   getIt.registerLazySingleton<AdmissionRepository>(() => AdmissionRepositoryImpl(getIt<AdmissionRemoteDataSource>()));
 
   // Facility & Admin (Manual fallback to ensure stability)

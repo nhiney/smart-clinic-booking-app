@@ -537,6 +537,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.1"
+  fl_chart:
+    dependency: "direct main"
+    description:
+      name: fl_chart
+      sha256: b938f77d042cbcd822936a7a359a7235bad8bd72070de1f827efc2cc297ac888
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.0"
   flutter:
     dependency: "direct main"
     description: flutter
@@ -1005,6 +1013,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.2"
+  image_pickers:
+    dependency: "direct main"
+    description:
+      name: image_pickers
+      sha256: e2f5d19a7b0a40af3af5d49c5855b22a755e6f79b22e0b58a65c44311b9d67c8
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.6"
   injectable:
     dependency: "direct main"
     description:

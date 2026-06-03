@@ -1,120 +1,171 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/extensions/context_extension.dart';
-import '../controllers/admin_controller.dart';
+import '../../../../app/di/injection.dart';
+import '../controllers/admin_assignment_controller.dart';
 import '../../domain/entities/facility_entities.dart';
+import '../../../doctor/domain/entities/doctor_entity.dart';
 
-class DoctorAssignmentScreen extends StatefulWidget {
-  final Hospital hospital;
-  final Department department;
-  
+class DoctorAssignmentScreen extends StatelessWidget {
+  final Hospital? hospital;
+  final Department? department;
+
   const DoctorAssignmentScreen({
-    super.key,
-    required this.hospital,
-    required this.department,
+    super.key, 
+    this.hospital, 
+    this.department,
   });
 
   @override
-  State<DoctorAssignmentScreen> createState() => _DoctorAssignmentScreenState();
-}
-
-class _DoctorAssignmentScreenState extends State<DoctorAssignmentScreen> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AdminController>().fetchUnassignedDoctors();
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final controller = context.watch<AdminController>();
-
-    return Scaffold(
-      backgroundColor: context.colors.background,
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Phân bổ Bác sĩ'),
-            Text('${widget.hospital.name} > ${widget.department.name}', style: context.textStyles.bodySmall),
-          ],
+    return ChangeNotifierProvider<AdminAssignmentController>(
+      create: (_) => getIt<AdminAssignmentController>()..init(),
+      child: Scaffold(
+        backgroundColor: const Color(0xfff8f9fa),
+        appBar: AppBar(
+          title: const Text('Phân Công Lịch Trực / Phòng Khám', 
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: const BackButton(color: Colors.black),
         ),
-      ),
-      body: controller.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : controller.unassignedDoctors.isEmpty
-              ? _buildEmptyState()
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: controller.unassignedDoctors.length,
-                  itemBuilder: (context, index) {
-                    final doctor = controller.unassignedDoctors[index];
-                    return _buildDoctorTile(context, doctor, controller);
-                  },
+        body: Consumer<AdminAssignmentController>(
+          builder: (context, controller, child) {
+            return Stack(
+              children: [
+                SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Card(
+                    color: Colors.white,
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text("Thông Tin Phân Công", 
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blueAccent)),
+                          const SizedBox(height: 20),
+                          
+                          _buildLabel("1. Chọn Bác Sĩ"),
+                          DropdownButtonFormField<DoctorEntity>(
+                            value: controller.selectedDoctor,
+                            hint: const Text("Chọn bác sĩ cần phân công"),
+                            items: controller.doctors.map((DoctorEntity doc) {
+                              return DropdownMenuItem<DoctorEntity>(
+                                value: doc,
+                                child: Text(doc.name),
+                              );
+                            }).toList(),
+                            onChanged: controller.selectDoctor,
+                            decoration: _inputDecoration(),
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          _buildLabel("2. Chọn Cơ Sở / Bệnh Viện"),
+                          DropdownButtonFormField<Hospital>(
+                            value: controller.selectedHospital,
+                            hint: const Text("Chọn hospital"),
+                            items: controller.hospitals.map((Hospital h) {
+                              return DropdownMenuItem<Hospital>(
+                                value: h,
+                                child: Text(h.name),
+                              );
+                            }).toList(),
+                            onChanged: controller.selectHospital,
+                            decoration: _inputDecoration(),
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          _buildLabel("3. Chọn Chuyên Khoa"),
+                          DropdownButtonFormField<Department>(
+                            value: controller.selectedDepartment,
+                            hint: const Text("Chọn khoa (Hãy chọn bệnh viện trước)"),
+                            items: controller.departments.map((Department d) {
+                              return DropdownMenuItem<Department>(
+                                value: d,
+                                child: Text(d.name),
+                              );
+                            }).toList(),
+                            onChanged: controller.selectDepartment,
+                            decoration: _inputDecoration(),
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          _buildLabel("4. Chọn Phòng Khám / Phòng Bệnh"),
+                          DropdownButtonFormField<Room>(
+                            value: controller.selectedRoom,
+                            hint: const Text("Chọn phòng trực"),
+                            items: controller.rooms.map((Room r) {
+                              return DropdownMenuItem<Room>(
+                                value: r,
+                                child: Text("${r.name} (${r.type})"),
+                              );
+                            }).toList(),
+                            onChanged: controller.selectRoom,
+                            decoration: _inputDecoration(),
+                          ),
+                          const SizedBox(height: 30),
+                          
+                          SizedBox(
+                            width: double.infinity,
+                            height: 50,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blueAccent,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                elevation: 0,
+                              ),
+                              onPressed: () async {
+                                final success = await controller.submitAssignment();
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(success 
+                                        ? 'Phân công bác sĩ thành công và đồng bộ dữ liệu!' 
+                                        : 'Vui lòng điền đầy đủ thông tin!'),
+                                      backgroundColor: success ? Colors.green : Colors.red,
+                                    ),
+                                  );
+                                }
+                              },
+                              child: const Text("XÁC NHẬN PHÂN CÔNG", 
+                                style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.person_search_rounded, size: 80, color: context.colors.textHint.withOpacity(0.5)),
-          const SizedBox(height: 16),
-          const Text('Không có bác sĩ nào chưa được phân bổ'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDoctorTile(BuildContext context, dynamic doctor, AdminController controller) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: context.colors.primary.withOpacity(0.1),
-          child: Icon(Icons.person_rounded, color: context.colors.primary),
-        ),
-        title: Text(doctor.name, style: context.textStyles.bodyBold),
-        subtitle: Text('Chuyên môn: ${doctor.specialty}', style: context.textStyles.bodySmall),
-        trailing: ElevatedButton(
-          onPressed: () => _confirmAssignment(context, doctor, controller),
-          child: const Text('Gán'),
+                if (controller.isLoading)
+                  Container(
+                    color: Colors.black12,
+                    child: const Center(child: CircularProgressIndicator(color: Colors.blueAccent)),
+                  )
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
-  void _confirmAssignment(BuildContext context, dynamic doctor, AdminController controller) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Xác nhận phân bổ'),
-        content: Text('Bạn có chắc chắn muốn gán ${doctor.name} vào khoa ${widget.department.name} của ${widget.hospital.name}?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Hủy')),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await controller.assignDoctor(
-                doctorId: doctor.id,
-                hospitalId: widget.hospital.id,
-                departmentId: widget.department.id,
-              );
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Đã phân bổ bác sĩ thành công')),
-                );
-              }
-            },
-            child: const Text('Xác nhận'),
-          ),
-        ],
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Text(text, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Colors.black87)),
+    );
+  }
+
+  InputDecoration _inputDecoration() {
+    return InputDecoration(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      filled: true,
+      fillColor: const Color(0xfff1f3f5),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
       ),
     );
   }
