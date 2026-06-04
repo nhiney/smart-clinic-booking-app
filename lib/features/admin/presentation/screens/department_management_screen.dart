@@ -5,6 +5,7 @@ import '../controllers/admin_controller.dart';
 import '../../domain/entities/facility_entities.dart';
 import 'room_management_screen.dart';
 import 'doctor_assignment_screen.dart';
+import 'admin_patient_management_screen.dart';
 
 class DepartmentManagementScreen extends StatefulWidget {
   final Hospital hospital;
@@ -13,7 +14,6 @@ class DepartmentManagementScreen extends StatefulWidget {
   @override
   State<DepartmentManagementScreen> createState() => _DepartmentManagementScreenState();
 }
-
 class _DepartmentManagementScreenState extends State<DepartmentManagementScreen> {
   @override
   void initState() {
@@ -38,6 +38,24 @@ class _DepartmentManagementScreenState extends State<DepartmentManagementScreen>
             Text('Danh sách chuyên khoa', style: context.textStyles.bodySmall),
           ],
         ),
+        // BỔ SUNG: Thêm nút xem danh sách bệnh nhân của bệnh viện này bên góc phải AppBar
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.people_alt_rounded, color: Color(0xFF1E88E5), size: 24),
+            tooltip: "Bệnh nhân của bệnh viện",
+            onPressed: () {
+              controller.setTargetHospitalForPatients(widget.hospital.name);
+              
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AdminPatientManagementScreen(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: controller.isLoading
           ? const Center(child: CircularProgressIndicator())

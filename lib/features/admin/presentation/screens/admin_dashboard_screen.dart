@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:smart_clinic_booking/features/admin/presentation/screens/admin_patient_management_screen.dart';
 import '../../../../core/extensions/context_extension.dart';
 import '../controllers/admin_controller.dart';
 import 'admin_hospital_management_screen.dart';

@@ -9,6 +9,7 @@ import '../../../doctor/domain/repositories/doctor_repository.dart';
 import '../../../../core/services/seed_data_service.dart';
 import '../../../auth/data/datasources/auth_remote_datasource.dart';
 import '../../../auth/data/models/user_model.dart';
+import '../../domain/entities/patient_entity.dart';
 
 class AdminController extends ChangeNotifier {
   final FacilityRepository facilityRepository;
@@ -280,6 +281,89 @@ class AdminController extends ChangeNotifier {
       FlSpot(6, counts[6]),
     ];
   }
+
+  String? _selectedHospitalNameForPatients;
+  List<Patient> _filteredPatientsByHospital = [];
+
+  List<Patient> get filteredPatientsByHospital => _filteredPatientsByHospital;
+  String? get selectedHospitalNameForPatients => _selectedHospitalNameForPatients;
+
+  void setTargetHospitalForPatients(String hospitalName) {
+    _selectedHospitalNameForPatients = hospitalName;
+    
+    _filteredPatientsByHospital = _patients
+        .where((p) => (p as dynamic).hospital == hospitalName) 
+        .toList();
+        
+    notifyListeners();
+  }
+
+  void clearHospitalDoctorFilter() {
+    _selectedHospitalNameForPatients = null;
+    _filteredPatientsByHospital = [];
+    notifyListeners();
+  }
+
+  List<Patient> _patients = [];
+  List<Patient> _filteredPatients = [];
+  String _selectedPatientFilter = "Tất cả";
+  bool _isPatientsFetched = false;
+  List<Patient> get patients => _patients;
+  List<Patient> get filteredPatients => _filteredPatients;
+  String get selectedPatientFilter => _selectedPatientFilter;
+
+  Future<void> fetchPatients() async {
+    if (_isPatientsFetched || isLoading) return;
+    
+    try {
+      isLoading = true;
+
+      final snapshot = await _firestore
+          .collection('users')
+          .where('role', isEqualTo: 'patient')
+          .get();
+
+      List<Patient> tempPatients = [];
+      for (var doc in snapshot.docs) {
+        tempPatients.add(Patient.fromFirebaseMap(doc.data(), doc.id));
+      }
+
+      _patients = tempPatients;
+      _applyPatientFilter();
+      _isPatientsFetched = true;
+    } catch (e) {
+      errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  void resetPatientFetchFlag() {
+    _isPatientsFetched = false;
+  }
+
+  void changePatientFilter(String filterLabel) {
+    _selectedPatientFilter = filterLabel;
+    _applyPatientFilter();
+    notifyListeners();
+  }
+
+  void _applyPatientFilter() {
+    if (_selectedPatientFilter == "Tất cả") {
+      _filteredPatients = List.from(_patients);
+    } else if (_selectedPatientFilter == "VIP") {
+      _filteredPatients = _patients.where((p) => p.isVerified == true).toList();
+    } else if (_selectedPatientFilter == "Hoạt động") {
+      _filteredPatients = _patients.where((p) => p.visitCount >= 8).toList();
+    } else if (_selectedPatientFilter == "BHYT") {
+      _filteredPatients = List.from(_patients);
+    }
+  }
+
+  int getActivePatientsCount() => _patients.where((p) => p.visitCount >= 8).length;
+  int getNewPatientsThisMonthCount() => _patients.length; 
+  int getVipPatientsCount() => _patients.where((p) => p.isVerified == true).length;
 
   Future<void> fetchHospitals() async {
     try {
