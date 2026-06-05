@@ -49,7 +49,37 @@ class _DepartmentManagementScreenState extends State<DepartmentManagementScreen>
           widget.hospital.name,
           style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18),
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Thêm khoa',
+            icon: const Icon(Icons.add_business_outlined),
+            onPressed: () => _showAddNameDialog(
+              title: 'Thêm khoa mới',
+              hint: 'Tên khoa (VD: Khoa Nội)',
+              onSubmit: (name) => context.read<AdminController>().addDepartment(
+                    hospitalId: widget.hospital.id,
+                    name: name,
+                  ),
+            ),
+          ),
+        ],
       ),
+      floatingActionButton: (context.watch<AdminController>().selectedDepartment != null)
+          ? FloatingActionButton.extended(
+              backgroundColor: const Color(0xFF2563EB),
+              icon: const Icon(Icons.meeting_room_outlined, color: Colors.white),
+              label: const Text('Thêm phòng', style: TextStyle(color: Colors.white)),
+              onPressed: () {
+                final dept = context.read<AdminController>().selectedDepartment!;
+                _showAddNameDialog(
+                  title: 'Thêm phòng cho ${dept.name}',
+                  hint: 'Tên phòng (VD: Phòng 101)',
+                  onSubmit: (name) =>
+                      context.read<AdminController>().addRoom(departmentId: dept.id, name: name),
+                );
+              },
+            )
+          : null,
       body: showLoading
           ? const Center(child: CircularProgressIndicator(color: Color(0xFF2563EB)))
           : Column(
@@ -77,7 +107,9 @@ class _DepartmentManagementScreenState extends State<DepartmentManagementScreen>
 
                               return Padding(
                                 padding: const EdgeInsets.only(right: 8),
-                                child: ChoiceChip(
+                                child: GestureDetector(
+                                  onLongPress: () => _confirmDeleteDepartment(dept.id, dept.name),
+                                  child: ChoiceChip(
                                   label: Text(dept.name),
                                   selected: isSelected,
                                   selectedColor: const Color(0xFF2563EB),
@@ -95,6 +127,7 @@ class _DepartmentManagementScreenState extends State<DepartmentManagementScreen>
                                       controller.selectDepartment(dept);
                                     }
                                   },
+                                ),
                                 ),
                               );
                             },
@@ -207,6 +240,79 @@ class _DepartmentManagementScreenState extends State<DepartmentManagementScreen>
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  /// Generic single-field "add" dialog used for departments and rooms.
+  void _showAddNameDialog({
+    required String title,
+    required String hint,
+    required Future<void> Function(String name) onSubmit,
+  }) {
+    final ctrl = TextEditingController();
+    bool isSaving = false;
+    showDialog(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: Text(title),
+          content: TextField(
+            controller: ctrl,
+            autofocus: true,
+            decoration: InputDecoration(labelText: hint, border: const OutlineInputBorder()),
+          ),
+          actions: [
+            TextButton(
+              onPressed: isSaving ? null : () => Navigator.pop(dialogContext),
+              child: const Text('Hủy'),
+            ),
+            ElevatedButton(
+              onPressed: isSaving
+                  ? null
+                  : () async {
+                      final name = ctrl.text.trim();
+                      if (name.isEmpty) return;
+                      setDialogState(() => isSaving = true);
+                      try {
+                        await onSubmit(name);
+                        if (dialogContext.mounted) Navigator.pop(dialogContext);
+                      } catch (e) {
+                        setDialogState(() => isSaving = false);
+                        if (dialogContext.mounted) {
+                          ScaffoldMessenger.of(dialogContext).showSnackBar(
+                            SnackBar(content: Text('Lỗi: $e'), backgroundColor: Colors.red),
+                          );
+                        }
+                      }
+                    },
+              child: isSaving
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Text('Lưu'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _confirmDeleteDepartment(String id, String name) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Xóa khoa'),
+        content: Text('Bạn có chắc muốn xóa khoa "$name"?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Hủy')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              await context.read<AdminController>().deleteDepartment(id);
+            },
+            child: const Text('Xóa'),
+          ),
+        ],
       ),
     );
   }

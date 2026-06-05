@@ -245,6 +245,38 @@ class AdminController extends ChangeNotifier {
     }
   }
 
+  // ── Department CRUD ─────────────────────────────────────────────────────────
+  Future<void> addDepartment({required String hospitalId, required String name, String description = ''}) async {
+    await facilityRepository.addDepartment(Department(
+      id: 'dept_${DateTime.now().millisecondsSinceEpoch}',
+      hospitalId: hospitalId,
+      name: name,
+      description: description,
+    ));
+    if (selectedHospital != null) await selectHospital(selectedHospital!);
+  }
+
+  Future<void> deleteDepartment(String id) async {
+    await facilityRepository.deleteDepartment(id);
+    if (selectedHospital != null) await selectHospital(selectedHospital!);
+  }
+
+  // ── Room CRUD ───────────────────────────────────────────────────────────────
+  Future<void> addRoom({required String departmentId, required String name, String type = 'Khám bệnh'}) async {
+    await facilityRepository.addRoom(Room(
+      id: 'room_${DateTime.now().millisecondsSinceEpoch}',
+      departmentId: departmentId,
+      name: name,
+      type: type,
+    ));
+    await fetchRooms(departmentId);
+  }
+
+  Future<void> deleteRoom(String id, String departmentId) async {
+    await facilityRepository.deleteRoom(id);
+    await fetchRooms(departmentId);
+  }
+
   Future<void> fetchDevices(String roomId) async {
     try {
       isLoading = true;
