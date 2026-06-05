@@ -25,7 +25,7 @@ class PatientListItem extends StatelessWidget {
     try {
       patientCode = dynamicPatient.code ?? dynamicPatient.insuranceId ?? dynamicPatient.insurance_id ?? patient.id.substring(0, 5);
       if (patientCode.length > 8) {
-        patientCode = patientCode.substring(0, 6); // Rút ngắn mã BHYT dài cho đẹp UI
+        patientCode = patientCode.substring(0, 6);
       }
     } catch (_) {
       patientCode = patient.id.substring(0, 5);

@@ -7,7 +7,6 @@ import '../../../../core/widgets/app_text_field.dart';
 import '../controllers/admin_controller.dart';
 import '../../domain/entities/facility_entities.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
-import '../../../auth/data/models/user_model.dart';
 
 
 class AddDoctorScreen extends StatefulWidget {

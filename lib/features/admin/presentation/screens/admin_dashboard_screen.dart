@@ -5,7 +5,7 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../controllers/admin_controller.dart';
 import 'add_doctor_screen.dart';
 import 'admin_revenue_screen.dart'; 
-import '../widgets/admin_content_view.dart'; // 🌟 Import View nội dung (Hình 2)
+import '../widgets/admin_content_view.dart';
 
 import '../widgets/hospital_management_view.dart';
 import '../widgets/admin_settings_view.dart';
@@ -86,8 +86,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     _filterAndCountDoctors(controller);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC), // 🌟 ĐỔI MÀU NỀN: Đồng bộ xám nhạt tinh tế giống Hình 1 & 2
-      appBar: _currentIndex == 0 || _currentIndex == 3 // 🌟 ẨN APPBAR: Ẩn tại Tổng quan và Nội dung giúp giao diện thoáng sạch
+      backgroundColor: const Color(0xFFF8FAFC), 
+      appBar: _currentIndex == 0 || _currentIndex == 3
           ? null
           : AppBar(
               elevation: 0,
@@ -164,7 +164,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           );
         }
 
-        // 🌟 INDEXEDSTACK: Phân tách đầy đủ 5 phân vùng giao diện động
         return IndexedStack(
           index: _currentIndex,
           children: [
@@ -220,7 +219,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 32), // Bù khoảng trống cho thanh trạng thái hệ thống khi ẩn AppBar
+            const SizedBox(height: 32),
             DashboardHeader(data: data),
             const SizedBox(height: 20),
             DashboardTitleSection(data: data),

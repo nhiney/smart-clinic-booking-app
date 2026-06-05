@@ -161,7 +161,6 @@ class MainAppointmentCard extends StatelessWidget {
       chartValues = [0, 0, 0, 0, 0, 0, 0];
     }
 
-    // 🌟 ĐỒNG BỘ ĐỒ THỊ: Đảo ngược mảng dữ liệu (List.reversed) để điểm đầu tiên khớp với ngày hôm nay
     chartValues = chartValues.reversed.toList();
 
     double minV = chartValues.reduce((a, b) => a < b ? a : b);
