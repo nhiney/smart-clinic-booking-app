@@ -60,7 +60,7 @@ import 'package:smart_clinic_booking/shared/widgets/under_development_screen.dar
 
 import 'package:smart_clinic_booking/shared/screens/status_screens.dart';
 
-import '../../features/auth/presentation/screens/doctor_home_screen.dart';
+import '../../features/doctor/patient_pov/presentation/screens/doctor_home_screen.dart';
 import '../../features/doctor/patient_pov/domain/entities/doctor_entity.dart';
 import '../../features/doctor/patient_pov/presentation/screens/doctor_detail_screen.dart';
 import '../../features/doctor/patient_pov/presentation/screens/doctor_search_screen.dart';
