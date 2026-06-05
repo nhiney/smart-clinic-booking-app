@@ -56,7 +56,9 @@ class AdminRevenueScreen extends StatelessWidget {
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
                   ),
                   TextButton(
-                    onPressed: () {},
+                    onPressed: dashboardData.topHospitals.isEmpty
+                        ? null
+                        : () => _showAllHospitals(context),
                     child: const Text('Tất cả', style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold, fontSize: 14)),
                   )
                 ],
@@ -85,6 +87,74 @@ class AdminRevenueScreen extends StatelessWidget {
                       ),
                     ),
               const SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatRevenue(double value) {
+    if (value >= 1000000) return 'đ${(value / 1000000).toStringAsFixed(1)}M';
+    if (value >= 1000) return 'đ${(value / 1000).toStringAsFixed(0)}K';
+    return 'đ${value.toStringAsFixed(0)}';
+  }
+
+  void _showAllHospitals(BuildContext context) {
+    final items = [...dashboardData.topHospitals]..sort((a, b) => a.rank.compareTo(b.rank));
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetCtx) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.6,
+        maxChildSize: 0.9,
+        builder: (_, scrollController) => Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE2E8F0),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const Text('Xếp hạng doanh thu bệnh viện',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+              const SizedBox(height: 12),
+              Expanded(
+                child: ListView.separated(
+                  controller: scrollController,
+                  itemCount: items.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (_, i) {
+                    final h = items[i];
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: const Color(0xFF2563EB),
+                        child: Text('${h.rank}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ),
+                      title: Text(h.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                      subtitle: LinearProgressIndicator(
+                        value: h.percentageOfMax.clamp(0.0, 1.0),
+                        backgroundColor: const Color(0xFFF1F5F9),
+                        color: const Color(0xFF2563EB),
+                      ),
+                      trailing: Text(_formatRevenue(h.revenueValue),
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                    );
+                  },
+                ),
+              ),
             ],
           ),
         ),
