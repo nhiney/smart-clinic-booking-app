@@ -1,6 +1,10 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../ai/domain/entities/ai_entities.dart';
+import '../../../ai/domain/services/ai_service.dart';
+import '../../../ai/presentation/riverpod/assistant_provider.dart';
+
 class ChatMessage {
   final String text;
   final bool isUser;
@@ -25,10 +29,17 @@ class ChatbotState {
 }
 
 class ChatbotNotifier extends StateNotifier<ChatbotState> {
-  ChatbotNotifier() : super(ChatbotState()) {
+  final AiService _aiService;
+
+  ChatbotNotifier(this._aiService) : super(ChatbotState()) {
     // Initial welcome message
     _addBotMessage('Xin chào! Tôi là trợ lý ảo ICare. Tôi có thể giúp gì cho bạn?');
   }
+
+  static const String _systemContext =
+      'Bạn là trợ lý ảo của ứng dụng đặt khám ICare. Trả lời ngắn gọn, thân thiện '
+      'bằng tiếng Việt về: đặt/hủy lịch khám, đơn thuốc, bảng giá dịch vụ, hồ sơ bệnh án '
+      'và cách dùng ứng dụng. Không đưa ra chẩn đoán y khoa thay bác sĩ.';
 
   void _addBotMessage(String text) {
     state = state.copyWith(
@@ -39,17 +50,37 @@ class ChatbotNotifier extends StateNotifier<ChatbotState> {
   Future<void> sendMessage(String text) async {
     if (text.trim().isEmpty) return;
 
+    // Build conversation history (oldest first) BEFORE adding the new message.
+    final history = state.messages.reversed
+        .map((m) => AiMessage(
+              id: m.timestamp.microsecondsSinceEpoch.toString(),
+              content: m.text,
+              role: m.isUser ? AiMessageRole.user : AiMessageRole.assistant,
+              timestamp: m.timestamp,
+            ))
+        .toList();
+
     // Add user message
     state = state.copyWith(
       messages: [ChatMessage(text: text, isUser: true), ...state.messages],
       isTyping: true,
     );
 
-    // Simulate AI thinking delay
-    await Future.delayed(const Duration(seconds: 1));
+    String response;
+    try {
+      final reply = await _aiService.generateResponse(
+        message: text,
+        history: history,
+        userContext: _systemContext,
+      );
+      response = reply.content.trim().isEmpty
+          ? _getRuleBasedResponse(text)
+          : reply.content.trim();
+    } catch (_) {
+      // Fall back to rule-based answers if the AI service is unavailable.
+      response = _getRuleBasedResponse(text);
+    }
 
-    String response = _getRuleBasedResponse(text);
-    
     state = state.copyWith(isTyping: false);
     _addBotMessage(response);
   }
@@ -78,5 +109,5 @@ class ChatbotNotifier extends StateNotifier<ChatbotState> {
 }
 
 final chatbotProvider = StateNotifierProvider<ChatbotNotifier, ChatbotState>((ref) {
-  return ChatbotNotifier();
+  return ChatbotNotifier(ref.watch(aiServiceProvider));
 });
