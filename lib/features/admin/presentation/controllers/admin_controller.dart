@@ -1,14 +1,14 @@
+// lib/features/admin/presentation/controllers/admin_controller.dart
 import 'package:flutter/material.dart';
 import '../../domain/entities/facility_entities.dart';
 import '../../domain/repositories/facility_repository.dart';
-import '../../../doctor/patient_pov//domain/entities/doctor_entity.dart';
-import '../../../doctor/patient_pov//domain/repositories/doctor_repository.dart';
+import '../../../doctor/patient_pov/domain/entities/doctor_entity.dart';
+import '../../../doctor/patient_pov/domain/repositories/doctor_repository.dart';
 import '../../../../core/services/seed_data_service.dart';
 import '../../../../core/utils/seed_hospital_data.dart';
 
 import '../../../auth/data/datasources/auth_remote_datasource.dart';
 import '../../../auth/data/models/user_model.dart';
-
 
 class AdminController extends ChangeNotifier {
   final FacilityRepository facilityRepository;
@@ -23,13 +23,53 @@ class AdminController extends ChangeNotifier {
 
   bool isLoading = false;
   String? errorMessage;
+
+  AdminDashboardEntity? dashboardData;
+  String selectedPeriod = '7 ngày';
   
   List<Hospital> hospitals = [];
   List<Department> selectedDepartments = [];
   List<Room> selectedRooms = [];
+  List<Patient> patients = [];
   List<Device> selectedDevices = [];
   List<DoctorEntity> unassignedDoctors = [];
   List<DoctorEntity> allDoctors = [];
+
+  Hospital? selectedHospital;
+  Department? selectedDepartment;
+
+  void changePeriod(String period) {
+    selectedPeriod = period;
+    fetchDashboardOverview();
+  }
+
+  Future<void> fetchDashboardOverview() async {
+    try {
+      isLoading = true;
+      errorMessage = null;
+      notifyListeners();
+      
+      final rawData = await facilityRepository.getAdminDashboardData(selectedPeriod);
+      
+      String realAdminName = "Hệ thống Quản trị";
+      try {
+        final UserModel? currentUser = await authRemoteDatasource.getCurrentUser() as UserModel?;
+        if (currentUser != null && currentUser.name.isNotEmpty) {
+          realAdminName = currentUser.name;
+        }
+      } catch (_) {
+        realAdminName = rawData.adminName;
+      }
+
+      dashboardData = rawData.copyWith(adminName: realAdminName);
+
+    } catch (e) {
+      errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
 
   Future<void> fetchHospitals() async {
     try {
@@ -37,6 +77,11 @@ class AdminController extends ChangeNotifier {
       notifyListeners();
       hospitals = await facilityRepository.getAllHospitals();
       await fetchAllDoctors();
+      await fetchDashboardOverview();
+
+      if (hospitals.isNotEmpty) {
+        await selectHospital(hospitals.first);
+      }
     } catch (e) {
       errorMessage = e.toString();
     } finally {
@@ -50,6 +95,43 @@ class AdminController extends ChangeNotifier {
       allDoctors = await doctorRepository.getDoctors();
     } catch (e) {
       errorMessage = e.toString();
+    }
+  }
+
+  Future<void> selectHospital(Hospital hospital) async {
+    selectedHospital = hospital;
+    isLoading = true;
+    notifyListeners();
+    try {
+      selectedDepartments = await facilityRepository.getDepartmentsByHospital(hospital.id);
+      
+      if (selectedDepartments.isNotEmpty) {
+        await selectDepartment(selectedDepartments.first);
+      } else {
+        selectedDepartment = null;
+        patients = [];
+      }
+    } catch (e) {
+      errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> selectDepartment(Department department) async {
+    selectedDepartment = department;
+    isLoading = true;
+    notifyListeners();
+    try {
+      patients = await facilityRepository.getPatientsByDepartment(department.id);
+      
+      selectedRooms = await facilityRepository.getRoomsByDepartment(department.id);
+    } catch (e) {
+      errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
     }
   }
 
@@ -124,6 +206,7 @@ class AdminController extends ChangeNotifier {
         departmentId: departmentId,
       );
       await fetchUnassignedDoctors();
+      await fetchDashboardOverview();
     } catch (e) {
       errorMessage = e.toString();
     } finally {
@@ -168,7 +251,6 @@ class AdminController extends ChangeNotifier {
     }
   }
 
-
   Future<void> seedData() async {
     try {
       isLoading = true;
@@ -206,6 +288,10 @@ class AdminController extends ChangeNotifier {
       isLoading = true;
       notifyListeners();
       await SeedDataService().seedSamplePatients();
+      await fetchDashboardOverview();
+      if (selectedDepartment != null) {
+        await selectDepartment(selectedDepartment!);
+      }
     } catch (e) {
       errorMessage = e.toString();
     } finally {

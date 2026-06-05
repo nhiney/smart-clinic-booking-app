@@ -5,13 +5,10 @@ import 'package:smart_clinic_booking/l10n/app_localizations.dart';
 import '../../../../../core/extensions/context_extension.dart';
 import '../../../../appointment/domain/entities/appointment_entity.dart';
 
-
-
 /// Phiên khám — mở từ lịch hoặc thao tác nhanh "Khám".
 class DoctorExamineScreen extends StatefulWidget {
+  final dynamic appointment;
   const DoctorExamineScreen({super.key, this.appointment});
-
-  final AppointmentEntity? appointment;
 
   @override
   State<DoctorExamineScreen> createState() => _DoctorExamineScreenState();
