@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/extensions/context_extension.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../domain/entities/facility_entities.dart';
 import '../controllers/admin_controller.dart';
 import 'add_doctor_screen.dart';
 import 'admin_revenue_screen.dart'; 
@@ -358,15 +359,91 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   void _showAddHospitalDialog(BuildContext context) {
+    final nameCtrl = TextEditingController();
+    final addressCtrl = TextEditingController();
+    final phoneCtrl = TextEditingController();
+    final hoursCtrl = TextEditingController();
+    final descCtrl = TextEditingController();
+    final adminController = context.read<AdminController>();
+    bool isSaving = false;
+
+    InputDecoration deco(String label) => InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+          isDense: true,
+        );
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Thêm Bệnh viện mới'),
-        content: const Text('Vui lòng nhập thông tin bệnh viện để bắt đầu quản lý.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Hủy bỏ')),
-          ElevatedButton(onPressed: () => Navigator.pop(context), child: const Text('Tiếp tục')),
-        ],
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: const Text('Thêm Bệnh viện mới'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(controller: nameCtrl, decoration: deco('Tên bệnh viện *')),
+                const SizedBox(height: 12),
+                TextField(controller: addressCtrl, decoration: deco('Địa chỉ')),
+                const SizedBox(height: 12),
+                TextField(controller: phoneCtrl, keyboardType: TextInputType.phone, decoration: deco('Số điện thoại')),
+                const SizedBox(height: 12),
+                TextField(controller: hoursCtrl, decoration: deco('Giờ làm việc (VD: 7:00 - 17:00)')),
+                const SizedBox(height: 12),
+                TextField(controller: descCtrl, maxLines: 2, decoration: deco('Mô tả')),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: isSaving ? null : () => Navigator.pop(dialogContext),
+              child: const Text('Hủy bỏ'),
+            ),
+            ElevatedButton(
+              onPressed: isSaving
+                  ? null
+                  : () async {
+                      final name = nameCtrl.text.trim();
+                      if (name.isEmpty) {
+                        ScaffoldMessenger.of(dialogContext).showSnackBar(
+                          const SnackBar(content: Text('Vui lòng nhập tên bệnh viện.')),
+                        );
+                        return;
+                      }
+                      setDialogState(() => isSaving = true);
+                      try {
+                        await adminController.addHospital(Hospital(
+                          id: 'hosp_${DateTime.now().millisecondsSinceEpoch}',
+                          name: name,
+                          address: addressCtrl.text.trim(),
+                          phone: phoneCtrl.text.trim(),
+                          workingHours: hoursCtrl.text.trim(),
+                          description: descCtrl.text.trim(),
+                        ));
+                        if (dialogContext.mounted) {
+                          Navigator.pop(dialogContext);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Đã thêm bệnh viện thành công.'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        setDialogState(() => isSaving = false);
+                        if (dialogContext.mounted) {
+                          ScaffoldMessenger.of(dialogContext).showSnackBar(
+                            SnackBar(content: Text('Lỗi: $e'), backgroundColor: Colors.red),
+                          );
+                        }
+                      }
+                    },
+              child: isSaving
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Text('Lưu'),
+            ),
+          ],
+        ),
       ),
     );
   }
