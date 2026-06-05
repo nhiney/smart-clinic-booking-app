@@ -1,298 +1,293 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
-import 'package:qr_flutter/qr_flutter.dart';
-import '../../../../core/theme/colors/app_colors.dart';
-import '../../../../core/theme/typography/app_text_styles.dart';
-import '../../../auth/presentation/controllers/auth_controller.dart';
-import '../controllers/profile_controller.dart';
-import '../../../auth/domain/entities/user_entity.dart';
-import '../../../../core/widgets/branded_app_bar.dart';
+import 'edit_profile_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool _notificationsEnabled = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: const BrandedAppBar(title: "Hồ sơ cá nhân"),
-      body: Consumer<AuthController>(
-        builder: (_, auth, __) {
-          final user = auth.currentUser;
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                // Avatar + Name
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Column(
-                    children: [
-                      CircleAvatar(
-                        radius: 45,
-                        backgroundColor: Colors.white.withValues(alpha: 0.3),
-                        child: Text(
-                          (user?.name != null && user!.name.isNotEmpty ? user.name : 'U').substring(0, 1).toUpperCase(),
-                          style: const TextStyle(
-                            fontSize: 36,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      Text(
-                        user?.name ?? 'Người dùng',
-                        style: AppTextStyles.heading2.copyWith(color: Colors.white),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        user?.phone ?? '',
-                        style: AppTextStyles.body.copyWith(color: Colors.white70),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Info cards
-                _buildInfoCard(
-                  icon: Icons.email_outlined,
-                  title: "Email",
-                  value: (user?.email == null || user!.email.isEmpty) ? 'Chưa cập nhật' : user.email,
-                  onTap: () => _showEditEmailDialog(context, user),
-                  trailing: const Icon(Icons.edit, size: 18, color: AppColors.primary),
-                ),
-                _buildInfoCard(
-                  icon: Icons.phone_outlined,
-                  title: "Số điện thoại",
-                  value: user?.phone ?? 'Chưa cập nhật',
-                ),
-                _buildInfoCard(
-                  icon: Icons.person_outline,
-                  title: "Vai trò",
-                  value: user?.role == 'patient' ? 'Bệnh nhân' : user?.role ?? '',
-                ),
-                const SizedBox(height: 24),
-
-                // Menu items
-                _buildMenuItem(
-                  icon: Icons.history,
-                  title: "Lịch sử khám bệnh",
-                  onTap: () => Navigator.pushNamed(context, '/appointments'),
-                ),
-                _buildMenuItem(
-                  icon: Icons.folder_outlined,
-                  title: "Hồ sơ bệnh án",
-                  onTap: () => Navigator.pushNamed(context, '/medical-records'),
-                ),
-                _buildMenuItem(
-                  icon: Icons.medication_outlined,
-                  title: "Nhắc uống thuốc",
-                  onTap: () => Navigator.pushNamed(context, '/medication'),
-                ),
-                _buildMenuItem(
-                  icon: Icons.qr_code_2_rounded,
-                  title: "Tạo mã QR đăng nhập thiết bị khác",
-                  onTap: () => _showQrLoginDialog(context),
-                ),
-                const SizedBox(height: 24),
-
-                // Logout
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      auth.logout();
-                      context.go('/login');
-                    },
-                    icon: const Icon(Icons.logout, color: AppColors.error),
-                    label: Text(
-                      "Đăng xuất",
-                      style: AppTextStyles.subtitle.copyWith(color: AppColors.error),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.error),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+      backgroundColor: const Color(0xFFF5F7FA),
+      body: ListView(
+        children: [
+          // Header xanh
+          Container(
+            height: 200,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF1565C0), Color(0xFF42A5F5)],
+              ),
             ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildInfoCard({
-    required IconData icon,
-    required String title,
-    required String value,
-    VoidCallback? onTap,
-    Widget? trailing,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.cardBackground,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: const [
-            BoxShadow(color: AppColors.shadow, blurRadius: 6),
-          ],
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: AppColors.primary, size: 22),
-            const SizedBox(width: 14),
-            Expanded(
+            child: SafeArea(
+              bottom: false,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(title, style: AppTextStyles.caption),
-                  Text(value, style: AppTextStyles.body),
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 3),
+                    ),
+                    child: const Icon(
+                      Icons.person,
+                      size: 45,
+                      color: Color(0xFF1565C0),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Nguyễn Văn A',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    '091*****74',
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
                 ],
               ),
             ),
-            if (trailing != null) trailing,
-          ],
-        ),
-      ),
-    );
-  }
+          ),
 
-  void _showEditEmailDialog(BuildContext context, UserEntity? user) {
-    if (user == null) return;
-    final emailController = TextEditingController(text: user.email);
-    
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("Cập nhật Email"),
-        content: TextField(
-          controller: emailController,
-          keyboardType: TextInputType.emailAddress,
-          decoration: const InputDecoration(
-            hintText: "Nhập email của bạn",
-            prefixIcon: Icon(Icons.email_outlined),
+          const SizedBox(height: 20),
+
+          const _SectionLabel('  Tài khoản'),
+          _SettingCard(
+            items: [
+              _SettingItem(
+                icon: Icons.person_outline,
+                label: 'Thông tin cá nhân',
+                color: const Color(0xFF1565C0),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                ),
+              ),
+              const _SettingItem(
+                icon: Icons.lock_outline,
+                label: 'Thay đổi mật khẩu',
+                color: Color(0xFF1565C0),
+              ),
+              const _SettingItem(
+                icon: Icons.security,
+                label: 'Passcode',
+                color: Color(0xFF1565C0),
+              ),
+            ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Hủy", style: TextStyle(color: Colors.grey)),
+
+          const SizedBox(height: 20),
+
+          const _SectionLabel('  Cài đặt'),
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8),
+              ],
+            ),
+            child: ListTile(
+              leading: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1565C0).withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.notifications_outlined,
+                  color: Color(0xFF1565C0),
+                  size: 20,
+                ),
+              ),
+              title: const Text(
+                'Nhận thông báo',
+                style: TextStyle(fontSize: 14),
+              ),
+              trailing: Switch(
+                value: _notificationsEnabled,
+                onChanged: (val) => setState(() => _notificationsEnabled = val),
+                activeColor: const Color(0xFF1565C0),
+              ),
+            ),
           ),
-          ElevatedButton(
-            onPressed: () async {
-              final newEmail = emailController.text.trim();
-              if (newEmail.isEmpty || !newEmail.contains('@')) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Email không hợp lệ")),
-                );
-                return;
-              }
-              
-              Navigator.pop(ctx);
-              final profileController = context.read<ProfileController>();
-              final authController = context.read<AuthController>();
-              
-              final updatedUser = UserEntity(
-                id: user.id,
-                email: newEmail,
-                name: user.name,
-                phone: user.phone,
-                role: user.role,
-                avatarUrl: user.avatarUrl,
-                createdAt: user.createdAt,
-              );
-              
-              final success = await profileController.updateProfile(updatedUser);
-              if (success && context.mounted) {
-                authController.updateUser(updatedUser); // Update session
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Cập nhật email thành công")),
-                );
-              } else if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(profileController.errorMessage ?? "Lỗi cập nhật")),
-                );
-              }
-            },
-            child: const Text("Cập nhật"),
+
+          const SizedBox(height: 20),
+
+          const _SectionLabel('  Thông tin pháp lý'),
+          const _SettingCard(
+            items: [
+              _SettingItem(
+                icon: Icons.description_outlined,
+                label: 'Điều khoản dịch vụ',
+                color: Color(0xFF1565C0),
+              ),
+              _SettingItem(
+                icon: Icons.privacy_tip_outlined,
+                label: 'Chính sách bảo mật',
+                color: Color(0xFF1565C0),
+              ),
+              _SettingItem(
+                icon: Icons.gavel,
+                label: 'Quy định sử dụng',
+                color: Color(0xFF1565C0),
+              ),
+            ],
           ),
+
+          const SizedBox(height: 20),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 8,
+                  ),
+                ],
+              ),
+              child: ListTile(
+                leading: Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.logout, color: Colors.red, size: 20),
+                ),
+                title: const Text(
+                  'Đăng xuất',
+                  style: TextStyle(fontSize: 14, color: Colors.red),
+                ),
+                trailing: const Icon(
+                  Icons.chevron_right,
+                  color: Colors.grey,
+                  size: 20,
+                ),
+                onTap: () {},
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 30),
+          const Center(
+            child: Text(
+              'v1.0.0',
+              style: TextStyle(color: Colors.grey, fontSize: 12),
+            ),
+          ),
+          const SizedBox(height: 20),
         ],
       ),
     );
   }
+}
 
-  Future<void> _showQrLoginDialog(BuildContext context) async {
-    final authController = context.read<AuthController>();
-    final qrData = await authController.createQrLoginToken(persistent: true);
-    if (!context.mounted) return;
-    if (qrData == null || (qrData['token'] as String?)?.isEmpty != false) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(authController.errorMessage ?? 'Không thể tạo mã QR đăng nhập.')),
-      );
-      return;
-    }
+class _SectionLabel extends StatelessWidget {
+  final String text;
+  const _SectionLabel(this.text);
 
-    final token = qrData['token'] as String;
-    final expiresAt = qrData['expiresAt'] as String? ?? '';
-    final payload = 'icare://qr-login?token=$token';
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Mã QR đăng nhập'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            QrImageView(data: payload, version: QrVersions.auto, size: 200),
-            const SizedBox(height: 12),
-            Text('Hết hạn: $expiresAt', textAlign: TextAlign.center),
-          ],
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10, left: 16),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 13,
+          color: Colors.grey,
+          fontWeight: FontWeight.w500,
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Đóng')),
-        ],
       ),
     );
   }
+}
 
-  Widget _buildMenuItem({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
+class _SettingCard extends StatelessWidget {
+  final List<_SettingItem> items;
+  const _SettingCard({super.key, required this.items});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
-          BoxShadow(color: AppColors.shadow, blurRadius: 6),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8),
         ],
       ),
-      child: ListTile(
-        leading: Icon(icon, color: AppColors.primary),
-        title: Text(title, style: AppTextStyles.body),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.textHint),
-        onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: Column(
+        children: items.asMap().entries.map((e) {
+          final isLast = e.key == items.length - 1;
+          return Column(
+            children: [
+              e.value,
+              if (!isLast)
+                Divider(height: 1, indent: 60, color: Colors.grey[100]),
+            ],
+          );
+        }).toList(),
       ),
+    );
+  }
+}
+
+class _SettingItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback? onTap;
+
+  const _SettingItem({
+    required this.icon,
+    required this.label,
+    required this.color,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, color: color, size: 20),
+      ),
+      title: Text(
+        label,
+        style: const TextStyle(fontSize: 14, color: Color(0xFF222222)),
+      ),
+      trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+      onTap: onTap,
     );
   }
 }
