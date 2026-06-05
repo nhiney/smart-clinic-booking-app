@@ -198,8 +198,61 @@ class StatItemEntity extends Equatable {
     required this.chartData,
   });
 
+  Map<String, dynamic> toMap() {
+    return {
+      'value': value,
+      'percentageChange': percentageChange,
+      'absoluteChange': absoluteChange,
+      'chartData': chartData,
+    };
+  }
+
+  factory StatItemEntity.fromMap(Map<String, dynamic> map) {
+    return StatItemEntity(
+      value: (map['value'] as num?)?.toDouble() ?? 0.0,
+      percentageChange: (map['percentageChange'] as num?)?.toDouble() ?? 0.0,
+      absoluteChange: (map['absoluteChange'] as num?)?.toInt() ?? 0,
+      chartData: (map['chartData'] as List<dynamic>?)?.map((e) => (e as num).toDouble()).toList() ?? [],
+    );
+  }
+
   @override
   List<Object?> get props => [value, percentageChange, absoluteChange, chartData];
+}
+
+class HospitalRevenueItem extends Equatable {
+  final String name;
+  final double revenueValue;
+  final int rank;
+  final double percentageOfMax;
+
+  const HospitalRevenueItem({
+    required this.name,
+    required this.revenueValue,
+    required this.rank,
+    required this.percentageOfMax,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'revenueValue': revenueValue,
+      'rank': rank,
+      'percentageOfMax': percentageOfMax,
+    };
+  }
+
+  factory HospitalRevenueItem.fromMap(Map<String, dynamic> map) {
+    return HospitalRevenueItem(
+      name: map['name'] ?? 'Cơ sở hệ thống',
+      revenueValue: (map['revenueValue'] as num?)?.toDouble() ?? 0.0,
+      rank: (map['rank'] as num?)?.toInt() ?? 0,
+      percentageOfMax: (map['percentageOfMax'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
+
+  @override
+  List<Object?> get props => [name, revenueValue, rank, percentageOfMax];
 }
 
 class AdminDashboardEntity extends Equatable {
@@ -212,6 +265,7 @@ class AdminDashboardEntity extends Equatable {
   final StatItemEntity doctors;
   final StatItemEntity patients;
   final StatItemEntity revenue;
+  final List<HospitalRevenueItem> topHospitals;
 
   const AdminDashboardEntity({
     required this.adminName,
@@ -223,7 +277,40 @@ class AdminDashboardEntity extends Equatable {
     required this.doctors,
     required this.patients,
     required this.revenue,
+    this.topHospitals = const [],
   });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'adminName': adminName,
+      'facilityName': facilityName,
+      'systemUptime': systemUptime,
+      'lastUpdated': lastUpdated,
+      'appointments': appointments.toMap(),
+      'hospitals': hospitals.toMap(),
+      'doctors': doctors.toMap(),
+      'patients': patients.toMap(),
+      'revenue': revenue.toMap(),
+      'topHospitals': topHospitals.map((e) => e.toMap()).toList(),
+    };
+  }
+
+  factory AdminDashboardEntity.fromMap(Map<String, dynamic> map) {
+    return AdminDashboardEntity(
+      adminName: map['adminName'] ?? '',
+      facilityName: map['facilityName'] ?? '',
+      systemUptime: (map['systemUptime'] as num?)?.toDouble() ?? 99.9,
+      lastUpdated: map['lastUpdated'] ?? '',
+      appointments: StatItemEntity.fromMap(map['appointments'] ?? {}),
+      hospitals: StatItemEntity.fromMap(map['hospitals'] ?? {}),
+      doctors: StatItemEntity.fromMap(map['doctors'] ?? {}),
+      patients: StatItemEntity.fromMap(map['patients'] ?? {}),
+      revenue: StatItemEntity.fromMap(map['revenue'] ?? {}),
+      topHospitals: (map['topHospitals'] as List<dynamic>?)
+              ?.map((e) => HospitalRevenueItem.fromMap(e as Map<String, dynamic>))
+              .toList() ?? [],
+    );
+  }
 
   AdminDashboardEntity copyWith({
     String? adminName,
@@ -235,6 +322,7 @@ class AdminDashboardEntity extends Equatable {
     StatItemEntity? doctors,
     StatItemEntity? patients,
     StatItemEntity? revenue,
+    List<HospitalRevenueItem>? topHospitals,
   }) {
     return AdminDashboardEntity(
       adminName: adminName ?? this.adminName,
@@ -246,11 +334,12 @@ class AdminDashboardEntity extends Equatable {
       doctors: doctors ?? this.doctors,
       patients: patients ?? this.patients,
       revenue: revenue ?? this.revenue,
+      topHospitals: topHospitals ?? this.topHospitals,
     );
   }
 
   @override
-  List<Object?> get props => [adminName, facilityName, systemUptime, lastUpdated, appointments, hospitals, doctors, patients, revenue];
+  List<Object?> get props => [adminName, facilityName, systemUptime, lastUpdated, appointments, hospitals, doctors, patients, revenue, topHospitals];
 }
 
 class Patient extends Equatable {
@@ -352,5 +441,40 @@ class Patient extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, hospitalId, departmentId, name, phone, address, assignedDoctor, bloodType, diagnosis, diagnoses, medicalHistory, insuranceId, allergies, dateOfBirth, lastVisit, isVip, totalVisits, status]; // 🌟 Thêm status vào props so sánh
+  List<Object?> get props => [id, hospitalId, departmentId, name, phone, address, assignedDoctor, bloodType, diagnosis, diagnoses, medicalHistory, insuranceId, allergies, dateOfBirth, lastVisit, isVip, totalVisits, status];
+}
+
+class ArticleEntity extends Equatable {
+  final String id;
+  final String title;
+  final String authorName;
+  final String category;
+  final String status;
+  final int views;
+  final String publishDate;
+
+  const ArticleEntity({
+    required this.id,
+    required this.title,
+    required this.authorName,
+    required this.category,
+    required this.status,
+    required this.views,
+    required this.publishDate,
+  });
+
+  factory ArticleEntity.fromMap(Map<String, dynamic> map, String id) {
+    return ArticleEntity(
+      id: id,
+      title: map['title'] ?? 'Tiêu đề trống',
+      authorName: map['author_name'] ?? map['authorName'] ?? 'Ẩn danh',
+      category: map['category'] ?? 'Chung',
+      status: map['status'] ?? 'Nháp',
+      views: (map['views'] as num?)?.toInt() ?? 0,
+      publishDate: map['publish_date'] ?? map['publishDate'] ?? '--/--',
+    );
+  }
+
+  @override
+  List<Object?> get props => [id, title, authorName, category, status, views, publishDate];
 }

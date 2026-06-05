@@ -61,7 +61,42 @@ class AdminController extends ChangeNotifier {
         realAdminName = rawData.adminName;
       }
 
-      dashboardData = rawData.copyWith(adminName: realAdminName);
+      final List<double> firebaseRevenueList = rawData.revenue.chartData;
+      
+      double maxVal = firebaseRevenueList.isNotEmpty 
+          ? firebaseRevenueList.reduce((a, b) => a > b ? a : b) 
+          : 1.0;
+
+      final List<HospitalRevenueItem> dynamicTopHospitals = List.generate(firebaseRevenueList.length, (index) {
+        String currentHospitalName = 'Cơ sở thành viên ${index + 1}';
+        if (hospitals.isNotEmpty && index < hospitals.length) {
+          currentHospitalName = hospitals[index].name;
+        }
+        
+        return HospitalRevenueItem(
+          name: currentHospitalName,
+          revenueValue: firebaseRevenueList[index],
+          rank: index + 1,
+          percentageOfMax: firebaseRevenueList[index] / maxVal,
+        );
+      });
+
+      dynamicTopHospitals.sort((a, b) => b.revenueValue.compareTo(a.revenueValue));
+      
+      final List<HospitalRevenueItem> rankedHospitals = List.generate(dynamicTopHospitals.length, (index) {
+        final item = dynamicTopHospitals[index];
+        return HospitalRevenueItem(
+          name: item.name,
+          revenueValue: item.revenueValue,
+          rank: index + 1,
+          percentageOfMax: item.percentageOfMax,
+        );
+      });
+
+      dashboardData = rawData.copyWith(
+        adminName: realAdminName,
+        topHospitals: rankedHospitals,
+      );
 
     } catch (e) {
       errorMessage = e.toString();
@@ -71,6 +106,8 @@ class AdminController extends ChangeNotifier {
     }
   }
 
+  List<ArticleEntity> articles = [];
+
   Future<void> fetchHospitals() async {
     try {
       isLoading = true;
@@ -78,6 +115,36 @@ class AdminController extends ChangeNotifier {
       hospitals = await facilityRepository.getAllHospitals();
       await fetchAllDoctors();
       await fetchDashboardOverview();
+
+      articles = List.from([
+        const ArticleEntity(
+          id: 'art_01',
+          title: '5 dấu hiệu cảnh báo bệnh tim mạch',
+          authorName: 'Trần Minh Quân',
+          category: 'Tim mạch',
+          status: 'Đã xuất bản',
+          views: 12400,
+          publishDate: '23/05',
+        ),
+        const ArticleEntity(
+          id: 'art_02',
+          title: 'Chế độ ăn cho người tiểu đường',
+          authorName: 'Nguyễn T. Lan',
+          category: 'Dinh dưỡng',
+          status: 'Đã xuất bản',
+          views: 8200,
+          publishDate: '21/05',
+        ),
+        const ArticleEntity(
+          id: 'art_03',
+          title: 'Hướng dẫn chăm sóc trẻ sốt cao',
+          authorName: 'Phạm V. Đức',
+          category: 'Nhi khoa',
+          status: 'Đang soạn',
+          views: 0,
+          publishDate: 'Nháp',
+        ),
+      ]);
 
       if (hospitals.isNotEmpty) {
         await selectHospital(hospitals.first);
@@ -88,6 +155,11 @@ class AdminController extends ChangeNotifier {
       isLoading = false;
       notifyListeners();
     }
+  }
+
+  void addNewArticle(ArticleEntity newArticle) {
+    articles.insert(0, newArticle);
+    notifyListeners();
   }
 
   Future<void> fetchAllDoctors() async {
@@ -298,5 +370,18 @@ class AdminController extends ChangeNotifier {
       isLoading = false;
       notifyListeners();
     }
+  }
+
+  void updateArticle(ArticleEntity updatedArticle) {
+    final index = articles.indexWhere((element) => element.id == updatedArticle.id);
+    if (index != -1) {
+      articles[index] = updatedArticle;
+      notifyListeners();
+    }
+  }
+
+  void deleteArticle(String articleId) {
+    articles.removeWhere((element) => element.id == articleId);
+    notifyListeners();
   }
 }

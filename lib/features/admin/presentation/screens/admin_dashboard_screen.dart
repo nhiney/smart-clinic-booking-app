@@ -4,6 +4,8 @@ import '../../../../core/extensions/context_extension.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../controllers/admin_controller.dart';
 import 'add_doctor_screen.dart';
+import 'admin_revenue_screen.dart'; 
+import '../widgets/admin_content_view.dart'; // 🌟 Import View nội dung (Hình 2)
 
 import '../widgets/hospital_management_view.dart';
 import '../widgets/admin_settings_view.dart';
@@ -70,7 +72,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         matchesStatus = (docStatus == 'rejected');
       }
 
-      // Kiểm tra từ khóa tìm kiếm
       bool matchesSearch = doctor.name.toLowerCase().contains(_searchDoctorQuery.toLowerCase()) ||
           (doctor.specialty ?? '').toLowerCase().contains(_searchDoctorQuery.toLowerCase());
 
@@ -81,17 +82,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<AdminController>();
-    final authController = context.watch<AuthController>();
 
     _filterAndCountDoctors(controller);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
-      appBar: _currentIndex == 0
+      backgroundColor: const Color(0xFFF8FAFC), // 🌟 ĐỔI MÀU NỀN: Đồng bộ xám nhạt tinh tế giống Hình 1 & 2
+      appBar: _currentIndex == 0 || _currentIndex == 3 // 🌟 ẨN APPBAR: Ẩn tại Tổng quan và Nội dung giúp giao diện thoáng sạch
           ? null
           : AppBar(
               elevation: 0,
-              backgroundColor: context.colors.primarySurface,
+              backgroundColor: Colors.white,
+              iconTheme: const IconThemeData(color: Colors.black),
               title: Text(
                 _currentIndex == 1 
                     ? 'Bệnh viện' 
@@ -142,7 +143,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         }
 
         if (controller.isLoading && controller.dashboardData == null) {
-          return const Center(child: CircularProgressIndicator(color: Color(0xFF0F172A)));
+          return const Center(child: CircularProgressIndicator(color: Color(0xFF2563EB)));
         }
 
         if (controller.dashboardData == null) {
@@ -163,12 +164,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           );
         }
 
+        // 🌟 INDEXEDSTACK: Phân tách đầy đủ 5 phân vùng giao diện động
         return IndexedStack(
           index: _currentIndex,
           children: [
             _buildDashboardHub(context, controller),
             _buildHospitalList(controller),
-            _buildDoctorList(controller), // Gọi hàm hiển thị tinh gọn bên dưới
+            _buildDoctorList(controller),
+            AdminContentView(articles: controller.articles), // 🌟 Tab Nội dung động (Hình 2)
             AdminSettingsView(
               onLogoutTap: () => _handleLogout(context),
             ),
@@ -178,22 +181,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, -4)),
+            BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 15, offset: const Offset(0, -4)),
           ],
         ),
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
           onTap: (index) => setState(() => _currentIndex = index),
-          backgroundColor: context.colors.surface,
+          backgroundColor: Colors.white,
           selectedItemColor: const Color(0xFF2563EB),
-          unselectedItemColor: context.colors.textHint,
+          unselectedItemColor: const Color(0xFF94A3B8),
           type: BottomNavigationBarType.fixed,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home_outlined, size: 24), activeIcon: Icon(Icons.home_rounded, size: 24), label: 'Tổng quan'),
-            BottomNavigationBarItem(icon: Icon(Icons.business_outlined, size: 24), activeIcon: Icon(Icons.business_rounded, size: 24), label: 'Bệnh viện'),
-            BottomNavigationBarItem(icon: Icon(Icons.people_outline_rounded, size: 24), activeIcon: Icon(Icons.people_alt_rounded, size: 24), label: 'Bác sĩ'),
-            BottomNavigationBarItem(icon: Icon(Icons.settings_outlined, size: 24), activeIcon: Icon(Icons.settings_rounded, size: 24), label: 'Cài đặt'),
+            BottomNavigationBarItem(icon: Icon(Icons.home_outlined, size: 22), activeIcon: Icon(Icons.home_rounded, size: 22), label: 'Tổng quan'),
+            BottomNavigationBarItem(icon: Icon(Icons.business_outlined, size: 22), activeIcon: Icon(Icons.business_rounded, size: 22), label: 'Bệnh viện'),
+            BottomNavigationBarItem(icon: Icon(Icons.people_outline_rounded, size: 22), activeIcon: Icon(Icons.people_alt_rounded, size: 22), label: 'Bác sĩ'),
+            BottomNavigationBarItem(icon: Icon(Icons.article_outlined, size: 22), activeIcon: Icon(Icons.article_rounded, size: 22), label: 'Nội dung'), // Tab mới
+            BottomNavigationBarItem(icon: Icon(Icons.settings_outlined, size: 22), activeIcon: Icon(Icons.settings_rounded, size: 22), label: 'Cài đặt'),
           ],
         ),
       ),
@@ -205,24 +210,39 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     if (data == null) return const Center(child: CircularProgressIndicator());
 
     return RefreshIndicator(
-      color: const Color(0xFF0F172A),
+      color: const Color(0xFF2563EB),
       onRefresh: () async {
         await context.read<AdminController>().fetchDashboardOverview();
       },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 12),
+            const SizedBox(height: 32), // Bù khoảng trống cho thanh trạng thái hệ thống khi ẩn AppBar
             DashboardHeader(data: data),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             DashboardTitleSection(data: data),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             DashboardPeriodSelector(controller: controller),
-            const SizedBox(height: 20),
-            MainAppointmentCard(appointments: data.appointments, currentPeriod: controller.selectedPeriod),
+            const SizedBox(height: 16),
+            
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AdminRevenueScreen(dashboardData: data),
+                  ),
+                );
+              },
+              child: MainAppointmentCard(
+                appointments: data.appointments, 
+                currentPeriod: controller.selectedPeriod,
+              ),
+            ),
+            
             const SizedBox(height: 16),
             SecondaryStatsGrid(data: data),
             const SizedBox(height: 24),
