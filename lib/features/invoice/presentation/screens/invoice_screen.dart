@@ -11,6 +11,7 @@ import '../../../../shared/widgets/empty_state_widget.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../controllers/invoice_controller.dart';
 import '../../domain/entities/invoice_entity.dart';
+import '../utils/invoice_pdf.dart';
 import 'package:intl/intl.dart';
 
 class InvoiceScreen extends ConsumerStatefulWidget {
@@ -171,10 +172,16 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                                     'description': 'Thanh toán hóa đơn #${invoice.id.substring(0, 8).toUpperCase()}',
                                     'invoiceId': invoice.id,
                                   })
-                              : () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text("Tính năng tải PDF đang phát triển")),
-                                  );
+                              : () async {
+                                  try {
+                                    await InvoicePdf.shareInvoice(invoice);
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('Không tạo được PDF: $e')),
+                                      );
+                                    }
+                                  }
                                 },
                           icon: Icon(isPending ? Icons.payment_rounded : Icons.download_rounded, size: 18),
                           label: Text(isPending ? "Thanh toán" : "Tải về"),

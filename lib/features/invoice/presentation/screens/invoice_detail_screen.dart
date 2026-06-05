@@ -9,6 +9,7 @@ import '../../../../core/extensions/context_extension.dart';
 import '../../../../shared/widgets/loading_widget.dart';
 import '../controllers/invoice_controller.dart';
 import '../../domain/entities/invoice_entity.dart';
+import '../utils/invoice_pdf.dart';
 
 class InvoiceDetailScreen extends ConsumerStatefulWidget {
   final String invoiceId;
@@ -100,10 +101,16 @@ class _InvoiceDetailScreenState extends ConsumerState<InvoiceDetailScreen> {
               text: "Tải hóa đơn PDF",
               prefixIcon: const Icon(Icons.download_rounded, color: Colors.white),
               backgroundColor: const Color(0xFF2E7D32),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Tính năng tải PDF đang phát triển")),
-                );
+              onPressed: () async {
+                try {
+                  await InvoicePdf.shareInvoice(invoice);
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Không tạo được PDF: $e')),
+                    );
+                  }
+                }
               },
             ),
           SizedBox(height: context.spacing.m),
