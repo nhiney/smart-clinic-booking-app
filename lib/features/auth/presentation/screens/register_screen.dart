@@ -127,7 +127,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 borderRadius: context.radius.xlRadius,
                 boxShadow: [
                   BoxShadow(
-                    color: context.colors.primary.withOpacity(0.15),
+                    color: context.colors.primary.withValues(alpha: 0.15),
                     blurRadius: 12,
                     offset: const Offset(0, 6),
                   ),
@@ -254,7 +254,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         label: Text(l10n.role_patient),
                         selected: selectedRole == 'patient',
                         onSelected: (_) => setState(() => selectedRole = 'patient'),
-                        selectedColor: context.colors.primary.withOpacity(0.16),
+                        selectedColor: context.colors.primary.withValues(alpha: 0.16),
                         labelStyle: context.textStyles.bodyBold.copyWith(
                           color: selectedRole == 'patient' ? context.colors.primary : context.colors.textSecondary,
                         ),
@@ -267,7 +267,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         label: Text(l10n.role_doctor),
                         selected: selectedRole == 'doctor',
                         onSelected: (_) => setState(() => selectedRole = 'doctor'),
-                        selectedColor: context.colors.primary.withOpacity(0.16),
+                        selectedColor: context.colors.primary.withValues(alpha: 0.16),
                         labelStyle: context.textStyles.bodyBold.copyWith(
                           color: selectedRole == 'doctor' ? context.colors.primary : context.colors.textSecondary,
                         ),

@@ -21,7 +21,7 @@ class HospitalListItem extends StatelessWidget {
         borderRadius: context.radius.lRadius,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -43,7 +43,7 @@ class HospitalListItem extends StatelessWidget {
                       width: 60,
                       height: 60,
                       decoration: BoxDecoration(
-                        color: context.colors.primary.withOpacity(0.1),
+                        color: context.colors.primary.withValues(alpha: 0.1),
                         borderRadius: context.radius.mRadius,
                       ),
                       child: ClipRRect(
@@ -114,9 +114,9 @@ class HospitalListItem extends StatelessWidget {
                     children: hospital.specialties.take(5).map((s) => Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: context.colors.primary.withOpacity(0.08),
+                        color: context.colors.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: context.colors.primary.withOpacity(0.1)),
+                        border: Border.all(color: context.colors.primary.withValues(alpha: 0.1)),
                       ),
                       child: Text(
                         s,

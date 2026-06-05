@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/colors/app_colors.dart';
-import '../../core/theme/typography/app_text_styles.dart';
 import '../../features/appointment/domain/entities/appointment_entity.dart';
 
 class AppointmentCard extends StatelessWidget {
@@ -88,7 +88,7 @@ class AppointmentCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -160,7 +160,7 @@ class AppointmentCard extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.access_time_filled_rounded, size: 16, color: statusColor.withOpacity(0.8)),
+                      Icon(Icons.access_time_filled_rounded, size: 16, color: statusColor.withValues(alpha: 0.8)),
                       const SizedBox(width: 8),
                       Text(
                         'Thời gian kham: ',
@@ -182,7 +182,7 @@ class AppointmentCard extends StatelessWidget {
                           onPressed: onCancel,
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Colors.red,
-                            side: BorderSide(color: Colors.red.withOpacity(0.3)),
+                            side: BorderSide(color: Colors.red.withValues(alpha: 0.3)),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             padding: const EdgeInsets.symmetric(vertical: 10),
                           ),
@@ -192,7 +192,7 @@ class AppointmentCard extends StatelessWidget {
                     if (isCompleted) ...[
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () {},
+                          onPressed: () => GoRouter.of(context).push('/doctor/review/unknown'),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.primary,
                             side: const BorderSide(color: AppColors.primary),
@@ -205,7 +205,7 @@ class AppointmentCard extends StatelessWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () => GoRouter.of(context).push('/doctor/search'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,
@@ -220,7 +220,7 @@ class AppointmentCard extends StatelessWidget {
                     if (isCancelled)
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () {},
+                          onPressed: () => GoRouter.of(context).push('/doctor/search'),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.primary,
                             side: const BorderSide(color: AppColors.primary),
@@ -233,7 +233,7 @@ class AppointmentCard extends StatelessWidget {
                     if (!isCompleted && !isCancelled && !AppointmentStatuses.cancellable.contains(normalizedStatus))
                        Expanded(
                         child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () => GoRouter.of(context).push('/appointments'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:smart_clinic_booking/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/theme/colors/app_colors.dart';
 import '../../../../core/extensions/context_extension.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
@@ -124,7 +123,7 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
         borderRadius: context.radius.xlRadius,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),

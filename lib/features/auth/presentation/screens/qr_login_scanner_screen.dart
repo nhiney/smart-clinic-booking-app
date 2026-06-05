@@ -6,7 +6,6 @@ import 'package:smart_clinic_booking/core/widgets/branded_app_bar.dart';
 
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart' as mlkit;
 import '../controllers/auth_controller.dart';
 import '../navigation/role_navigation.dart';
 import '../utils/auth_error_localizer.dart';
@@ -104,21 +103,15 @@ class _QrLoginScannerScreenState extends State<QrLoginScannerScreen> {
   }
 
   Future<void> _pickAndScanImage() async {
-    mlkit.BarcodeScanner? barcodeScanner;
     try {
-      // 1. ImagePicker handles basic gallery access on modern iOS/Android
-      // without needing explicit Permission.photos in many cases.
-      // We only check if it's already denied.
       if (await Permission.photos.isPermanentlyDenied) {
         if (!mounted) return;
         _showPermissionDialog();
         return;
       }
 
-      // 2. Pause live camera
       await _scannerController.stop();
 
-      // 3. Pick image
       final XFile? image = await _picker.pickImage(
         source: ImageSource.gallery,
         maxWidth: 1024,
@@ -133,12 +126,9 @@ class _QrLoginScannerScreenState extends State<QrLoginScannerScreen> {
 
       setState(() => _isHandlingScan = true);
 
-      // 4. Use Google ML Kit for definitive static analysis
-      barcodeScanner = mlkit.BarcodeScanner(formats: [mlkit.BarcodeFormat.qrCode]);
-      final mlkit.InputImage inputImage = mlkit.InputImage.fromFilePath(image.path);
-      final List<mlkit.Barcode> barcodes = await barcodeScanner.processImage(inputImage);
-      
-      if (barcodes.isEmpty) {
+      final capture = await _scannerController.analyzeImage(image.path);
+
+      if (capture == null || capture.barcodes.isEmpty) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -154,7 +144,7 @@ class _QrLoginScannerScreenState extends State<QrLoginScannerScreen> {
           ),
         );
       } else {
-        final String? raw = barcodes.first.rawValue;
+        final String? raw = capture.barcodes.first.rawValue;
         if (raw != null && raw.trim().isNotEmpty) {
           final token = _extractToken(raw);
           await _processToken(token);
@@ -164,13 +154,12 @@ class _QrLoginScannerScreenState extends State<QrLoginScannerScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Lỗi quét ảnh (ML Kit): $e'),
+          content: Text('Lỗi quét ảnh: $e'),
           backgroundColor: context.colors.error,
         ),
       );
     } finally {
       setState(() => _isHandlingScan = false);
-      barcodeScanner?.close();
       if (mounted) {
         await _scannerController.start();
       }
@@ -229,7 +218,7 @@ class _QrLoginScannerScreenState extends State<QrLoginScannerScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.92),
+                    color: Colors.white.withValues(alpha: 0.92),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Row(
@@ -285,7 +274,7 @@ class _QrLoginScannerScreenState extends State<QrLoginScannerScreen> {
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white.withOpacity(0.9),
+                        backgroundColor: Colors.white.withValues(alpha: 0.9),
                         foregroundColor: context.colors.primary,
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                         shape: RoundedRectangleBorder(

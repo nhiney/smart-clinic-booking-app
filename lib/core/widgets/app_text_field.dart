@@ -20,6 +20,7 @@ class AppTextField extends StatelessWidget {
   final TextStyle? style;
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onFieldSubmitted;
+  final ValueChanged<String>? onChanged;
 
   const AppTextField({
     super.key,
@@ -39,6 +40,7 @@ class AppTextField extends StatelessWidget {
     this.style,
     this.textInputAction,
     this.onFieldSubmitted,
+    this.onChanged,
   });
 
   @override
@@ -67,6 +69,7 @@ class AppTextField extends StatelessWidget {
           textAlign: textAlign,
           textInputAction: textInputAction,
           onFieldSubmitted: onFieldSubmitted,
+          onChanged: onChanged,
           style: style ?? AppTextStyles.body.copyWith(color: context.colors.textPrimary),
           decoration: InputDecoration(
             hintText: hintText,

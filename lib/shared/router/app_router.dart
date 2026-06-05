@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -60,13 +59,13 @@ import '../../features/auth/presentation/screens/doctor_home_screen.dart';
 import '../../features/doctor/patient_pov/domain/entities/doctor_entity.dart';
 import '../../features/doctor/patient_pov/presentation/screens/doctor_detail_screen.dart';
 import '../../features/doctor/patient_pov/presentation/screens/doctor_search_screen.dart';
-
-// No longer need placeholders as we implemented the real screens
-class KycUploadScreen extends StatelessWidget {
-  const KycUploadScreen({super.key});
-  @override
-  Widget build(BuildContext context) => const Scaffold(body: Center(child: Text("KYC Upload Screen (Secure)")));
-}
+import '../../features/appointment/presentation/screens/patient_appointments_screen.dart';
+import '../../features/kyc/presentation/screens/kyc_upload_screen.dart';
+import '../../features/kyc/presentation/screens/kyc_approval_screen.dart';
+import '../../features/doctor/doctor_pov/presentation/screens/doctor_schedule_timeline_screen.dart';
+import '../../features/doctor/patient_pov/presentation/screens/patient_find_doctor_screen.dart';
+import '../../features/doctor/patient_pov/presentation/screens/patient_doctor_profile_booking_screen.dart';
+import '../../features/booking/presentation/screens/booking_confirmation_screen.dart';
 
 /// Custom notifier to bridge FirebaseAuth streams into GoRouter's refresh Listenable.
 class GoRouterRefreshStream extends ChangeNotifier {
@@ -186,8 +185,11 @@ class AppRouter {
         return '/forbidden';
       }
       if (path.startsWith('/doctor') && role != 'doctor') {
-        // Allow patients to search and see doctor details
-        if (path == '/doctor/search' || path.startsWith('/doctor/detail/')) {
+        // Allow patients to search, view doctor details, and use the booking funnel
+        if (path == '/doctor/search' ||
+            path == '/doctor/find' ||
+            path == '/doctor/profile-booking' ||
+            path.startsWith('/doctor/detail/')) {
           return null;
         }
         return '/forbidden';
@@ -292,6 +294,10 @@ class AppRouter {
       GoRoute(
         path: '/admin/dashboard',
         builder: (context, state) => const AdminDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/admin/kyc-approvals',
+        builder: (context, state) => const KycApprovalScreen(),
       ),
       GoRoute(
         path: '/ai/voice-assistant',
@@ -482,6 +488,26 @@ class AppRouter {
           doctorId: state.pathParameters['doctorId']!,
           doctorName: state.extra as String? ?? 'Bác sĩ',
         ),
+      ),
+      GoRoute(
+        path: '/patient/appointments',
+        builder: (context, state) => const PatientAppointmentsScreen(),
+      ),
+      GoRoute(
+        path: '/doctor/schedule',
+        builder: (context, state) => const DoctorScheduleTimelineScreen(),
+      ),
+      GoRoute(
+        path: '/doctor/find',
+        builder: (context, state) => const PatientFindDoctorScreen(),
+      ),
+      GoRoute(
+        path: '/doctor/profile-booking',
+        builder: (context, state) => const PatientDoctorProfileBookingScreen(),
+      ),
+      GoRoute(
+        path: '/booking/confirmation',
+        builder: (context, state) => const BookingConfirmationScreen(),
       ),
       GoRoute(
         path: '/under-development',

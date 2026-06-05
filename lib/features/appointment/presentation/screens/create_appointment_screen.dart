@@ -3,9 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/extensions/context_extension.dart';
-import '../../../../core/theme/colors/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/branded_app_bar.dart';
 
 class CreateAppointmentScreen extends ConsumerStatefulWidget {
   const CreateAppointmentScreen({super.key});
@@ -94,7 +92,7 @@ class _CreateAppointmentScreenState extends ConsumerState<CreateAppointmentScree
                 child: Icon(
                   Icons.calendar_today_rounded,
                   size: 150,
-                  color: Colors.white.withOpacity(0.1),
+                  color: Colors.white.withValues(alpha: 0.1),
                 ),
               ),
             ],
@@ -126,7 +124,7 @@ class _CreateAppointmentScreenState extends ConsumerState<CreateAppointmentScree
         borderRadius: context.radius.lRadius,
         boxShadow: [
           BoxShadow(
-            color: context.colors.primary.withOpacity(0.05),
+            color: context.colors.primary.withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -175,7 +173,15 @@ class _CreateAppointmentScreenState extends ConsumerState<CreateAppointmentScree
             ),
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: () => showDialog(
+              context: context,
+              builder: (_) => AlertDialog(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                title: const Text('Hướng dẫn đặt lịch'),
+                content: const Text('1. Chọn ngày & giờ khám\n2. Điền lý do khám\n3. Xác nhận thông tin\n4. Đặt lịch và thanh toán (nếu cần)'),
+                actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Đã hiểu'))],
+              ),
+            ),
             icon: Icon(Icons.info_outline_rounded, color: context.colors.primary),
           ),
         ],
@@ -205,7 +211,7 @@ class _CreateAppointmentScreenState extends ConsumerState<CreateAppointmentScree
                 borderRadius: context.radius.mRadius,
                 boxShadow: isSelected ? [
                   BoxShadow(
-                    color: context.colors.primary.withOpacity(0.3),
+                    color: context.colors.primary.withValues(alpha: 0.3),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),

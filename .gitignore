@@ -64,3 +64,32 @@ architecture.g.dart
 /windows/flutter/generated/
 /linux/flutter/generated/
 /macos/Flutter/GeneratedPluginRegistrant.swift
+
+# ───── iOS: giữ project, bỏ build & file generated (chứa path máy local) ─────
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/ephemeral/
+ios/Runner/GeneratedPluginRegistrant.*
+ios/ServiceDefinitions.json
+**/DerivedData/
+**/xcuserdata/
+*.xcuserstate
+
+# ───── Android: giữ project, bỏ build & file generated ─────
+android/.gradle/
+android/captures/
+android/key.properties
+android/app/debug/
+android/app/profile/
+android/app/release/
+**/GeneratedPluginRegistrant.java
+
+# ───── Firebase config (theo môi trường / nhạy cảm — mỗi máy tự thêm) ─────
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+**/google-services.json
+**/GoogleService-Info.plist

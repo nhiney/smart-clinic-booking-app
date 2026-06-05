@@ -134,7 +134,7 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -173,7 +173,7 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
                   height: 60,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: context.colors.primary.withOpacity(0.2), width: 3),
+                    border: Border.all(color: context.colors.primary.withValues(alpha: 0.2), width: 3),
                     image: const DecorationImage(
                       image: NetworkImage('https://i.pravatar.cc/150?u=doctor'),
                       fit: BoxFit.cover,
@@ -242,9 +242,9 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
           margin: const EdgeInsets.symmetric(horizontal: 4),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: color.withOpacity(0.2)),
+            border: Border.all(color: color.withValues(alpha: 0.2)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -317,7 +317,7 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
                     color: context.colors.surface,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 4, offset: const Offset(0, 2)),
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 4, offset: const Offset(0, 2)),
                     ],
                   ),
                   child: Column(
@@ -405,7 +405,7 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
         color: context.colors.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 4, offset: const Offset(0, 2)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 4, offset: const Offset(0, 2)),
         ],
       ),
       child: Row(
@@ -413,7 +413,7 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: context.colors.primary.withOpacity(0.1),
+              color: context.colors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
@@ -519,7 +519,7 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
@@ -592,7 +592,7 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [color.withOpacity(0.8), color],
+              colors: [color.withValues(alpha: 0.8), color],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -605,7 +605,7 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
               const SizedBox(height: 12),
               Text(title, style: context.textStyles.bodyBold.copyWith(color: Colors.white)),
               const SizedBox(height: 4),
-              Text(subtitle, style: context.textStyles.bodySmall.copyWith(color: Colors.white.withOpacity(0.9), fontSize: 10)),
+              Text(subtitle, style: context.textStyles.bodySmall.copyWith(color: Colors.white.withValues(alpha: 0.9), fontSize: 10)),
             ],
           ),
         ),
@@ -620,9 +620,9 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: context.colors.primary.withOpacity(0.05),
+          color: context.colors.primary.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: context.colors.primary.withOpacity(0.1)),
+          border: Border.all(color: context.colors.primary.withValues(alpha: 0.1)),
         ),
         child: Column(
           children: [

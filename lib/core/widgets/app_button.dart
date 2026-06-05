@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../extensions/context_extension.dart';
 import '../theme/radius/app_radius.dart';
-import '../theme/typography/app_text_styles.dart';
 
 class AppButton extends StatelessWidget {
   final String text;

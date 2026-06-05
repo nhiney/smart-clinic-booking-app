@@ -1,9 +1,8 @@
-import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:smart_clinic_booking/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/config/debug_test_login_config.dart';
 import '../../../../core/extensions/context_extension.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
@@ -183,8 +182,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(
                   l10n.login_account,
                   style: context.textStyles.heading2.copyWith(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     color: context.colors.primaryDark,
+                    letterSpacing: -0.3,
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -206,7 +206,7 @@ class _LoginScreenState extends State<LoginScreen> {
         borderRadius: context.radius.xlRadius,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -219,7 +219,11 @@ class _LoginScreenState extends State<LoginScreen> {
           children: [
             Text(
               l10n.phone_label,
-              style: context.textStyles.bodyBold.copyWith(fontSize: 14),
+              style: context.textStyles.bodyBold.copyWith(
+                fontSize: 13.5,
+                color: context.colors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 8),
             AppTextField(
@@ -228,10 +232,14 @@ class _LoginScreenState extends State<LoginScreen> {
               keyboardType: TextInputType.phone,
               prefixIcon: _buildCountryCodePicker(),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
             Text(
               l10n.password_label,
-              style: context.textStyles.bodyBold.copyWith(fontSize: 14),
+              style: context.textStyles.bodyBold.copyWith(
+                fontSize: 13.5,
+                color: context.colors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 8),
             AppTextField(
@@ -265,7 +273,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
                 TextButton(
-                  onPressed: () => context.push('/under-development?title=${Uri.encodeComponent('Quên mật khẩu')}'),
+                  onPressed: () => _showForgotPasswordDialog(context),
                   child: Text(
                     l10n.forgot_password,
                     style: context.textStyles.bodyBold.copyWith(color: context.colors.primary, fontSize: 13),
@@ -314,7 +322,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 icon: const Icon(Icons.qr_code_scanner_rounded),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  side: BorderSide(color: context.colors.primary.withOpacity(0.5)),
+                  side: BorderSide(color: context.colors.primary.withValues(alpha: 0.5)),
                   shape: RoundedRectangleBorder(borderRadius: context.radius.mRadius),
                 ),
                 label: Text(
@@ -357,6 +365,68 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  void _showForgotPasswordDialog(BuildContext context) {
+    final emailCtrl = TextEditingController();
+    bool isSending = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Quên mật khẩu', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Text('Nhập email để nhận link đặt lại mật khẩu.', style: TextStyle(fontSize: 14)),
+            const SizedBox(height: 16),
+            TextField(
+              controller: emailCtrl,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                hintText: 'Email của bạn',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              ),
+            ),
+          ]),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+            ElevatedButton(
+              onPressed: isSending
+                  ? null
+                  : () async {
+                      final email = emailCtrl.text.trim();
+                      if (email.isEmpty) return;
+                      setDialogState(() => isSending = true);
+                      try {
+                        await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+                        if (ctx.mounted) {
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Email đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư.'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        setDialogState(() => isSending = false);
+                        if (ctx.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Lỗi: ${e.toString()}'), backgroundColor: Colors.red),
+                          );
+                        }
+                      }
+                    },
+              child: isSending
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Text('Gửi email'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -16,25 +17,22 @@ class RecordDetailScreen extends StatelessWidget {
   const RecordDetailScreen({super.key, required this.record});
 
   void _pickAndUploadFile(BuildContext context) async {
-    // TODO: Integrate file_picker or image_picker package here to get the file.
-    // For now, this is a placeholder for the logic before dispatching the event.
-    
-    // Example logic once file is picked:
-    // final result = await FilePicker.platform.pickFiles();
-    // if (result != null) {
-    //   final file = File(result.files.single.path!);
-    //   final fileName = result.files.single.name;
-    //   context.read<MedicalRecordBloc>().add(UploadAttachmentEvent(
-    //     file: file,
-    //     recordId: record.id,
-    //     patientId: record.patientId,
-    //     fileName: fileName,
-    //   ));
-    // }
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Chức năng chọn tệp đang được tích hợp...')),
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'],
     );
+    if (result == null || result.files.single.path == null) return;
+
+    final file = File(result.files.single.path!);
+    final fileName = result.files.single.name;
+
+    if (!context.mounted) return;
+    context.read<MedicalRecordBloc>().add(UploadAttachmentEvent(
+      file: file,
+      recordId: record.id,
+      patientId: record.patientId,
+      fileName: fileName,
+    ));
   }
 
   @override
@@ -248,7 +246,7 @@ class RecordDetailScreen extends StatelessWidget {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, color: color),

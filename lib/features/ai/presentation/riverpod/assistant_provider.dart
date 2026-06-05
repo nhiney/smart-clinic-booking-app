@@ -1,12 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
-import "package:smart_clinic_booking/shared/di/injection.dart";
 import '../../../../core/services/voice_service.dart';
 import '../../domain/services/intent_parser.dart';
 import '../../domain/services/ai_service.dart';
+import '../../domain/entities/ai_entities.dart';
 import '../../data/services/gemini_ai_service.dart';
-import '../../../appointment/domain/usecases/create_appointment_usecase.dart';
-import '../../../appointment/domain/usecases/cancel_appointment_usecase.dart';
 import 'assistant_state.dart';
 
 // Uses GeminiAiService (free tier: gemini-2.0-flash, 1500 req/day).
@@ -25,7 +23,7 @@ class AssistantNotifier extends StateNotifier<AssistantState> {
   final VoiceService _voiceService;
   final IntentParser _intentParser;
   final AiService _aiService;
-  
+
   ParsedIntent? _lastIntent;
 
   AssistantNotifier({
@@ -37,9 +35,11 @@ class AssistantNotifier extends StateNotifier<AssistantState> {
         _aiService = aiService,
         super(const AssistantState());
 
+  VoiceService get voiceService => _voiceService;
+
   Future<void> startListening() async {
     state = state.copyWith(status: AssistantStatus.listening, currentText: '', responseText: '');
-    
+
     await _voiceService.startListening(
       onResult: (text) {
         state = state.copyWith(currentText: text);
@@ -71,16 +71,15 @@ class AssistantNotifier extends StateNotifier<AssistantState> {
     state = state.copyWith(status: AssistantStatus.processing);
     debugPrint('AI Processing Text: ${state.currentText}');
 
-    // 1. Local Intent Parsing for Critical Actions
-    final intent = _intentParser.parse(state.currentText, _lastIntent);
+    final userInput = state.currentText;
+    final intent = _intentParser.parse(userInput, _lastIntent);
     _lastIntent = intent;
     debugPrint('AI Intent: ${intent.type}, Entities: ${intent.entities}');
 
     String response = '';
-    
+
     try {
       if (intent.type != IntentType.unknown) {
-        // Handle structured intents locally
         switch (intent.type) {
           case IntentType.booking:
             response = await _handleBooking(intent);
@@ -99,10 +98,17 @@ class AssistantNotifier extends StateNotifier<AssistantState> {
             response = 'Tôi chưa rõ yêu cầu này.';
         }
       } else {
-        // Fallback to Conversational AI
+        // Build history for context
+        final history = state.history
+            .expand((t) => [
+                  AiMessage(id: '', content: t.userText, role: AiMessageRole.user, timestamp: DateTime.now()),
+                  AiMessage(id: '', content: t.aiText, role: AiMessageRole.assistant, timestamp: DateTime.now()),
+                ])
+            .toList();
+
         final aiMessage = await _aiService.generateResponse(
-          message: state.currentText,
-          history: [],
+          message: userInput,
+          history: history,
         );
         response = aiMessage.content;
       }
@@ -111,26 +117,31 @@ class AssistantNotifier extends StateNotifier<AssistantState> {
       debugPrint('AI Error: $e');
     }
 
-    state = state.copyWith(status: AssistantStatus.speaking, responseText: response);
+    final newHistory = [
+      ...state.history,
+      ConversationTurn(userText: userInput, aiText: response),
+    ];
+
+    state = state.copyWith(
+      status: AssistantStatus.speaking,
+      responseText: response,
+      history: newHistory.length > 10 ? newHistory.sublist(newHistory.length - 10) : newHistory,
+    );
+
     await _voiceService.speak(response);
-    
     state = state.copyWith(status: AssistantStatus.idle);
   }
 
   Future<String> _handleBooking(ParsedIntent intent) async {
     final specialty = intent.entities['specialty'];
     final date = intent.entities['date'] ?? 'ngày mai';
-    
     if (specialty == null) {
       return 'Bạn muốn đặt lịch khám chuyên khoa nào ạ? Ví dụ như nhi khoa hay nội khoa?';
     }
-
-    // Perform real action (mocking for now as we don't have full params)
     return 'Đã hiểu. Tôi đang tiến hành đăng ký lịch khám $specialty cho bạn vào $date. Bạn chờ một chút nhé.';
   }
 
   Future<String> _handleCancel(ParsedIntent intent) async {
-    // Perform real action
     return 'Đã nhận yêu cầu. Tôi đã hủy lịch khám gần nhất của bạn thành công.';
   }
 

@@ -127,12 +127,12 @@ class _DoctorKycRegistrationFormState extends State<DoctorKycRegistrationForm> {
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: _selectedHospital,
+                initialValue: _selectedHospital,
                 decoration: InputDecoration(
                   hintText: l10n.hospital_hint,
                   prefixIcon: Icon(Icons.local_hospital_outlined, color: context.colors.primary),
                   filled: true,
-                  fillColor: Colors.grey.withOpacity(0.05),
+                  fillColor: Colors.grey.withValues(alpha: 0.05),
                   border: OutlineInputBorder(
                     borderRadius: context.radius.mRadius,
                     borderSide: BorderSide.none,
@@ -177,9 +177,9 @@ class _DoctorKycRegistrationFormState extends State<DoctorKycRegistrationForm> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
         decoration: BoxDecoration(
-          border: Border.all(color: context.colors.primary.withOpacity(0.2)),
+          border: Border.all(color: context.colors.primary.withValues(alpha: 0.2)),
           borderRadius: context.radius.mRadius,
-          color: context.colors.primary.withOpacity(0.02),
+          color: context.colors.primary.withValues(alpha: 0.02),
         ),
         child: Row(
           children: [
@@ -194,7 +194,7 @@ class _DoctorKycRegistrationFormState extends State<DoctorKycRegistrationForm> {
                 ),
               ),
             ),
-            Icon(Icons.cloud_upload_outlined, size: 20, color: context.colors.primary.withOpacity(0.5)),
+            Icon(Icons.cloud_upload_outlined, size: 20, color: context.colors.primary.withValues(alpha: 0.5)),
           ],
         ),
       ),

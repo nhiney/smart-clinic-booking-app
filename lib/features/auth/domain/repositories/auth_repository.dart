@@ -48,4 +48,8 @@ abstract class AuthRepository {
     String? password,
     String? tenantId,
   });
+
+  // Token Management
+  /// Refresh Firebase ID Token. Returns token mới hoặc null.
+  Future<String?> refreshToken();
 }

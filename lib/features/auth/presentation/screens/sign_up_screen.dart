@@ -187,7 +187,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         borderRadius: context.radius.xlRadius,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
+                            color: Colors.black.withValues(alpha: 0.04),
                             blurRadius: 24,
                             offset: const Offset(0, 12),
                           ),

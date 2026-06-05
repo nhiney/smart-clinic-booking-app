@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../widgets/quick_actions_grid.dart';
-import '../../../../core/theme/colors/app_colors.dart';
 
 class ServicesScreen extends StatelessWidget {
   const ServicesScreen({super.key});
@@ -61,7 +60,7 @@ class ServicesScreen extends StatelessWidget {
             icon: Icons.local_pharmacy_outlined,
             title: 'Mua thuốc online',
             subtitle: 'Đặt mua thuốc từ đơn thuốc của bác sĩ',
-            onTap: () => context.push('/under-development?title=${Uri.encodeComponent('Mua thuốc online')}'),
+            onTap: () => context.push('/medication'),
           ),
           _buildServiceTile(
             icon: Icons.volunteer_activism_outlined,
@@ -73,7 +72,7 @@ class ServicesScreen extends StatelessWidget {
             icon: Icons.history_edu_outlined,
             title: 'Cẩm nang sức khỏe',
             subtitle: 'Kiến thức y khoa hữu ích từ chuyên gia',
-            onTap: () => context.push('/under-development?title=${Uri.encodeComponent('Cẩm nang sức khỏe')}'),
+            onTap: () => context.push('/health-library'),
           ),
         ],
       ),
@@ -94,7 +93,7 @@ class ServicesScreen extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade100),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),

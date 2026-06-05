@@ -1,0 +1,488 @@
+    ================================================================================
+HƯỚNG DẪN: LƯU KẾT QUẢ KHÁM BỆNH (VAI TRÒ BÁC SĨ) LÊN FIREBASE
+Dự án: smart_clinic_booking (Flutter + Firebase, Clean Architecture)
+================================================================================
+
+------------------------------------------------------------
+0. LUỒNG NGHIỆP VỤ
+------------------------------------------------------------
+Bác sĩ mở phiên khám cho 1 appointment -> nhập chẩn đoán/đơn thuốc/ghi chú
+-> nhấn LƯU -> hệ thống làm 2 việc CÙNG LÚC (nguyên tử bằng WriteBatch):
+   (1) Tạo document kết quả khám mới trong collection 'medical_records'
+   (2) Cập nhật appointment: status = 'completed', completedAt = now
+
+    DoctorExamineScreen (nhập liệu)
+            |
+            v
+    SaveExaminationUseCase
+            |
+            v
+    ExaminationRepository
+            |
+            v
+    ExaminationRemoteDatasource  -- ghi 2 chỗ trong 1 WriteBatch --+
+            |                                                       |
+            v                                                       v
+    medical_records/{id}                  appointments/{id}
+    (kết quả khám mới)                    status -> 'completed'
+
+LƯU Ý: dùng WriteBatch để không xảy ra trường hợp lưu được record nhưng
+quên đổi trạng thái appointment.
+
+------------------------------------------------------------
+1. DANH SÁCH FILE (5 tạo mới + 1 sửa)
+------------------------------------------------------------
+| # | File                                                                  | Hành động | Tầng         |
+|---|-----------------------------------------------------------------------|-----------|--------------|
+| 1 | doctor_pov/domain/entities/examination_result.dart                    | TẠO MỚI   | Domain       |
+| 2 | doctor_pov/domain/repositories/examination_repository.dart            | TẠO MỚI   | Domain       |
+| 3 | doctor_pov/domain/usecases/save_examination_usecase.dart              | TẠO MỚI   | Domain       |
+| 4 | doctor_pov/data/datasources/examination_remote_datasource.dart        | TẠO MỚI   | Data         |
+| 5 | doctor_pov/data/repositories/examination_repository_impl.dart         | TẠO MỚI   | Data         |
+| 6 | doctor_pov/presentation/riverpod/examination_provider.dart            | TẠO MỚI   | Presentation |
+| 7 | patient_pov/.../doctor_examine_screen.dart                            | SỬA       | Presentation |
+
+Đường dẫn gốc: lib/features/doctor/
+
+================================================================================
+BƯỚC 1 - ENTITY (Domain)
+TẠO MỚI: lib/features/doctor/doctor_pov/domain/entities/examination_result.dart
+================================================================================
+class ExaminationResult {
+  final String id;
+  final String appointmentId;
+  final String patientId;
+  final String patientName;
+  final String doctorId;
+  final String doctorName;
+  final String diagnosis;
+  final String prescription;
+  final String notes;
+  final DateTime? examinedAt;
+
+  const ExaminationResult({
+    this.id = '',
+    required this.appointmentId,
+    required this.patientId,
+    this.patientName = '',
+    required this.doctorId,
+    this.doctorName = '',
+    required this.diagnosis,
+    this.prescription = '',
+    this.notes = '',
+    this.examinedAt,
+  });
+}
+
+================================================================================
+BƯỚC 2 - REPOSITORY INTERFACE (Domain)
+TẠO MỚI: lib/features/doctor/doctor_pov/domain/repositories/examination_repository.dart
+================================================================================
+import '../entities/examination_result.dart';
+
+abstract class ExaminationRepository {
+  /// Lưu kết quả khám + đánh dấu lịch hẹn đã hoàn tất. Trả về id record vừa tạo.
+  Future<String> saveExamination(ExaminationResult result);
+}
+
+================================================================================
+BƯỚC 3 - USECASE (Domain)
+TẠO MỚI: lib/features/doctor/doctor_pov/domain/usecases/save_examination_usecase.dart
+================================================================================
+import '../entities/examination_result.dart';
+import '../repositories/examination_repository.dart';
+
+class SaveExaminationUseCase {
+  final ExaminationRepository _repository;
+
+  SaveExaminationUseCase(this._repository);
+
+  Future<String> call(ExaminationResult result) {
+    if (result.diagnosis.trim().isEmpty) {
+      throw ArgumentError('Chẩn đoán không được để trống');
+    }
+    return _repository.saveExamination(result);
+  }
+}
+
+================================================================================
+BƯỚC 4 - DATASOURCE (Data) - CHỖ GHI FIREBASE (QUAN TRỌNG NHẤT)
+TẠO MỚI: lib/features/doctor/doctor_pov/data/datasources/examination_remote_datasource.dart
+================================================================================
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../domain/entities/examination_result.dart';
+// AppointmentStatuses nằm trong feature appointment
+import '../../../../appointment/domain/entities/appointment_entity.dart';
+
+class ExaminationRemoteDatasource {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  Future<String> saveExamination(ExaminationResult exam) async {
+    final batch = _firestore.batch();
+
+    // 1) Tạo document kết quả khám mới trong 'medical_records'
+    final recordRef = _firestore.collection('medical_records').doc();
+    batch.set(recordRef, {
+      'appointmentId': exam.appointmentId,
+      'patientId': exam.patientId,
+      'patientName': exam.patientName,
+      'doctorId': exam.doctorId,
+      'doctorName': exam.doctorName,
+      'diagnosis': exam.diagnosis,
+      'prescription': exam.prescription,
+      'notes': exam.notes,
+      'examinedAt': FieldValue.serverTimestamp(),
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    // 2) Cập nhật trạng thái lịch hẹn -> completed
+    final aptRef =
+        _firestore.collection('appointments').doc(exam.appointmentId);
+    batch.update(aptRef, {
+      'status': AppointmentStatuses.completed,
+      'statusUpdatedAt': FieldValue.serverTimestamp(),
+      'completedAt': FieldValue.serverTimestamp(),
+    });
+
+    await batch.commit();
+    return recordRef.id;
+  }
+}
+
+================================================================================
+BƯỚC 5 - REPOSITORY IMPL (Data)
+TẠO MỚI: lib/features/doctor/doctor_pov/data/repositories/examination_repository_impl.dart
+================================================================================
+import '../../domain/entities/examination_result.dart';
+import '../../domain/repositories/examination_repository.dart';
+import '../datasources/examination_remote_datasource.dart';
+
+class ExaminationRepositoryImpl implements ExaminationRepository {
+  final ExaminationRemoteDatasource _datasource;
+
+  ExaminationRepositoryImpl(this._datasource);
+
+  @override
+  Future<String> saveExamination(ExaminationResult result) =>
+      _datasource.saveExamination(result);
+}
+
+================================================================================
+BƯỚC 6 - PROVIDER RIVERPOD (Presentation)
+TẠO MỚI: lib/features/doctor/doctor_pov/presentation/riverpod/examination_provider.dart
+(Copy đúng cấu trúc của doctor_schedule_provider.dart)
+================================================================================
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../data/datasources/examination_remote_datasource.dart';
+import '../../data/repositories/examination_repository_impl.dart';
+import '../../domain/entities/examination_result.dart';
+import '../../domain/usecases/save_examination_usecase.dart';
+
+final _datasourceProvider = Provider((_) => ExaminationRemoteDatasource());
+
+final _repositoryProvider = Provider(
+  (ref) => ExaminationRepositoryImpl(ref.read(_datasourceProvider)),
+);
+
+final saveExaminationProvider = Provider(
+  (ref) => SaveExaminationUseCase(ref.read(_repositoryProvider)),
+);
+
+// --- State ---
+class ExaminationState {
+  final bool isSaving;
+  final bool isSaved;
+  final String? error;
+
+  const ExaminationState({
+    this.isSaving = false,
+    this.isSaved = false,
+    this.error,
+  });
+
+  ExaminationState copyWith({bool? isSaving, bool? isSaved, String? error}) =>
+      ExaminationState(
+        isSaving: isSaving ?? this.isSaving,
+        isSaved: isSaved ?? this.isSaved,
+        error: error,
+      );
+}
+
+// --- Notifier ---
+class ExaminationNotifier extends StateNotifier<ExaminationState> {
+  final SaveExaminationUseCase _saveExamination;
+
+  ExaminationNotifier(this._saveExamination)
+      : super(const ExaminationState());
+
+  Future<void> save({
+    required String appointmentId,
+    required String patientId,
+    required String patientName,
+    required String diagnosis,
+    required String prescription,
+    required String notes,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      state = state.copyWith(error: 'Chưa đăng nhập');
+      return;
+    }
+
+    state = state.copyWith(isSaving: true, error: null, isSaved: false);
+    try {
+      await _saveExamination(ExaminationResult(
+        appointmentId: appointmentId,
+        patientId: patientId,
+        patientName: patientName,
+        doctorId: user.uid,
+        doctorName: user.displayName ?? '',
+        diagnosis: diagnosis,
+        prescription: prescription,
+        notes: notes,
+      ));
+      state = state.copyWith(isSaving: false, isSaved: true);
+    } catch (e) {
+      state = state.copyWith(isSaving: false, error: e.toString());
+    }
+  }
+}
+
+final examinationProvider =
+    StateNotifierProvider<ExaminationNotifier, ExaminationState>(
+  (ref) => ExaminationNotifier(ref.read(saveExaminationProvider)),
+);
+
+================================================================================
+BƯỚC 7 - SỬA MÀN HÌNH DoctorExamineScreen
+SỬA: lib/features/doctor/patient_pov/presentation/screens/doctor_examine_screen.dart
+================================================================================
+
+--- 7.1: Thêm import (sau dòng import appointment_entity.dart) ---
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../doctor_pov/presentation/riverpod/examination_provider.dart';
+
+--- 7.2: Đổi StatefulWidget -> ConsumerStatefulWidget ---
+class DoctorExamineScreen extends ConsumerStatefulWidget {
+  const DoctorExamineScreen({super.key, this.appointment});
+
+  final AppointmentEntity? appointment;
+
+  @override
+  ConsumerState<DoctorExamineScreen> createState() =>
+      _DoctorExamineScreenState();
+}
+
+class _DoctorExamineScreenState extends ConsumerState<DoctorExamineScreen> {
+
+--- 7.3: Thêm hàm lưu (đặt trong _DoctorExamineScreenState, ví dụ sau dispose()) ---
+Future<void> _save() async {
+  final apt = widget.appointment;
+  if (apt == null) return;
+
+  await ref.read(examinationProvider.notifier).save(
+        appointmentId: apt.id,
+        patientId: apt.patientId,
+        patientName: apt.patientName,
+        diagnosis: _diagnosisController.text,
+        prescription: '', // thêm controller riêng nếu cần ô đơn thuốc
+        notes: _notesController.text,
+      );
+
+  if (!mounted) return;
+  final state = ref.read(examinationProvider);
+  if (state.isSaved) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Đã lưu kết quả khám')),
+    );
+    Navigator.of(context).pop();
+  } else if (state.error != null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Lỗi: ${state.error}')),
+    );
+  }
+}
+
+--- 7.4: Thay nút demo (FilledButton cũ ~dòng 94-102) bằng nút có loading ---
+Consumer(
+  builder: (context, ref, _) {
+    final isSaving = ref.watch(examinationProvider).isSaving;
+    return FilledButton(
+      onPressed: isSaving ? null : _save,
+      child: isSaving
+          ? const SizedBox(
+              height: 18, width: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : Text(l10n.doctor_send_prescription),
+    );
+  },
+),
+
+================================================================================
+BƯỚC 8 - FIRESTORE SECURITY RULES (bắt buộc cho production)
+Thêm trên Firebase Console
+================================================================================
+match /medical_records/{id} {
+  allow create: if request.auth != null
+                && request.resource.data.doctorId == request.auth.uid;
+  allow read: if request.auth != null;
+}
+
+match /appointments/{id} {
+  allow update: if request.auth != null
+                && resource.data.doctorId == request.auth.uid;
+}
+
+================================================================================
+BƯỚC 9 - KIỂM TRA SAU KHI LÀM XONG
+================================================================================
+1. Chạy:  flutter analyze
+2. (nếu cần)  flutter pub get
+3. Mở app -> màn bác sĩ -> "Lịch hôm nay" -> chọn bệnh nhân -> "Khám"
+   -> nhập chẩn đoán -> nhấn LƯU.
+4. Kiểm tra Firebase Console:
+   - collection 'medical_records' có document mới
+   - appointments/{id} có status = 'completed'
+
+================================================================================
+================================================================================
+PHẦN BỔ SUNG: ĐĂNG KÝ TÀI KHOẢN BÊN BỆNH NHÂN
+================================================================================
+================================================================================
+
+LƯU Ý QUAN TRỌNG: Luồng đăng ký bệnh nhân ĐÃ ĐƯỢC HIỆN THỰC SẴN trong dự án.
+Phần này GHI CHÚ lại cách nó hoạt động + file liên quan để bạn đọc/sửa khi cần.
+
+------------------------------------------------------------
+A. LUỒNG ĐĂNG KÝ BỆNH NHÂN (tổng quan)
+------------------------------------------------------------
+Cơ chế: dùng SỐ ĐIỆN THOẠI + OTP (Firebase Phone Auth), rồi gắn thêm
+"virtual email" để có thể đăng nhập lại bằng mật khẩu.
+
+  1) Nhập thông tin (tên, SĐT, mật khẩu)   <- patient_registration_form.dart
+            |
+            v
+  2) Gửi OTP qua Firebase                    <- AuthRemoteDatasource.verifyPhone()
+            |
+            v
+  3) Nhập mã OTP -> xác thực                 <- otp_verification_screen.dart
+     AuthRemoteDatasource.signInWithPhone()  -> tạo Firebase user (uid)
+            |
+            v
+  4) Lưu hồ sơ + đặt mật khẩu                <- RegisterUseCase -> AuthRepository
+     AuthRemoteDatasource.register()            -> AuthRemoteDatasource.register()
+            |
+            v
+  5) Ghi Firestore (3 collection) + lưu local
+
+Virtual email được tạo từ SĐT đã chuẩn hoá:  {phone84}@icare.patient
+Ví dụ: SĐT 0901234567 -> 84901234567@icare.patient
+
+------------------------------------------------------------
+B. CÁC FILE LIÊN QUAN (đã có sẵn)
+------------------------------------------------------------
+| File                                                                   | Vai trò                              |
+|------------------------------------------------------------------------|--------------------------------------|
+| auth/presentation/widgets/patient_registration_form.dart               | Form nhập tên/SĐT/mật khẩu (UI)       |
+| auth/presentation/screens/register_screen.dart (và sign_up_screen)     | Màn đăng ký                          |
+| auth/presentation/screens/otp_verification_screen.dart (otp_screen)    | Nhập OTP                             |
+| auth/presentation/screens/create_password_screen.dart                  | Đặt mật khẩu                         |
+| auth/domain/usecases/register_usecase.dart                             | UseCase đăng ký                      |
+| auth/domain/usecases/verify_phone_usecase.dart                         | UseCase gửi OTP                      |
+| auth/domain/usecases/signin_with_phone_usecase.dart                    | UseCase xác thực OTP                 |
+| auth/data/repositories/auth_repository_impl.dart                       | Repository impl                      |
+| auth/data/datasources/auth_remote_datasource.dart  <== TRUNG TÂM       | verifyPhone / signInWithPhone / register |
+| auth/data/models/user_model.dart                                       | Model user (toJson/fromJson)         |
+| auth/domain/entities/user_entity.dart                                  | Entity user                          |
+
+------------------------------------------------------------
+C. DỮ LIỆU LƯU LÊN FIRESTORE KHI ĐĂNG KÝ
+------------------------------------------------------------
+Hàm: AuthRemoteDatasource.register()  (file auth_remote_datasource.dart)
+
+1) users/{uid}                  -> hồ sơ bệnh nhân
+   {
+     'uid': uid,
+     'email': '{phone84}@icare.patient',
+     'name': 'Nguyễn Văn A',
+     'phone': '0901234567',
+     'auth_provider': 'phone',
+     'role': 'patient',            // <- vai trò bệnh nhân
+     'is_verified': true,
+     'status': 'active',
+     'password': <hash HMAC-SHA256>,  // chỉ lưu qua toJsonWithPassword()
+     'created_at': <serverTimestamp>,
+     'updated_at': <serverTimestamp>,
+   }
+
+2) registered_phones/{phone84}  -> chống đăng ký trùng số
+   { 'uid': uid, 'created_at': <serverTimestamp> }
+
+3) (gián tiếp) sessions/, audit_logs/  -> log phiên & nhật ký (khi đăng nhập)
+
+Ngoài Firestore còn lưu local (LocalAccountStore) để đăng nhập offline + đặt
+biometric. Mật khẩu được HASH bằng EncryptionService trước khi lưu.
+
+------------------------------------------------------------
+D. CHỮ KÝ HÀM CẦN BIẾT (gọi từ tầng trên)
+------------------------------------------------------------
+// Gửi OTP
+verifyPhone(phone, onCodeSent: ..., onAutoVerified: ..., onError: ...)
+
+// Xác thực OTP -> tạo firebase user
+signInWithPhone({required verificationId, required smsCode, displayName})
+
+// Lưu hồ sơ bệnh nhân sau khi đã có firebase user
+register({
+  required String name,
+  required String phone,
+  required String role,     // truyền 'patient'
+  String? email,
+  String? password,
+  String? tenantId,
+})
+
+------------------------------------------------------------
+E. NẾU MUỐN THÊM/SỬA TRƯỜNG KHI ĐĂNG KÝ BỆNH NHÂN
+------------------------------------------------------------
+Ví dụ muốn lưu thêm ngày sinh, giới tính, địa chỉ cho bệnh nhân:
+
+  1) Thêm field vào:  auth/domain/entities/user_entity.dart
+  2) Thêm vào constructor + toJson()/fromJson():  auth/data/models/user_model.dart
+  3) Truyền giá trị xuống khi tạo UserModel trong:
+       auth/data/datasources/auth_remote_datasource.dart  (hàm register())
+  4) Thêm input + truyền tham số ở:
+       auth/presentation/widgets/patient_registration_form.dart
+       (và register_usecase.dart nếu cần thêm tham số mới)
+
+------------------------------------------------------------
+F. SECURITY RULES CHO ĐĂNG KÝ
+------------------------------------------------------------
+match /users/{uid} {
+  allow create: if request.auth != null && request.auth.uid == uid;
+  allow read, update: if request.auth != null && request.auth.uid == uid;
+}
+match /registered_phones/{phone} {
+  allow read: if true;                 // cần đọc để kiểm tra trùng số
+  allow create: if request.auth != null;
+}
+
+------------------------------------------------------------
+G. LIÊN HỆ GIỮA 2 PHẦN
+------------------------------------------------------------
+- Đăng ký (phần này) tạo ra users/{uid} với role='patient' và uid của bệnh nhân.
+- Khi bác sĩ khám (phần đầu file), record lưu patientId = chính uid này,
+  doctorId = uid của bác sĩ. Hai phần dùng chung collection 'users' để định danh.
+
+================================================================================
+GHI CHÚ THIẾT KẾ
+================================================================================
+- doctorId LUÔN lấy từ FirebaseAuth.currentUser.uid (không nhận từ UI) -> chống giả mạo.
+- Dùng WriteBatch cho thao tác "lưu record + đổi status" -> đảm bảo nguyên tử.
+- Pattern copy y hệt feature doctor_schedule đã có sẵn trong dự án.
+- Nếu muốn theo chuẩn FHIR: dự án đã có collection 'encounters'/'observations'
+  và hàm createEncounter() trong medical_record. Nhưng dùng 'medical_records'
+  như trên là đủ và nhất quán với createVersion() đang trỏ vào 'medical_records'.
+================================================================================

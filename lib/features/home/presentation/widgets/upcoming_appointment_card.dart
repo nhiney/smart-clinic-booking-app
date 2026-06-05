@@ -3,7 +3,6 @@ import 'package:smart_clinic_booking/features/appointment/domain/entities/appoin
 import 'package:intl/intl.dart';
 import '../../../../core/theme/colors/app_colors.dart';
 import '../../../../core/theme/typography/app_text_styles.dart';
-import '../../../appointment/domain/entities/appointment_entity.dart';
 
 /// Section 3: Upcoming Appointment — next scheduled appointment with actions.
 class UpcomingAppointmentCard extends StatelessWidget {
@@ -68,10 +67,10 @@ class _AppointmentItem extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         border:
-            Border.all(color: Colors.blue.withOpacity(0.1), width: 1.5),
+            Border.all(color: Colors.blue.withValues(alpha: 0.1), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -209,7 +208,7 @@ class _StatusChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: _getStatusColor(status).withOpacity(0.1),
+        color: _getStatusColor(status).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Text(

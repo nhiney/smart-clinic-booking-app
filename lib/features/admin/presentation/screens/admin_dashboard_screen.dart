@@ -76,7 +76,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),
@@ -142,7 +142,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       children: [
                         Text(
                           'Xin chào,',
-                          style: context.textStyles.body.copyWith(color: Colors.white.withOpacity(0.8)),
+                          style: context.textStyles.body.copyWith(color: Colors.white.withValues(alpha: 0.8)),
                         ),
                         Text(
                           adminName,
@@ -163,7 +163,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
+                    color: Colors.white.withValues(alpha: 0.15),
                     borderRadius: context.radius.lRadius,
                   ),
                   child: Row(
@@ -210,15 +210,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       icon: Icons.people_alt_rounded,
                       color: Colors.teal,
                     ),
-                    const AdminStatCard(
+                    AdminStatCard(
                       title: 'Bệnh nhân',
-                      value: '124', // Placeholder for now
+                      value: controller.patientCount.toString(),
                       icon: Icons.person_rounded,
                       color: Colors.orange,
                     ),
-                    const AdminStatCard(
+                    AdminStatCard(
                       title: 'Lịch hẹn',
-                      value: '48', // Placeholder for now
+                      value: controller.appointmentCount.toString(),
                       icon: Icons.event_available_rounded,
                       color: Colors.purple,
                     ),
@@ -289,9 +289,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       },
                     ),
                     AdminQuickActionButton(
+                      label: 'Duyệt hồ sơ',
+                      icon: Icons.verified_user_rounded,
+                      onTap: () => context.push('/admin/kyc-approvals'),
+                    ),
+                    AdminQuickActionButton(
                       label: 'Báo cáo',
                       icon: Icons.analytics_rounded,
-                      onTap: () {},
+                      onTap: () => context.push('/transactions'),
                     ),
                   ],
                 ),
@@ -339,7 +344,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             borderRadius: context.radius.mRadius,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -349,7 +354,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             leading: CircleAvatar(
               radius: 28,
-              backgroundColor: context.colors.primary.withOpacity(0.1),
+              backgroundColor: context.colors.primary.withValues(alpha: 0.1),
               backgroundImage: doctor.imageUrl.isNotEmpty ? NetworkImage(doctor.imageUrl) : null,
               child: doctor.imageUrl.isEmpty
                   ? Icon(Icons.person_rounded, color: context.colors.primary, size: 28)
@@ -379,7 +384,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.inbox_rounded, size: 80, color: context.colors.textHint.withOpacity(0.5)),
+          Icon(Icons.inbox_rounded, size: 80, color: context.colors.textHint.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
           Text(message, style: context.textStyles.bodyLarge),
           const SizedBox(height: 24),
@@ -416,18 +421,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ListTile(
             leading: const Icon(Icons.settings_rounded),
             title: const Text('Cài đặt hệ thống'),
-            onTap: () {},
+            onTap: () { Navigator.pop(context); context.push('/notifications/settings'); },
           ),
           ListTile(
             leading: const Icon(Icons.notifications_active_rounded),
             title: const Text('Thông báo hệ thống'),
-            onTap: () {},
+            onTap: () { Navigator.pop(context); context.push('/notifications'); },
           ),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.help_outline_rounded),
             title: const Text('Trợ giúp & Hỗ trợ'),
-            onTap: () {},
+            onTap: () { Navigator.pop(context); context.push('/support'); },
           ),
           const Spacer(),
           Padding(

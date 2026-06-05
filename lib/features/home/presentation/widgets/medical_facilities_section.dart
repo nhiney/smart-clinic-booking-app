@@ -1,7 +1,5 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/theme/colors/app_colors.dart';
 
 class MedicalFacilitiesSection extends StatelessWidget {
   const MedicalFacilitiesSection({super.key});
@@ -162,7 +160,7 @@ class _HospitalVerticalCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 ElevatedButton(
-                  onPressed: () => context.push('/under-development?title=${Uri.encodeComponent('Đặt khám tại cơ sở y tế')}'),
+                  onPressed: () => context.push('/doctor/search'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.lightBlue,
                     foregroundColor: Colors.white,

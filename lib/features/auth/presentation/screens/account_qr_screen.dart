@@ -171,7 +171,7 @@ class _AccountQrScreenState extends State<AccountQrScreen> {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
+                    color: Colors.green.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -219,7 +219,7 @@ class _AccountQrScreenState extends State<AccountQrScreen> {
                     borderRadius: context.radius.xlRadius,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
+                        color: Colors.black.withValues(alpha: 0.06),
                         blurRadius: 30,
                         offset: const Offset(0, 15),
                       ),
@@ -256,7 +256,7 @@ class _AccountQrScreenState extends State<AccountQrScreen> {
                         style: context.textStyles.bodySmall.copyWith(
                           fontWeight: FontWeight.bold,
                           letterSpacing: 2,
-                          color: Colors.blueGrey.withOpacity(0.5),
+                          color: Colors.blueGrey.withValues(alpha: 0.5),
                         ),
                       ),
                     ],
@@ -292,9 +292,9 @@ class _AccountQrScreenState extends State<AccountQrScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
-                    color: context.colors.error.withOpacity(0.05),
+                    color: context.colors.error.withValues(alpha: 0.05),
                     borderRadius: context.radius.mRadius,
-                    border: Border.all(color: context.colors.error.withOpacity(0.1)),
+                    border: Border.all(color: context.colors.error.withValues(alpha: 0.1)),
                   ),
                   child: Row(
                     children: [

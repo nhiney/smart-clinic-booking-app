@@ -65,7 +65,7 @@ class _DepartmentManagementScreenState extends State<DepartmentManagementScreen>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.category_rounded, size: 80, color: context.colors.textHint.withOpacity(0.5)),
+          Icon(Icons.category_rounded, size: 80, color: context.colors.textHint.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
           Text('Chưa có khoa nào', style: context.textStyles.bodyLarge),
         ],
@@ -95,7 +95,7 @@ class _DepartmentManagementScreenState extends State<DepartmentManagementScreen>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: context.colors.primary.withOpacity(0.1),
+                  color: context.colors.primary.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(Icons.local_hospital_rounded, color: context.colors.primary, size: 30),

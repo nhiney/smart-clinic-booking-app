@@ -53,8 +53,8 @@ class _GlassTextFieldState extends State<GlassTextField> {
               : null,
           filled: true,
           fillColor: isFocus
-              ? const Color(0xff00c6ff).withOpacity(0.25)
-              : Colors.white.withOpacity(0.08),
+              ? const Color(0xff00c6ff).withValues(alpha: 0.25)
+              : Colors.white.withValues(alpha: 0.08),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(15),
             borderSide: BorderSide.none,

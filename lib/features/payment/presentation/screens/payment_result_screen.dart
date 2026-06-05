@@ -93,7 +93,7 @@ class PaymentResultScreen extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(context.spacing.l),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         shape: BoxShape.circle,
       ),
       child: Icon(icon, size: 80, color: color),

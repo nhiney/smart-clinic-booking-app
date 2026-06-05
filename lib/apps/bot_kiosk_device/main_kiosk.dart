@@ -76,7 +76,7 @@ class _ICareKioskBotAppState extends ConsumerState<ICareKioskBotApp> {
                 Positioned(
                   top: 0, left: 0, right: 0,
                   child: Container(
-                    color: Colors.red.withOpacity(0.9),
+                    color: Colors.red.withValues(alpha: 0.9),
                     padding: const EdgeInsets.symmetric(vertical: 30),
                     child: const SafeArea(
                       bottom: false,

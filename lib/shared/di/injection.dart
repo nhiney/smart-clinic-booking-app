@@ -65,6 +65,22 @@ import 'package:smart_clinic_booking/features/booking/domain/usecases/expire_sta
 import 'package:smart_clinic_booking/core/services/file_storage_service.dart';
 import 'package:smart_clinic_booking/core/services/seed_data_service.dart';
 
+import 'package:smart_clinic_booking/features/kyc/data/datasources/kyc_remote_datasource.dart';
+import 'package:smart_clinic_booking/features/kyc/data/repositories/kyc_repository_impl.dart';
+import 'package:smart_clinic_booking/features/kyc/domain/repositories/kyc_repository.dart';
+
+import 'package:smart_clinic_booking/features/checkin/data/datasources/check_in_remote_datasource.dart';
+import 'package:smart_clinic_booking/features/checkin/data/repositories/check_in_repository_impl.dart';
+import 'package:smart_clinic_booking/features/checkin/domain/repositories/check_in_repository.dart';
+import 'package:smart_clinic_booking/features/checkin/domain/usecases/generate_check_in_token_usecase.dart';
+import 'package:smart_clinic_booking/features/checkin/domain/usecases/verify_check_in_usecase.dart';
+
+import 'package:smart_clinic_booking/features/doctor/doctor_pov/data/datasources/doctor_schedule_remote_datasource.dart';
+import 'package:smart_clinic_booking/features/doctor/doctor_pov/data/repositories/doctor_schedule_repository_impl.dart';
+import 'package:smart_clinic_booking/features/doctor/doctor_pov/domain/repositories/doctor_schedule_repository.dart';
+import 'package:smart_clinic_booking/features/doctor/doctor_pov/domain/usecases/get_doctor_day_schedule_usecase.dart';
+import 'package:smart_clinic_booking/features/doctor/doctor_pov/domain/usecases/update_slot_status_usecase.dart';
+
 final getIt = GetIt.instance;
 
 @InjectableInit()
@@ -192,6 +208,56 @@ Future<void> configureDependencies() async {
   if (!getIt.isRegistered<ExpireStaleUnpaidBookingsUseCase>()) {
     getIt.registerLazySingleton(
       () => ExpireStaleUnpaidBookingsUseCase(getIt<BookingRepository>()),
+    );
+  }
+
+  // KYC
+  if (!getIt.isRegistered<KycRemoteDatasource>()) {
+    getIt.registerLazySingleton(() => KycRemoteDatasource());
+  }
+  if (!getIt.isRegistered<KYCRepository>()) {
+    getIt.registerLazySingleton<KYCRepository>(
+      () => KycRepositoryImpl(getIt<KycRemoteDatasource>()),
+    );
+  }
+
+  // CheckIn
+  if (!getIt.isRegistered<CheckInRemoteDatasource>()) {
+    getIt.registerLazySingleton(() => CheckInRemoteDatasource());
+  }
+  if (!getIt.isRegistered<CheckInRepository>()) {
+    getIt.registerLazySingleton<CheckInRepository>(
+      () => CheckInRepositoryImpl(getIt<CheckInRemoteDatasource>()),
+    );
+  }
+  if (!getIt.isRegistered<GenerateCheckInTokenUseCase>()) {
+    getIt.registerLazySingleton(
+      () => GenerateCheckInTokenUseCase(getIt<CheckInRepository>()),
+    );
+  }
+  if (!getIt.isRegistered<VerifyCheckInUseCase>()) {
+    getIt.registerLazySingleton(
+      () => VerifyCheckInUseCase(getIt<CheckInRepository>()),
+    );
+  }
+
+  // Doctor Schedule (doctor_pov)
+  if (!getIt.isRegistered<DoctorScheduleRemoteDatasource>()) {
+    getIt.registerLazySingleton(() => DoctorScheduleRemoteDatasource());
+  }
+  if (!getIt.isRegistered<DoctorScheduleRepository>()) {
+    getIt.registerLazySingleton<DoctorScheduleRepository>(
+      () => DoctorScheduleRepositoryImpl(getIt<DoctorScheduleRemoteDatasource>()),
+    );
+  }
+  if (!getIt.isRegistered<GetDoctorDayScheduleUseCase>()) {
+    getIt.registerLazySingleton(
+      () => GetDoctorDayScheduleUseCase(getIt<DoctorScheduleRepository>()),
+    );
+  }
+  if (!getIt.isRegistered<UpdateSlotStatusUseCase>()) {
+    getIt.registerLazySingleton(
+      () => UpdateSlotStatusUseCase(getIt<DoctorScheduleRepository>()),
     );
   }
 }

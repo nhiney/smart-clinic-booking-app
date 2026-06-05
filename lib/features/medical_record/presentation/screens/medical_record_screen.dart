@@ -15,7 +15,6 @@ import '../controllers/medical_record_controller.dart';
 import '../../domain/entities/medical_record_entity.dart';
 import '../../domain/entities/attachment.dart';
 import '../../domain/entities/record_version.dart';
-import '../../domain/entities/record_share.dart';
 
 class MedicalRecordScreen extends ConsumerStatefulWidget {
   const MedicalRecordScreen({super.key});

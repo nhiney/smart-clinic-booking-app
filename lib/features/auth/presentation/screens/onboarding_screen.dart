@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:smart_clinic_booking/l10n/app_localizations.dart';
 import '../../../../core/extensions/context_extension.dart';
 import '../../../../core/theme/colors/app_colors.dart';
-import '../../../../core/widgets/icare_logo.dart';
 import '../../../../core/widgets/language_selector.dart';
 
 class OnboardingScreen extends StatefulWidget {

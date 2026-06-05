@@ -45,7 +45,7 @@ class ICareLogo extends StatelessWidget {
             style: TextStyle(
               fontSize: size / 8,
               fontWeight: FontWeight.w600,
-              color: defaultTextColor.withOpacity(0.6),
+              color: defaultTextColor.withValues(alpha: 0.6),
               letterSpacing: 2.0,
             ),
           ),

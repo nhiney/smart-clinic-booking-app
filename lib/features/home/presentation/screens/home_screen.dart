@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
-import '../../../../core/theme/colors/app_colors.dart';
-import '../../../../core/extensions/context_extension.dart';
 import '../../../notification/presentation/screens/notification_screen.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../bloc/home_bloc.dart';
@@ -55,7 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),
@@ -181,7 +178,7 @@ class _HomeDashboardState extends State<_HomeDashboard> {
                       borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
+                          color: Colors.black.withValues(alpha: 0.04),
                           blurRadius: 10,
                           offset: const Offset(0, -4),
                         ),

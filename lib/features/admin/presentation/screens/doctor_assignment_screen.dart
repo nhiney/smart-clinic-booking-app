@@ -63,7 +63,7 @@ class _DoctorAssignmentScreenState extends State<DoctorAssignmentScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.person_search_rounded, size: 80, color: context.colors.textHint.withOpacity(0.5)),
+          Icon(Icons.person_search_rounded, size: 80, color: context.colors.textHint.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
           const Text('Không có bác sĩ nào chưa được phân bổ'),
         ],
@@ -77,7 +77,7 @@ class _DoctorAssignmentScreenState extends State<DoctorAssignmentScreen> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: context.colors.primary.withOpacity(0.1),
+          backgroundColor: context.colors.primary.withValues(alpha: 0.1),
           child: Icon(Icons.person_rounded, color: context.colors.primary),
         ),
         title: Text(doctor.name, style: context.textStyles.bodyBold),

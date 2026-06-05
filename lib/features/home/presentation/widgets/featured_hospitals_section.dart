@@ -68,7 +68,7 @@ class FeaturedHospitalsSection extends StatelessWidget {
                 ),
               ),
               TextButton(
-                onPressed: () => context.push('/under-development?title=${Uri.encodeComponent('Bệnh viện nổi bật')}'),
+                onPressed: () => context.push('/maps'),
                 child: const Text(
                   'Xem thêm >',
                   style: TextStyle(
@@ -114,7 +114,7 @@ class _HospitalCard extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -144,7 +144,7 @@ class _HospitalCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -176,7 +176,7 @@ class _HospitalCard extends StatelessWidget {
                       border: Border.all(color: Colors.white, width: 3),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -250,7 +250,7 @@ class _HospitalCard extends StatelessWidget {
                         ),
                       ),
                       ElevatedButton(
-                        onPressed: () => context.push('/under-development?title=${Uri.encodeComponent('Đặt khám tại bệnh viện')}'),
+                        onPressed: () => context.push('/doctor/search'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF0D62A2),
                           foregroundColor: Colors.white,

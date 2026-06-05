@@ -138,8 +138,10 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
       // If we allow registration, it maps to a pending state.
       final success = await authController.register(
         name: event.fullName,
-        phone: '', // Placeholder for now
-        email: event.email, // Assume event has email or use name as placeholder
+        // The doctor registration form does not collect a phone number; the
+        // doctor adds it later from their profile / KYC submission.
+        phone: '',
+        email: event.email,
         role: 'doctor',
         tenantId: event.targetHospitalId,
       );

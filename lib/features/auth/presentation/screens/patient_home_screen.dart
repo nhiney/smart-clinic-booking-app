@@ -9,7 +9,6 @@ import 'package:smart_clinic_booking/features/auth/presentation/controllers/auth
 import 'package:smart_clinic_booking/features/notification/presentation/screens/notification_screen.dart';
 import 'package:smart_clinic_booking/features/maps/presentation/screens/hospital_map_screen.dart';
 import 'package:smart_clinic_booking/features/profile/presentation/screens/patient_profile_screen.dart';
-import 'package:smart_clinic_booking/core/localization/language_service.dart';
 import 'package:smart_clinic_booking/core/localization/language_controller.dart';
 import 'package:smart_clinic_booking/core/localization/app_language.dart';
 import 'package:smart_clinic_booking/core/widgets/icare_logo.dart';
@@ -18,9 +17,7 @@ import 'package:smart_clinic_booking/features/content/presentation/screens/surve
 import 'package:smart_clinic_booking/features/home/domain/entities/health_article.dart';
 import 'package:smart_clinic_booking/features/maps/presentation/controllers/hospital_map_controller.dart';
 import 'package:smart_clinic_booking/features/maps/domain/entities/hospital_entity.dart';
-import 'package:smart_clinic_booking/features/doctor/patient_pov//presentation/screens/doctor_search_screen.dart';
 
-import 'package:intl/intl.dart';
 
 import '../../../doctor/patient_pov/domain/entities/doctor_entity.dart';
 import '../../../doctor/patient_pov/presentation/controllers/featured_doctors_provider.dart';
@@ -208,7 +205,7 @@ class _PatientHomeScreenState extends ConsumerState<PatientHomeScreen>
                 boxShadow: [
                   BoxShadow(
                     color: const Color(0xFF7C3AED)
-                        .withOpacity(0.35 * (1 - _fabPulse.value)),
+                        .withValues(alpha: 0.35 * (1 - _fabPulse.value)),
                     spreadRadius: 10 * _fabPulse.value,
                     blurRadius: 18 * _fabPulse.value,
                   ),
@@ -389,7 +386,7 @@ class _TopBar extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            _P.primary.withOpacity(0.08),
+            _P.primary.withValues(alpha: 0.08),
             _P.surface,
           ],
           begin: Alignment.topCenter,
@@ -406,7 +403,7 @@ class _TopBar extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: _P.primary.withOpacity(0.1),
+                  color: _P.primary.withValues(alpha: 0.1),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -425,18 +422,21 @@ class _TopBar extends StatelessWidget {
                 Text(
                   '$greeting, $firstName',
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     color: _P.textSecondary,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w500,
+                    height: 1.3,
                   ),
                 ),
+                const SizedBox(height: 1),
                 const Text(
                   'ICare Health',
                   style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
                     color: _P.primaryDark,
-                    letterSpacing: -0.5,
+                    letterSpacing: -0.4,
+                    height: 1.2,
                   ),
                 ),
               ],
@@ -696,7 +696,7 @@ class _BannerCarousel extends ConsumerWidget {
     return Column(
       children: [
         SizedBox(
-          height: 180,
+          height: 196,
           child: PageView.builder(
             controller: ctrl,
             onPageChanged: onChanged,
@@ -710,13 +710,15 @@ class _BannerCarousel extends ConsumerWidget {
           children: List.generate(
             banners.length,
             (i) => AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
+              duration: const Duration(milliseconds: 250),
               margin: const EdgeInsets.symmetric(horizontal: 3),
-              width: index == i ? 20 : 7,
-              height: 7,
+              width: index == i ? 18 : 6,
+              height: 6,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(4),
-                color: index == i ? _P.primary : _P.textHint,
+                borderRadius: BorderRadius.circular(3),
+                color: index == i
+                    ? _P.primary
+                    : _P.textHint.withValues(alpha: 0.4),
               ),
             ),
           ),
@@ -753,19 +755,19 @@ class _BannerCard extends StatelessWidget {
     return GestureDetector(
       onTap: () => context.push(data.route),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: data.gradient.first.withOpacity(0.35),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
+              color: data.gradient.first.withValues(alpha: 0.25),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(20),
           child: Stack(
             children: [
               // Background Gradient
@@ -787,7 +789,7 @@ class _BannerCard extends StatelessWidget {
                   height: 150,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.12),
+                    color: Colors.white.withValues(alpha: 0.12),
                   ),
                 ),
               ),
@@ -799,13 +801,13 @@ class _BannerCard extends StatelessWidget {
                   height: 100,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.08),
+                    color: Colors.white.withValues(alpha: 0.08),
                   ),
                 ),
               ),
               // Content
               Padding(
-                padding: const EdgeInsets.all(22),
+                padding: const EdgeInsets.fromLTRB(20, 18, 16, 18),
                 child: Row(
                   children: [
                     Expanded(
@@ -819,62 +821,46 @@ class _BannerCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 19,
-                              fontWeight: FontWeight.w800,
-                              height: 1.2,
-                              letterSpacing: -0.5,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              height: 1.3,
+                              letterSpacing: -0.3,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           Text(
                             data.subtitle,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.85),
-                              fontSize: 13,
+                              color: Colors.white.withValues(alpha: 0.8),
+                              fontSize: 12.5,
                               fontWeight: FontWeight.w400,
+                              height: 1.4,
                             ),
                           ),
-                          const SizedBox(height: 18),
-                          // Premium Gradient Button
+                          const SizedBox(height: 14),
+                          // CTA Button
                           Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(30),
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.15),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 3),
+                                  color: Colors.black.withValues(alpha: 0.10),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
                                 ),
                               ],
                             ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(30),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 11),
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      Colors.white,
-                                      Colors.white.withOpacity(0.9),
-                                    ],
-                                  ),
-                                ),
-                                child: ShaderMask(
-                                  shaderCallback: (bounds) => LinearGradient(
-                                    colors: data.gradient,
-                                  ).createShader(bounds),
-                                  child: Text(
-                                    data.action,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 14,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                ),
+                            child: Text(
+                              data.action,
+                              style: TextStyle(
+                                color: data.gradient.first,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                letterSpacing: 0.1,
                               ),
                             ),
                           ),
@@ -886,9 +872,9 @@ class _BannerCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(22),
-                        border: Border.all(color: Colors.white.withOpacity(0.2)),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
                       ),
                       child: Icon(data.icon, color: Colors.white, size: 36),
                     ),
@@ -906,7 +892,7 @@ class _BannerCard extends StatelessWidget {
 // ── Quick actions grid ───────────────────────────────────────────────────────
 class _QuickActionsGrid extends ConsumerWidget {
   List<_Action> _getItems(AppLanguage lang) => [
-    _Action(Icons.add_circle_outline_rounded, lang.localize('Đặt khám', 'Book Visit'), const Color(0xFF2196F3), '/doctor/search', assetPath: 'assets/icons/quick_actions/book_appointment.png'),
+    _Action(Icons.add_circle_outline_rounded, lang.localize('Đặt khám', 'Book Visit'), const Color(0xFF2196F3), '/doctor/find', assetPath: 'assets/icons/quick_actions/book_appointment.png'),
     _Action(Icons.history_rounded, lang.localize('Lịch sử', 'History'), const Color(0xFF7C3AED), '/appointments', assetPath: 'assets/icons/quick_actions/appointment_history.png'),
     _Action(Icons.receipt_long_rounded, lang.localize('Hóa đơn', 'Invoices'), const Color(0xFF00BFA5), '/invoices', assetPath: 'assets/icons/quick_actions/invoice.png'),
     _Action(Icons.medication_rounded, lang.localize('Đơn thuốc', 'Prescription'), const Color(0xFFE91E63), '/prescriptions', assetPath: 'assets/icons/quick_actions/invoice.png'),
@@ -927,10 +913,10 @@ class _QuickActionsGrid extends ConsumerWidget {
     final items = _getItems(lang);
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
       decoration: BoxDecoration(
         color: _P.cardBg,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: const [
           BoxShadow(
             color: Color(0x08000000),
@@ -948,9 +934,10 @@ class _QuickActionsGrid extends ConsumerWidget {
               Text(
                 lang.localize('Chức năng', 'Functions'),
                 style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
                   color: _P.primaryDark,
+                  letterSpacing: 0.1,
                 ),
               ),
               GestureDetector(
@@ -1000,12 +987,12 @@ class _QuickActionsGrid extends ConsumerWidget {
                           const SizedBox(height: 16),
                           Expanded(
                             child: GridView.builder(
-                              padding: const EdgeInsets.all(24),
+                              padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
                                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                                   crossAxisCount: 3,
-                                  mainAxisSpacing: 24,
-                                  crossAxisSpacing: 16,
-                                  childAspectRatio: 0.85,
+                                  mainAxisSpacing: 16,
+                                  crossAxisSpacing: 12,
+                                  childAspectRatio: 0.88,
                                 ),
                               itemCount: items.length,
                               itemBuilder: (context, index) => _ActionCell(item: items[index]),
@@ -1020,14 +1007,14 @@ class _QuickActionsGrid extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           GridView.count(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             crossAxisCount: 3,
-            mainAxisSpacing: 24,
-            crossAxisSpacing: 16,
-            childAspectRatio: 0.9,
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 12,
+            childAspectRatio: 0.88,
             children: items.take(9)
                 .map((item) => _ActionCell(item: item))
                 .toList(),
@@ -1068,26 +1055,29 @@ class _ActionCell extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(18),
+            width: 56,
+            height: 56,
             decoration: BoxDecoration(
-              color: item.color.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(20),
+              color: item.color.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: item.assetPath != null 
-              ? Image.asset(item.assetPath!, width: 32, height: 32, fit: BoxFit.contain)
-              : Icon(item.icon, color: item.color, size: 32),
+            child: Center(
+              child: item.assetPath != null
+                  ? Image.asset(item.assetPath!, width: 28, height: 28, fit: BoxFit.contain)
+                  : Icon(item.icon, color: item.color, size: 26),
+            ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Text(
             item.label,
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: FontWeight.w600,
               color: _P.textPrimary,
-              height: 1.2,
+              height: 1.35,
             ),
           ),
         ],
@@ -1120,19 +1110,20 @@ class _UpcomingSection extends ConsumerWidget {
               Text(
                 lang.localize('Lịch khám sắp tới', 'Upcoming Appointments'),
                 style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
                   color: _P.primaryDark,
+                  letterSpacing: 0.1,
                 ),
               ),
               GestureDetector(
                 onTap: () => context.push('/appointments'),
-                child: Text(
-                  lang.localize('Xem tất cả', 'See all'),
-                  style: const TextStyle(
+                child: const Text(
+                  'Xem tất cả →',
+                  style: TextStyle(
                     color: _P.primary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12.5,
                   ),
                 ),
               ),
@@ -1168,12 +1159,12 @@ class _EmptyAppt extends ConsumerWidget {
         decoration: BoxDecoration(
           color: _P.surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _P.primary.withOpacity(0.15)),
+          border: Border.all(color: _P.primary.withValues(alpha: 0.15)),
         ),
         child: Column(
           children: [
             Icon(Icons.event_available_rounded,
-                color: _P.primary.withOpacity(0.5), size: 40),
+                color: _P.primary.withValues(alpha: 0.5), size: 40),
             const SizedBox(height: 12),
             Text(
               lang.localize('Không có lịch khám sắp tới', 'No upcoming appointments'),
@@ -1218,16 +1209,17 @@ class _ApptCard extends ConsumerWidget {
         '${appt.dateTime.hour.toString().padLeft(2, '0')}:${appt.dateTime.minute.toString().padLeft(2, '0')}';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: _P.cardBg,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFEEEEEE)),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 12,
-            offset: Offset(0, 4),
+            color: Color(0x06000000),
+            blurRadius: 8,
+            offset: Offset(0, 3),
           ),
         ],
       ),
@@ -1235,11 +1227,11 @@ class _ApptCard extends ConsumerWidget {
         children: [
           // Date block
           Container(
-            width: 52,
-            height: 56,
+            width: 50,
+            height: 54,
             decoration: BoxDecoration(
-              color: _P.primary.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(14),
+              color: _P.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -1304,7 +1296,7 @@ class _ApptCard extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: _statusColor.withOpacity(0.12),
+                  color: _statusColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -1459,8 +1451,8 @@ class _StatCard extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    color.withOpacity(0.12),
-                    color.withOpacity(0.05),
+                    color.withValues(alpha: 0.12),
+                    color.withValues(alpha: 0.05),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -1546,9 +1538,9 @@ class _FeaturedHospitals extends ConsumerWidget {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.08),
+                  color: Colors.orange.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                  border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [
@@ -1581,7 +1573,7 @@ class _FeaturedHospitals extends ConsumerWidget {
                     child: Row(
                       children: [
                         Icon(Icons.local_hospital_outlined,
-                            color: _P.primary.withOpacity(0.5), size: 20),
+                            color: _P.primary.withValues(alpha: 0.5), size: 20),
                         const SizedBox(width: 10),
                         Text(
                           lang.localize(
@@ -1834,7 +1826,7 @@ class _FeaturedDoctorItem extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: _P.primary.withOpacity(0.06),
+              color: _P.primary.withValues(alpha: 0.06),
               blurRadius: 8,
               offset: const Offset(0, 3),
             ),
@@ -1875,7 +1867,7 @@ class _FeaturedDoctorItem extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 10,
-                color: _P.primary.withOpacity(0.85),
+                color: _P.primary.withValues(alpha: 0.85),
               ),
             ),
             if (doctor.rating > 0) ...[
@@ -2050,7 +2042,7 @@ class _SurveysSection extends ConsumerWidget {
                               width: double.infinity,
                               padding: const EdgeInsets.symmetric(vertical: 7),
                               decoration: BoxDecoration(
-                                color: _P.primary.withOpacity(0.07),
+                                color: _P.primary.withValues(alpha: 0.07),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: const Text(
@@ -2146,7 +2138,7 @@ class _HealthNewsSectionState extends ConsumerState<_HealthNewsSection> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.grey.withOpacity(0.1)),
+                  border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
                 ),
                 child: Center(
                   child: Text(

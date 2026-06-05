@@ -109,7 +109,7 @@ class _SplashScreenState extends State<SplashScreen>
                     'Đặt lịch khám bệnh thông minh',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.white.withOpacity(0.85),
+                      color: Colors.white.withValues(alpha: 0.85),
                       letterSpacing: 0.5,
                     ),
                   ),

@@ -7,7 +7,6 @@ import 'package:smart_clinic_booking/core/widgets/app_button.dart';
 import 'package:smart_clinic_booking/core/widgets/app_text_field.dart';
 import 'package:smart_clinic_booking/core/widgets/auth_header.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/services/local_account_store.dart';
 import '../controllers/auth_controller.dart';
 import '../utils/auth_error_localizer.dart';
 
@@ -101,9 +100,9 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
       width: double.infinity,
       padding: EdgeInsets.all(context.spacing.m),
       decoration: BoxDecoration(
-        color: context.colors.primary.withOpacity(0.06),
+        color: context.colors.primary.withValues(alpha: 0.06),
         borderRadius: context.radius.mRadius,
-        border: Border.all(color: context.colors.primary.withOpacity(0.2)),
+        border: Border.all(color: context.colors.primary.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,7 +238,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                     borderRadius: context.radius.xlRadius,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
+                        color: Colors.black.withValues(alpha: 0.04),
                         blurRadius: 24,
                         offset: const Offset(0, 12),
                       ),

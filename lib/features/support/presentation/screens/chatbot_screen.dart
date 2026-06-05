@@ -42,7 +42,7 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
         title: Row(
           children: [
             CircleAvatar(
-              backgroundColor: Colors.blue.withOpacity(0.1),
+              backgroundColor: Colors.blue.withValues(alpha: 0.1),
               child: const Icon(Icons.smart_toy, color: Colors.blue, size: 20),
             ),
             const SizedBox(width: 12),
@@ -135,7 +135,7 @@ class _ChatbotScreenState extends ConsumerState<ChatbotScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),

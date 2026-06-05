@@ -4,7 +4,6 @@ import 'package:smart_clinic_booking/features/content/domain/entities/content_en
 import 'package:smart_clinic_booking/features/home/domain/entities/health_article.dart';
 import 'package:smart_clinic_booking/features/content/domain/repositories/content_repository.dart';
 import 'package:smart_clinic_booking/features/content/data/repositories/content_repository_impl.dart';
-import 'package:smart_clinic_booking/core/usecase/usecase.dart';
 
 final contentRepositoryProvider = Provider<ContentRepository>((ref) {
   return ContentRepositoryImpl(

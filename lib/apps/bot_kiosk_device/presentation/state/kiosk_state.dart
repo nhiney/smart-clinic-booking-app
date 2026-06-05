@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_clinic_booking/apps/bot_kiosk_device/domain/entities/slot_entity.dart';
 
 abstract class KioskState {

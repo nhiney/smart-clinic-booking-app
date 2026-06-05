@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/colors/app_colors.dart';
-import '../../../../core/theme/typography/app_text_styles.dart';
 import '../../../../core/widgets/branded_app_bar.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/extensions/context_extension.dart';
@@ -112,7 +111,9 @@ class PrescriptionScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => context.push('/under-development?title=${Uri.encodeComponent('Tải PDF đơn thuốc')}'),
+                    onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Tính năng xuất PDF đang được cập nhật trong phiên bản tiếp theo.'), duration: Duration(seconds: 3)),
+                    ),
                     icon: const Icon(Icons.download_rounded, size: 18),
                     label: const Text("Tải PDF"),
                     style: OutlinedButton.styleFrom(
@@ -125,7 +126,7 @@ class PrescriptionScreen extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () => context.push('/under-development?title=${Uri.encodeComponent('Đặt nhắc uống thuốc')}'),
+                    onPressed: () => context.push('/notifications/settings'),
                     icon: const Icon(Icons.alarm_add_rounded, size: 18),
                     label: const Text("Đặt nhắc hẹn"),
                     style: ElevatedButton.styleFrom(
@@ -147,7 +148,7 @@ class PrescriptionScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: isActive ? AppColors.success.withOpacity(0.1) : context.colors.textHint.withOpacity(0.1),
+        color: isActive ? AppColors.success.withValues(alpha: 0.1) : context.colors.textHint.withValues(alpha: 0.1),
         borderRadius: context.radius.xsRadius,
       ),
       child: Text(
@@ -168,14 +169,14 @@ class PrescriptionScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.colors.surface,
         borderRadius: context.radius.sRadius,
-        border: Border.all(color: context.colors.divider.withOpacity(0.5)),
+        border: Border.all(color: context.colors.divider.withValues(alpha: 0.5)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: context.colors.primary.withOpacity(0.1),
+              color: context.colors.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(Icons.medication_liquid_rounded, color: context.colors.primary, size: 20),

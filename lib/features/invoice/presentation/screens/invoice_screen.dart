@@ -83,7 +83,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
               decoration: BoxDecoration(
                 color: context.colors.surface,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                border: Border(bottom: BorderSide(color: context.colors.divider.withOpacity(0.5))),
+                border: Border(bottom: BorderSide(color: context.colors.divider.withValues(alpha: 0.5))),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -129,7 +129,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: context.colors.primary.withOpacity(0.05),
+                      color: context.colors.primary.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -148,7 +148,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () => context.push('/under-development?title=${Uri.encodeComponent('Chi tiết hóa đơn')}'),
+                          onPressed: () => _showInvoiceDetail(context, invoice),
                           icon: const Icon(Icons.description_outlined, size: 18),
                           label: const Text("Chi tiết"),
                           style: OutlinedButton.styleFrom(
@@ -162,11 +162,22 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed: () => context.push('/under-development?title=${Uri.encodeComponent(isPending ? 'Thanh toán hóa đơn' : 'Tải hóa đơn')}'),
+                          onPressed: () {
+                            if (isPending) {
+                              context.push('/payment', extra: {
+                                'amount': invoice.total,
+                                'description': 'Thanh toán hóa đơn #${invoice.id.substring(0, 6)}',
+                              });
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Tính năng tải hóa đơn PDF sẽ có trong phiên bản tiếp theo.')),
+                              );
+                            }
+                          },
                           icon: Icon(isPending ? Icons.payment_rounded : Icons.download_rounded, size: 18),
                           label: Text(isPending ? "Thanh toán" : "Tải về"),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: isPending ? context.colors.primary : const Color(0xFF2E7D32), // Green for completed
+                            backgroundColor: isPending ? context.colors.primary : const Color(0xFF2E7D32),
                             foregroundColor: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -186,6 +197,54 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
   }
 
 
+  void _showInvoiceDetail(BuildContext context, InvoiceEntity invoice) {
+    final fmt = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
+    final dateFmt = DateFormat('dd/MM/yyyy HH:mm');
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Center(child: Container(width: 40, height: 4,
+              decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)))),
+          const SizedBox(height: 16),
+          const Text('Chi tiết hóa đơn', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text('Mã: #${invoice.id.substring(0, 8).toUpperCase()}',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+          const SizedBox(height: 16),
+          const Divider(),
+          ...invoice.services.map((item) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(children: [
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(item.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                if (item.quantity > 1) Text('× ${item.quantity}',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+              ])),
+              Text(fmt.format(item.total), style: const TextStyle(fontWeight: FontWeight.w700)),
+            ]),
+          )),
+          const Divider(),
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            const Text('Tổng cộng', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(fmt.format(invoice.total),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary)),
+          ]),
+          const SizedBox(height: 8),
+          Text('Ngày tạo: ${dateFmt.format(invoice.createdAt)}',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+        ]),
+      ),
+    );
+  }
+
   Widget _buildStatusBadge(BuildContext context, String status) {
     Color color = AppColors.success;
     String label = "Đã thanh toán";
@@ -201,7 +260,7 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: context.radius.xsRadius,
       ),
       child: Text(

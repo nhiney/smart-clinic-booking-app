@@ -7,7 +7,6 @@ import '../../../../core/widgets/app_text_field.dart';
 import '../controllers/admin_controller.dart';
 import '../../domain/entities/facility_entities.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
-import '../../../auth/data/models/user_model.dart';
 
 
 class AddDoctorScreen extends StatefulWidget {
@@ -83,7 +82,7 @@ class _AddDoctorScreenState extends State<AddDoctorScreen> {
               const SizedBox(height: 16),
               
               DropdownButtonFormField<Hospital>(
-                value: _selectedHospital,
+                initialValue: _selectedHospital,
                 decoration: InputDecoration(
                   labelText: 'Bệnh viện',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -105,7 +104,7 @@ class _AddDoctorScreenState extends State<AddDoctorScreen> {
               const SizedBox(height: 16),
               
               DropdownButtonFormField<Department>(
-                value: _selectedDepartment,
+                initialValue: _selectedDepartment,
                 decoration: InputDecoration(
                   labelText: 'Khoa chuyên môn',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),

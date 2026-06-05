@@ -36,7 +36,7 @@ class HospitalBanner extends StatelessWidget {
                 Text(
                   'Giới thiệu bệnh viện',
                   style: TextStyle(
-                    color: const Color(0xFF81D4FA).withOpacity(0.9),
+                    color: const Color(0xFF81D4FA).withValues(alpha: 0.9),
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
@@ -55,7 +55,7 @@ class HospitalBanner extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () => context.push('/under-development?title=${Uri.encodeComponent('Giới thiệu bệnh viện')}'),
+              onPressed: () => context.push('/maps'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: const Color(0xFF035EAA),

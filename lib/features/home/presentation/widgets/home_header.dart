@@ -57,7 +57,7 @@ class HomeHeader extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: const Color(0xFF0D62A2).withOpacity(0.8),
+              color: const Color(0xFF0D62A2).withValues(alpha: 0.8),
             ),
           ),
           const SizedBox(height: 32),

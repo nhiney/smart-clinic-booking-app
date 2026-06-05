@@ -57,7 +57,7 @@ class _RoomManagementScreenState extends State<RoomManagementScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.meeting_room_rounded, size: 80, color: context.colors.textHint.withOpacity(0.5)),
+          Icon(Icons.meeting_room_rounded, size: 80, color: context.colors.textHint.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
           Text('Chưa có phòng nào', style: context.textStyles.bodyLarge),
         ],
@@ -86,7 +86,9 @@ class _RoomManagementScreenState extends State<RoomManagementScreen> {
           Align(
             alignment: Alignment.centerRight,
             child: TextButton.icon(
-              onPressed: () {},
+              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Tính năng quản lý thiết bị sẽ có trong phiên bản tiếp theo')),
+              ),
               icon: const Icon(Icons.add_rounded, size: 18),
               label: const Text('Thêm Thiết bị'),
             ),
@@ -120,7 +122,7 @@ class _RoomManagementScreenState extends State<RoomManagementScreen> {
           trailing: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: device.status == 'active' ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+              color: device.status == 'active' ? Colors.green.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(

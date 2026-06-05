@@ -1,29 +1,25 @@
-import 'dart:math';
 import 'package:smart_clinic_booking/features/payment/domain/entities/transaction_entity.dart';
 
+// Sandbox payment processor — all methods are deterministic (no randomness).
+// Replace this class with a real gateway (VNPay, MoMo) when credentials are available.
 class PaymentService {
-  final _random = Random();
+  /// Validates amount and simulates gateway round-trip (always succeeds in sandbox).
+  Future<PaymentStatus> processPayment(double amount, PaymentMethod method) async {
+    if (amount <= 0) return PaymentStatus.failed;
 
-  Future<PaymentStatus> simulatePayment() async {
-    // Simulate network delay
-    await Future.delayed(const Duration(seconds: 2));
-
-    final roll = _random.nextDouble();
-
-    if (roll < 0.7) {
-      return PaymentStatus.success;
-    } else if (roll < 0.9) {
-      return PaymentStatus.failed;
-    } else {
-      return PaymentStatus.pending;
-    }
+    // Realistic network round-trip per gateway
+    final delay = switch (method) {
+      PaymentMethod.momo   => const Duration(milliseconds: 1800),
+      PaymentMethod.vnpay  => const Duration(milliseconds: 2200),
+      PaymentMethod.stripe => const Duration(milliseconds: 1500),
+    };
+    await Future.delayed(delay);
+    return PaymentStatus.success;
   }
 
-  String generateTransactionId() {
-    return 'TXN${DateTime.now().millisecondsSinceEpoch}${_random.nextInt(1000)}';
-  }
+  String generateTransactionId() =>
+      'TXN${DateTime.now().millisecondsSinceEpoch}';
 
-  String generatePaymentRequestId() {
-    return 'PAYREQ${DateTime.now().millisecondsSinceEpoch}${_random.nextInt(1000)}';
-  }
+  String generatePaymentRequestId() =>
+      'PAYREQ${DateTime.now().millisecondsSinceEpoch}';
 }

@@ -10,6 +10,7 @@ import '../../domain/entities/department_entity.dart';
 import '../../domain/entities/clinic_room_entity.dart';
 import '../controllers/hospital_detail_controller.dart';
 import '../../../doctor/patient_pov/domain/entities/doctor_entity.dart';
+import 'patient_list_by_department_screen.dart';
 
 // ─────────────────────────── icon helper ────────────────────────────────────
 
@@ -205,7 +206,7 @@ class _HospitalDetailScreenState extends ConsumerState<HospitalDetailScreen>
               leading: Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: CircleAvatar(
-                  backgroundColor: Colors.white.withOpacity(0.9),
+                  backgroundColor: Colors.white.withValues(alpha: 0.9),
                   child: IconButton(
                     icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 20),
                     onPressed: () => context.pop(),
@@ -366,8 +367,8 @@ class _OpenBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: isOpen
-            ? AppColors.success.withOpacity(0.12)
-            : AppColors.error.withOpacity(0.12),
+            ? AppColors.success.withValues(alpha: 0.12)
+            : AppColors.error.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -611,6 +612,28 @@ class _DepartmentExpansionTile extends ConsumerWidget {
             hospitalId: hospitalId,
             deptId: department.id,
           ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => PatientListByDepartmentScreen(
+                    departmentId: department.id,
+                    departmentName: department.name,
+                  ),
+                ),
+              ),
+              icon: const Icon(Icons.people_alt_rounded, size: 18),
+              label: const Text('Danh sách bệnh nhân'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                side: const BorderSide(color: AppColors.primary),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -774,8 +797,8 @@ class _RoomChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        border: Border.all(color: color.withOpacity(0.4)),
+        color: color.withValues(alpha: 0.1),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(

@@ -89,8 +89,8 @@ class PaymentController extends StateNotifier<PaymentState> {
       // 1. Create pending transaction on Firestore
       await repository.createTransaction(transaction);
 
-      // 2. Simulate payment gateway process
-      final status = await service.simulatePayment();
+      // 2. Process payment via sandbox/gateway
+      final status = await service.processPayment(amount, method);
 
       // 3. Update Firestore status
       await repository.updateTransactionStatus(transactionId, status);

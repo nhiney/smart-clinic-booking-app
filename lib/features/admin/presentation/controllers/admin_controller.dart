@@ -1,8 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../../domain/entities/facility_entities.dart';
 import '../../domain/repositories/facility_repository.dart';
-import '../../../doctor/patient_pov//domain/entities/doctor_entity.dart';
-import '../../../doctor/patient_pov//domain/repositories/doctor_repository.dart';
+import '../../../doctor/patient_pov/domain/entities/doctor_entity.dart';
+import '../../../doctor/patient_pov/domain/repositories/doctor_repository.dart';
 import '../../../../core/services/seed_data_service.dart';
 import '../../../../core/utils/seed_hospital_data.dart';
 
@@ -23,7 +24,7 @@ class AdminController extends ChangeNotifier {
 
   bool isLoading = false;
   String? errorMessage;
-  
+
   List<Hospital> hospitals = [];
   List<Department> selectedDepartments = [];
   List<Room> selectedRooms = [];
@@ -31,18 +32,39 @@ class AdminController extends ChangeNotifier {
   List<DoctorEntity> unassignedDoctors = [];
   List<DoctorEntity> allDoctors = [];
 
+  int patientCount = 0;
+  int appointmentCount = 0;
+
   Future<void> fetchHospitals() async {
     try {
       isLoading = true;
       notifyListeners();
       hospitals = await facilityRepository.getAllHospitals();
-      await fetchAllDoctors();
+      await Future.wait([fetchAllDoctors(), fetchStats()]);
     } catch (e) {
       errorMessage = e.toString();
     } finally {
       isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> fetchStats() async {
+    try {
+      final firestore = FirebaseFirestore.instance;
+      final patientsSnap = await firestore
+          .collection('users')
+          .where('role', isEqualTo: 'patient')
+          .count()
+          .get();
+      final appointmentsSnap = await firestore
+          .collection('appointments')
+          .count()
+          .get();
+      patientCount = patientsSnap.count ?? 0;
+      appointmentCount = appointmentsSnap.count ?? 0;
+      notifyListeners();
+    } catch (_) {}
   }
 
   Future<void> fetchAllDoctors() async {

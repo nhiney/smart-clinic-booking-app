@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart' as legacy_provider;
 import '../../../../core/theme/colors/app_colors.dart';
-import '../../../../core/theme/typography/app_text_styles.dart';
 import '../../../../core/widgets/branded_app_bar.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/extensions/context_extension.dart';
@@ -110,7 +109,7 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
         label: Text(label),
         selected: isSelected,
         onSelected: (val) => setState(() => _filterStatus = status),
-        selectedColor: context.colors.primary.withOpacity(0.2),
+        selectedColor: context.colors.primary.withValues(alpha: 0.2),
         checkmarkColor: context.colors.primary,
         labelStyle: context.textStyles.bodySmall.copyWith(
           color: isSelected
@@ -191,7 +190,7 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
                 ),
                 SizedBox(width: context.spacing.s),
                 OutlinedButton.icon(
-                  onPressed: () => context.push('/under-development?title=${Uri.encodeComponent('Chi tiết hóa đơn')}'),
+                  onPressed: () => context.push('/invoices'),
                   icon: const Icon(Icons.receipt_long, size: 18),
                   label: const Text("Hóa đơn"),
                   style: OutlinedButton.styleFrom(
@@ -230,7 +229,7 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
       width: 48,
       height: 48,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: context.radius.sRadius,
       ),
       child: Icon(iconData, color: color),
@@ -261,7 +260,7 @@ class _TransactionScreenState extends ConsumerState<TransactionScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: context.radius.xsRadius,
       ),
       child: Text(

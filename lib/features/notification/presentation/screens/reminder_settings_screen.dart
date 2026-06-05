@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/colors/app_colors.dart';
-import '../../../../core/theme/typography/app_text_styles.dart';
 import '../../../../core/widgets/branded_app_bar.dart';
 import '../controllers/notification_controller.dart';
 
@@ -81,7 +80,7 @@ class _ReminderSettingsScreenState extends State<ReminderSettingsScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10)],
       ),
       child: SwitchListTile(
         secondary: Icon(icon, color: AppColors.primary),
@@ -89,7 +88,7 @@ class _ReminderSettingsScreenState extends State<ReminderSettingsScreen> {
         subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
         value: value,
         onChanged: onChanged,
-        activeColor: AppColors.primary,
+        activeThumbColor: AppColors.primary,
       ),
     );
   }
@@ -109,7 +108,7 @@ class _ReminderSettingsScreenState extends State<ReminderSettingsScreen> {
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(24),
-            boxShadow: [BoxShadow(color: Colors.blue.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))],
+            boxShadow: [BoxShadow(color: Colors.blue.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 8))],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,7 +131,7 @@ class _ReminderSettingsScreenState extends State<ReminderSettingsScreen> {
               const SizedBox(height: 8),
               Text(
                 'Dựa trên lịch sử đi khám của bạn, chúng tôi điều chỉnh tần suất thông báo để đảm bảo bạn không lỡ lịch.',
-                style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 13),
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 13),
               ),
               const SizedBox(height: 24),
               Row(
@@ -153,7 +152,7 @@ class _ReminderSettingsScreenState extends State<ReminderSettingsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 11)),
+        Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 11)),
         const SizedBox(height: 4),
         Text(value, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
       ],

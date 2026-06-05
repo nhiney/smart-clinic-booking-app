@@ -95,7 +95,7 @@ class _DoctorCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: context.colors.primary.withOpacity(0.1),
+                    color: context.colors.primary.withValues(alpha: 0.1),
                     width: 3,
                   ),
                 ),
@@ -176,7 +176,7 @@ class _DoctorCard extends StatelessWidget {
                           borderRadius: context.radius.sRadius,
                           boxShadow: [
                             BoxShadow(
-                              color: context.colors.primary.withOpacity(0.3),
+                              color: context.colors.primary.withValues(alpha: 0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -204,7 +204,7 @@ class _DoctorCard extends StatelessWidget {
 
   Widget _buildAvatarError(BuildContext context) {
     return Container(
-      color: context.colors.primary.withOpacity(0.1),
+      color: context.colors.primary.withValues(alpha: 0.1),
       child: Icon(
         Icons.person,
         color: context.colors.primary,

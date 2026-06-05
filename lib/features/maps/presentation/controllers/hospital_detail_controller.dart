@@ -8,6 +8,7 @@ import '../../domain/entities/clinic_room_entity.dart';
 import '../../data/models/hospital_model.dart';
 import '../../data/models/department_model.dart';
 import '../../data/models/clinic_room_model.dart';
+import '../../data/models/department_patient.dart';
 import '../../../doctor/patient_pov/domain/entities/doctor_entity.dart';
 import '../../../doctor/patient_pov/data/models/doctor_model.dart';
 
@@ -87,6 +88,33 @@ String roomsProviderKey(String hospitalId, String deptId) {
   // hospitalId never contains "_dept_"
   return '${hospitalId}_$deptId';
 }
+
+/// Danh sách bệnh nhân của một khoa.
+///
+/// Lọc collection `users` theo `department_id` + `role == patient`.
+/// (department_id là duy nhất toàn hệ thống nên không cần thêm tenant_id;
+/// dùng 2 bộ lọc equality nên Firestore phục vụ được bằng single-field index,
+/// không cần composite index. Sắp xếp theo tên ở client để tránh cần index.)
+final departmentPatientsProvider =
+    FutureProvider.family<List<DepartmentPatient>, String>((ref, departmentId) async {
+  debugPrint('[HospitalDetail] Fetching patients for department $departmentId');
+  try {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .where('department_id', isEqualTo: departmentId)
+        .where('role', isEqualTo: 'patient')
+        .get();
+    debugPrint('[HospitalDetail] Found ${snapshot.docs.length} patients for dept $departmentId');
+    final patients = snapshot.docs
+        .map((doc) => DepartmentPatient.fromJson(doc.data(), doc.id))
+        .toList();
+    patients.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    return patients;
+  } catch (e) {
+    debugPrint('[HospitalDetail] Error fetching patients for dept $departmentId: $e');
+    rethrow;
+  }
+});
 
 final departmentDoctorsProvider = FutureProvider.family<List<DoctorEntity>, String>((ref, departmentId) async {
   debugPrint('[HospitalDetail] Fetching doctors for department $departmentId');

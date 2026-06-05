@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../riverpod/medical_history_provider.dart';
 import 'medical_history_screen.dart';
 
 class MedicalRecordListScreen extends ConsumerWidget {

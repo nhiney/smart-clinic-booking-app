@@ -126,7 +126,7 @@ class _AppointmentQrScreenState extends State<AppointmentQrScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -140,7 +140,7 @@ class _AppointmentQrScreenState extends State<AppointmentQrScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.calendar_today_rounded,
@@ -228,7 +228,7 @@ class _AppointmentQrScreenState extends State<AppointmentQrScreen> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.08),
+            color: AppColors.primary.withValues(alpha: 0.08),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -286,7 +286,7 @@ class _AppointmentQrScreenState extends State<AppointmentQrScreen> {
             padding:
                 const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
             decoration: BoxDecoration(
-              color: _countdownColor.withOpacity(0.1),
+              color: _countdownColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(30),
             ),
             child: Row(
@@ -322,10 +322,10 @@ class _AppointmentQrScreenState extends State<AppointmentQrScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.05),
+        color: AppColors.primary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-            color: AppColors.primary.withOpacity(0.15)),
+            color: AppColors.primary.withValues(alpha: 0.15)),
       ),
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,

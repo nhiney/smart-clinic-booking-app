@@ -2,13 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart' as legacy_provider;
-import '../../../../core/theme/colors/app_colors.dart';
-import '../../../../core/theme/typography/app_text_styles.dart';
 import '../../../../core/widgets/branded_app_bar.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/extensions/context_extension.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
-import '../controllers/payment_controller.dart';
 import 'package:smart_clinic_booking/features/payment/domain/entities/transaction_entity.dart';
 
 class PaymentScreen extends ConsumerStatefulWidget {
@@ -54,19 +51,19 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   PaymentMethod.vnpay,
                   "VNPay",
                   Icons.account_balance_wallet_outlined,
-                  context.colors.primary.withOpacity(0.1),
+                  context.colors.primary.withValues(alpha: 0.1),
                 ),
                 _buildMethodTile(
                   PaymentMethod.momo,
                   "MoMo",
                   Icons.phone_android_outlined,
-                  Colors.pink.withOpacity(0.1),
+                  Colors.pink.withValues(alpha: 0.1),
                 ),
                 _buildMethodTile(
                   PaymentMethod.stripe,
                   "Stripe (Visa/Mastercard)",
                   Icons.credit_card_outlined,
-                  Colors.deepPurple.withOpacity(0.1),
+                  Colors.deepPurple.withValues(alpha: 0.1),
                 ),
               ],
             ),
@@ -87,7 +84,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
             BorderRadius.vertical(bottom: context.radius.xlRadius.bottomLeft),
         boxShadow: [
           BoxShadow(
-            color: context.colors.primary.withOpacity(0.05),
+            color: context.colors.primary.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -160,7 +157,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         color: context.colors.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -4),
           ),

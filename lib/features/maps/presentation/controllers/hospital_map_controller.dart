@@ -13,10 +13,12 @@ import 'dart:async';
 class HospitalMapState {
   final bool isLoading;
   final Position? userLocation;
-  final List<HospitalEntity> hospitals;        // All hospitals
-  final List<HospitalEntity> filteredHospitals; // After search/filter
+  final List<HospitalEntity> hospitals;
+  final List<HospitalEntity> filteredHospitals;
   final HospitalEntity? selectedHospital;
   final String? error;
+  final String activeFilter;
+  final bool isNearbyActive;
 
   const HospitalMapState({
     this.isLoading = false,
@@ -25,6 +27,8 @@ class HospitalMapState {
     this.filteredHospitals = const [],
     this.selectedHospital,
     this.error,
+    this.activeFilter = 'Tất cả',
+    this.isNearbyActive = false,
   });
 
   HospitalMapState copyWith({
@@ -34,7 +38,9 @@ class HospitalMapState {
     List<HospitalEntity>? filteredHospitals,
     HospitalEntity? selectedHospital,
     String? error,
+    String? activeFilter,
     bool clearSelected = false,
+    bool? isNearbyActive,
   }) {
     return HospitalMapState(
       isLoading: isLoading ?? this.isLoading,
@@ -43,6 +49,16 @@ class HospitalMapState {
       filteredHospitals: filteredHospitals ?? this.filteredHospitals,
       selectedHospital: clearSelected ? null : (selectedHospital ?? this.selectedHospital),
       error: error,
+      activeFilter: activeFilter ?? this.activeFilter,
+      isNearbyActive: isNearbyActive ?? this.isNearbyActive,
+    );
+  }
+
+  double? distanceTo(HospitalEntity hospital) {
+    if (userLocation == null) return null;
+    return DistanceUtil.calculateDistance(
+      userLocation!.latitude, userLocation!.longitude,
+      hospital.lat, hospital.lng,
     );
   }
 }
@@ -119,6 +135,7 @@ class HospitalMapController extends StateNotifier<HospitalMapState> {
         userLocation: position,
         filteredHospitals: nearby.isEmpty ? list : nearby,
         selectedHospital: nearby.isNotEmpty ? nearby.first : null,
+        isNearbyActive: nearby.isNotEmpty,
       );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -126,19 +143,42 @@ class HospitalMapController extends StateNotifier<HospitalMapState> {
   }
 
   void searchHospitals(String query) {
+    if (state.isNearbyActive) {
+      state = state.copyWith(isNearbyActive: false);
+    }
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 300), () {
-      if (query.isEmpty) {
-        state = state.copyWith(filteredHospitals: state.hospitals);
-        return;
-      }
-      final lowerQuery = query.toLowerCase();
-      final filtered = state.hospitals.where((p) {
-        return p.name.toLowerCase().contains(lowerQuery) ||
-               p.specialties.any((s) => s.toLowerCase().contains(lowerQuery));
-      }).toList();
-      state = state.copyWith(filteredHospitals: filtered);
+      _applyFilters(searchQuery: query);
     });
+  }
+
+  void filterBySpecialty(String specialty) {
+    state = state.copyWith(activeFilter: specialty, isNearbyActive: false);
+    _applyFilters();
+  }
+
+  void clearNearby() {
+    state = state.copyWith(
+      isNearbyActive: false,
+      filteredHospitals: state.hospitals,
+      clearSelected: true,
+    );
+  }
+
+  void _applyFilters({String? searchQuery}) {
+    final query = (searchQuery ?? '').toLowerCase();
+    final filter = state.activeFilter;
+
+    var list = state.hospitals.where((h) {
+      final matchesSearch = query.isEmpty ||
+          h.name.toLowerCase().contains(query) ||
+          h.specialties.any((s) => s.toLowerCase().contains(query));
+      final matchesFilter = filter == 'Tất cả' ||
+          h.specialties.any((s) => s.toLowerCase().contains(filter.toLowerCase()));
+      return matchesSearch && matchesFilter;
+    }).toList();
+
+    state = state.copyWith(filteredHospitals: list);
   }
 
   void filterByDistanceRadius(double kmRadius) {

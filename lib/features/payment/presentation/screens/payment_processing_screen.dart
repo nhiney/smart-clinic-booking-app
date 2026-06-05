@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/colors/app_colors.dart';
 import '../../../../core/extensions/context_extension.dart';
 import '../controllers/payment_controller.dart';
 import 'package:smart_clinic_booking/features/payment/domain/entities/transaction_entity.dart';
@@ -90,7 +89,7 @@ class _PaymentProcessingScreenState
                     height: 70,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: context.colors.primary.withOpacity(0.1),
+                      color: context.colors.primary.withValues(alpha: 0.1),
                     ),
                     child: Icon(Icons.sync,
                         color: context.colors.primary, size: 40),

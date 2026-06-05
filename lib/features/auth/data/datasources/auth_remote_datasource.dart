@@ -11,6 +11,7 @@ import 'package:uuid/uuid.dart';
 import '../../domain/entities/user_entity.dart';
 import '../models/user_model.dart';
 import '../../../../core/services/local_account_store.dart';
+import '../../../../core/security/encryption_service.dart';
 
 @lazySingleton
 class AuthRemoteDatasource {
@@ -19,6 +20,7 @@ class AuthRemoteDatasource {
   final LocalAuthentication _localAuth = LocalAuthentication();
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   final _uuid = const Uuid();
+  final EncryptionService _encryptionService = EncryptionService.instance;
 
   static const String _biometricCredentialKey = 'auth_biometric_credential_v1';
   static const String _sessionUidKey = 'session_uid';
@@ -261,7 +263,7 @@ class AuthRemoteDatasource {
         tenantId: tenantId,
         isVerified: role == 'patient',
         status: 'active',
-        password: password,
+        password: password != null ? _encryptionService.hashPassword(password) : null,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -302,6 +304,8 @@ class AuthRemoteDatasource {
     }
 
     final effectiveEmail = email ?? _firebaseAuth.currentUser?.email ?? linkedVirtualEmail ?? '';
+    // Hash password trước khi lưu vào model (và Firestore)
+    final hashedPassword = password != null ? _encryptionService.hashPassword(password) : null;
     final userModel = UserModel(
       id: user.uid,
       email: effectiveEmail,
@@ -312,7 +316,7 @@ class AuthRemoteDatasource {
       tenantId: tenantId,
       isVerified: role == 'patient',
       status: 'active',
-      password: password,
+      password: hashedPassword,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );
@@ -325,10 +329,12 @@ class AuthRemoteDatasource {
         throw Exception('Số điện thoại này đã được đăng ký trên hệ thống.');
       }
 
-      final data = userModel.toJson();
+      // Dùng toJsonWithPassword để lưu password hash vào Firestore
+      // (toJson() mặc định không include password cho an toàn)
+      final data = userModel.toJsonWithPassword();
       data['uid'] = user.uid;
 
-      // 1. Save user profile to Firestore
+      // 1. Save user profile to Firestore (với password đã hash)
       await _firestore.collection('users').doc(user.uid).set(data, SetOptions(merge: true));
 
       // 2. Mark phone as registered for duplicate prevention (Server-side)
@@ -827,6 +833,23 @@ class AuthRemoteDatasource {
         return 'Phiên xác thực đã hết hạn. Vui lòng gửi lại OTP.';
       default:
         return 'Lỗi xác thực ($code).';
+    }
+  }
+
+  // ── Token Refresh ──────────────────────────────────────────────────────────
+
+  /// Refresh Firebase ID Token.
+  /// Firebase SDK tự quản lý refresh internally.
+  /// Method này force-refresh để lấy token mới.
+  Future<String?> refreshToken() async {
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user == null) return null;
+      final token = await user.getIdToken(true);
+      return token;
+    } catch (e) {
+      debugPrint('[AUTH] refreshToken error: $e');
+      return null;
     }
   }
 }

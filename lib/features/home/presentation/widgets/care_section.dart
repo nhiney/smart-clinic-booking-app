@@ -46,7 +46,7 @@ class _CareSectionState extends State<CareSection> {
                 ),
               ),
               TextButton(
-                onPressed: () => context.push('/under-development?title=${Uri.encodeComponent('Gói chăm sóc sức khoẻ')}'),
+                onPressed: () => context.push('/health-library'),
                 child: const Text(
                   'Xem thêm >',
                   style: TextStyle(
@@ -134,7 +134,7 @@ class _PackageCard extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

@@ -175,4 +175,10 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Map<String, String>?> getLocalRegistrationInfo() async {
     return await remoteDatasource.getLocalRegistrationInfo();
   }
+
+  @override
+  Future<String?> refreshToken() async {
+    return await remoteDatasource.refreshToken();
+  }
 }
+

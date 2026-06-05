@@ -7,12 +7,16 @@ import 'package:permission_handler/permission_handler.dart';
 class VoiceService {
   final stt.SpeechToText _speech = stt.SpeechToText();
   final FlutterTts _tts = FlutterTts();
-  
+
   bool _isSpeechInitialized = false;
+
+  // Stream for sound level (0.0 – 1.0) so UI can animate mic button.
+  final _soundLevelController = StreamController<double>.broadcast();
+  Stream<double> get soundLevelStream => _soundLevelController.stream;
 
   Future<bool> init() async {
     if (_isSpeechInitialized) return true;
-    
+
     final status = await Permission.microphone.request();
     if (status != PermissionStatus.granted) {
       debugPrint('Microphone permission not granted');
@@ -24,19 +28,17 @@ class VoiceService {
       onStatus: (val) => debugPrint('STT Status: $val'),
     );
 
-    // TTS Config
-    await _tts.setLanguage("vi-VN");
+    await _tts.setLanguage('vi-VN');
     await _tts.setPitch(1.0);
     await _tts.setSpeechRate(0.5);
-    
-    // iOS specific TTS setup
-    await _tts.setIosAudioCategory(IosTextToSpeechAudioCategory.playback, 
+    await _tts.setIosAudioCategory(
+      IosTextToSpeechAudioCategory.playback,
       [
         IosTextToSpeechAudioCategoryOptions.defaultToSpeaker,
         IosTextToSpeechAudioCategoryOptions.allowBluetooth,
         IosTextToSpeechAudioCategoryOptions.allowBluetoothA2DP,
       ],
-      IosTextToSpeechAudioMode.defaultMode
+      IosTextToSpeechAudioMode.defaultMode,
     );
 
     return _isSpeechInitialized;
@@ -48,27 +50,38 @@ class VoiceService {
     required Function(String error) onError,
   }) async {
     if (!_isSpeechInitialized) {
-      bool initialized = await init();
-      if (!initialized) {
-        onError("Không thể khởi tạo micro");
+      final ok = await init();
+      if (!ok) {
+        onError('Không thể khởi tạo micro');
         return;
       }
     }
 
-    if (_isSpeechInitialized) {
-      await _speech.listen(
-        onResult: (val) {
-          if (val.recognizedWords.isNotEmpty) {
-            onResult(val.recognizedWords);
-          }
-        },
-        localeId: 'vi_VN',
-        onSoundLevelChange: (level) => {}, // Can be used for mic animation
+    await _speech.listen(
+      onResult: (val) {
+        if (val.recognizedWords.isNotEmpty) {
+          onResult(val.recognizedWords);
+        }
+        // STT done (final result) → notify caller
+        if (val.finalResult) {
+          onListeningChange(false);
+        }
+      },
+      localeId: 'vi_VN',
+      onSoundLevelChange: (level) {
+        // Normalize roughly to 0–1 (level range is typically -2 to 10 dB)
+        final normalized = ((level + 2) / 12).clamp(0.0, 1.0);
+        if (!_soundLevelController.isClosed) {
+          _soundLevelController.add(normalized);
+        }
+      },
+      listenOptions: stt.SpeechListenOptions(
         cancelOnError: true,
         listenMode: stt.ListenMode.confirmation,
-      );
-      onListeningChange(true);
-    }
+      ),
+    );
+
+    onListeningChange(true);
   }
 
   Future<void> stopListening() async {
@@ -91,5 +104,6 @@ class VoiceService {
   void dispose() {
     _speech.stop();
     _tts.stop();
+    _soundLevelController.close();
   }
 }
