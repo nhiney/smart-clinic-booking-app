@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../../../../../core/theme/icare_tokens.dart';
 import '../../domain/entities/doctor_schedule_slot.dart';
 import '../riverpod/doctor_schedule_provider.dart';
@@ -124,15 +126,103 @@ class _DoctorScheduleTimelineScreenState
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
+        onPressed: _pickDay,
         backgroundColor: IColors.primary500,
-        icon: const Icon(Icons.add_rounded, color: Colors.white),
-        label: Text('Thêm lịch',
+        icon: const Icon(Icons.calendar_month_rounded, color: Colors.white),
+        label: Text('Chọn ngày',
             style: IText.body(
                 size: 13, weight: FontWeight.w600, color: Colors.white)),
       ),
     );
   }
+
+  /// Pick a day and reload the schedule for it.
+  Future<void> _pickDay() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: now,
+      firstDate: now.subtract(const Duration(days: 60)),
+      lastDate: now.add(const Duration(days: 120)),
+      builder: (ctx, child) => Theme(
+        data: Theme.of(ctx).copyWith(
+          colorScheme: const ColorScheme.light(primary: IColors.primary500),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null && mounted) {
+      ref.read(doctorScheduleProvider.notifier).loadForDay(picked);
+    }
+  }
+
+  /// Show the details of a single appointment slot.
+  void _showSlotDetail(DoctorScheduleSlot slot) {
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetCtx) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: IColors.line2,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Text(slot.patientName,
+                style: IText.display(size: 18, color: IColors.ink)),
+            const SizedBox(height: 8),
+            _detailRow(Icons.schedule_rounded,
+                '${DateFormat('dd/MM/yyyy').format(slot.dateTime)} · '
+                '${DateFormat.Hm().format(slot.dateTime)} (${slot.durationMinutes} phút)'),
+            if (slot.isVideo)
+              _detailRow(Icons.videocam_rounded, 'Khám video từ xa'),
+            if (slot.isUrgent)
+              _detailRow(Icons.priority_high_rounded, 'Ưu tiên/khẩn'),
+            if (slot.note.isNotEmpty)
+              _detailRow(Icons.notes_rounded, slot.note),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(sheetCtx);
+                  context.push('/medical-records');
+                },
+                icon: const Icon(Icons.folder_open_rounded, size: 18),
+                label: const Text('Xem hồ sơ bệnh án'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: IColors.primary500,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _detailRow(IconData icon, String text) => Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Icon(icon, size: 16, color: IColors.primary500),
+          const SizedBox(width: 8),
+          Expanded(child: Text(text, style: IText.body(size: 13, color: IColors.ink2))),
+        ]),
+      );
 
   Widget _buildError(String message) => Center(
         child: Padding(
@@ -206,7 +296,8 @@ class _DoctorScheduleTimelineScreenState
           ),
           _iconBtn(Icons.notifications_outlined, () {}, badge: null),
           const SizedBox(width: 8),
-          _iconBtn(Icons.more_horiz_rounded, () {}),
+          _iconBtn(Icons.refresh_rounded,
+              () => ref.read(doctorScheduleProvider.notifier).loadForDay(DateTime.now())),
         ],
       ),
     );
@@ -711,7 +802,7 @@ class _DoctorScheduleTimelineScreenState
                 style: IText.label(size: 9.5, color: IColors.success)),
             const Spacer(),
             GestureDetector(
-              onTap: () {},
+              onTap: () => _showSlotDetail(slot),
               child: Text('Xem hồ sơ →',
                   style: IText.body(
                       size: 11.5,
@@ -735,7 +826,7 @@ class _DoctorScheduleTimelineScreenState
                 style: IText.label(size: 9.5, color: IColors.ink3)),
             const Spacer(),
             GestureDetector(
-              onTap: () {},
+              onTap: () => _showSlotDetail(slot),
               child: Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
