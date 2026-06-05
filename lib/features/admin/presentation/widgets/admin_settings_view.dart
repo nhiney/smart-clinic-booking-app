@@ -19,7 +19,6 @@ class AdminSettingsView extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        // Khối 1: Thông tin tài khoản hiện tại
         Card(
           elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -70,7 +69,6 @@ class AdminSettingsView extends StatelessWidget {
         ),
         const SizedBox(height: 20),
 
-        // Khối 2: Cài đặt hệ thống tổng quát
         const Padding(
           padding: EdgeInsets.only(left: 8, bottom: 8),
           child: Text(
@@ -117,7 +115,6 @@ class AdminSettingsView extends StatelessWidget {
         ),
         const SizedBox(height: 20),
 
-        // Khối 3: Ứng dụng & Hỗ trợ
         const Padding(
           padding: EdgeInsets.only(left: 8, bottom: 8),
           child: Text(

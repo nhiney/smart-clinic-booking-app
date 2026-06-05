@@ -1,4 +1,3 @@
-// lib/features/admin/data/repositories/firestore_facility_repository.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:injectable/injectable.dart';
 import '../../domain/entities/facility_entities.dart';
@@ -8,9 +7,6 @@ import '../../domain/repositories/facility_repository.dart';
 class FirestoreFacilityRepository implements FacilityRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // =========================================================================
-  // 1. DASHBOARD OVERVIEW - GIẢI PHÁP TỐI ƯU HÓA KHÔNG CẦN COMPOSITE INDEX
-  // =========================================================================
   @override
   Future<AdminDashboardEntity> getAdminDashboardData(String period) async {
     try {
@@ -282,4 +278,3 @@ class FirestoreFacilityRepository implements FacilityRepository {
     }
   }
 }
-

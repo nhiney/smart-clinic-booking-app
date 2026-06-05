@@ -16,7 +16,6 @@ class DoctorApprovalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 💡 GIẢI PHÁP SỬA LỖI: Đọc dữ liệu thô dạng Map Key-Value để tránh kích hoạt NoSuchMethodError
     Map<String, dynamic> doctorMap = {};
     try {
       doctorMap = (doctor as dynamic).toMap();
@@ -62,19 +61,16 @@ class DoctorApprovalCard extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               
-              // 💡 ĐÃ CẬP NHẬT: Bọc toàn bộ khối text vào Expanded để khống chế chiều ngang, chống tràn viền
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start, // Căn đỉnh để badge không bị lệch khi tên xuống dòng
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // 💡 ĐÃ CẬP NHẬT: Tiếp tục bọc tên vào Expanded nội bộ để ép chữ tự động xuống hàng mượt mà
                         Expanded(
                           child: Text(
-                            // Tự động kiểm tra chuỗi động từ DB, nếu có sẵn tiền tố thì giữ nguyên để tránh lặp 'BS. BS.'
                             doctor.name.trim().toLowerCase().startsWith('bs') || 
                             doctor.name.trim().toLowerCase().startsWith('bác sĩ')
                                 ? doctor.name
@@ -88,7 +84,7 @@ class DoctorApprovalCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(width: 8), // Khoảng cách an toàn giữa tên và badge trạng thái
+                        const SizedBox(width: 8),
                         _buildStatusBadge(currentStatus),
                       ],
                     ),

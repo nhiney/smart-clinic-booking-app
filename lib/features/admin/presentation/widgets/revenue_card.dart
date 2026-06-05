@@ -15,12 +15,10 @@ class RevenueCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 🌟 TỰ TÍNH TOÁN ĐỘNG: Lấy tổng doanh thu chia cho số lượt hẹn từ Firestore
     final double avgPerVisit = appointments.value > 0 
         ? (revenue.value / appointments.value) 
         : 0.0;
 
-    // Tự động format định dạng hiển thị ví dụ: 1800 -> 1.8K
     final String formattedTransactions = appointments.value >= 1000
         ? '${(appointments.value / 1000).toStringAsFixed(1)}K'
         : appointments.value.toInt().toString();
