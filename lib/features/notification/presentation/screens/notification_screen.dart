@@ -44,6 +44,22 @@ _Meta _metaFor(String type) {
       label: 'Nhập viện',
     );
   }
+  if (type == 'checkin' || type == 'patient_ready') {
+    return const _Meta(
+      icon: Icons.person_search_rounded,
+      color: Color(0xFF0EA5E9),
+      bg: Color(0xFFE0F2FE),
+      label: 'Bệnh nhân',
+    );
+  }
+  if (type == 'clinical' || type == 'result') {
+    return const _Meta(
+      icon: Icons.biotech_rounded,
+      color: Color(0xFFBE185D),
+      bg: Color(0xFFFCE7F3),
+      label: 'Lâm sàng',
+    );
+  }
   return const _Meta(
     icon: Icons.campaign_rounded,
     color: Color(0xFF7C3AED),

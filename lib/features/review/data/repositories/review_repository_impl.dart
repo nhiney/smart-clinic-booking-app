@@ -118,6 +118,15 @@ class ReviewRepositoryImpl implements ReviewRepository {
   }
 
   @override
+    @override
+  Future<void> respondToReview(String reviewId, String response) async {
+    await _firestore.collection('reviews').doc(reviewId).update({
+      'doctorResponse': response,
+      'doctorResponseAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  @override
   Future<List<ReviewEntity>> getUserReviews(String userId) async {
     final snapshot = await _firestore
         .collection('reviews')
