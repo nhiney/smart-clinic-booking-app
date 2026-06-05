@@ -148,7 +148,10 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () => _showInvoiceDetail(context, invoice),
+                          onPressed: () => context.push(
+                            '/invoices/detail',
+                            extra: {'invoiceId': invoice.id, 'invoice': invoice},
+                          ),
                           icon: const Icon(Icons.description_outlined, size: 18),
                           label: const Text("Chi tiết"),
                           style: OutlinedButton.styleFrom(
@@ -162,18 +165,17 @@ class _InvoiceScreenState extends ConsumerState<InvoiceScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed: () {
-                            if (isPending) {
-                              context.push('/payment', extra: {
-                                'amount': invoice.total,
-                                'description': 'Thanh toán hóa đơn #${invoice.id.substring(0, 6)}',
-                              });
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Tính năng tải hóa đơn PDF sẽ có trong phiên bản tiếp theo.')),
-                              );
-                            }
-                          },
+                          onPressed: isPending
+                              ? () => context.push('/payment', extra: {
+                                    'amount': invoice.total,
+                                    'description': 'Thanh toán hóa đơn #${invoice.id.substring(0, 8).toUpperCase()}',
+                                    'invoiceId': invoice.id,
+                                  })
+                              : () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("Tính năng tải PDF đang phát triển")),
+                                  );
+                                },
                           icon: Icon(isPending ? Icons.payment_rounded : Icons.download_rounded, size: 18),
                           label: Text(isPending ? "Thanh toán" : "Tải về"),
                           style: ElevatedButton.styleFrom(

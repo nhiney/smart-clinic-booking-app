@@ -10,6 +10,8 @@ class PaymentProcessingScreen extends ConsumerStatefulWidget {
   final PaymentMethod method;
   final String description;
   final String userId;
+  final String? invoiceId;
+  final String? appointmentId;
 
   const PaymentProcessingScreen({
     super.key,
@@ -17,6 +19,8 @@ class PaymentProcessingScreen extends ConsumerStatefulWidget {
     required this.method,
     required this.description,
     required this.userId,
+    this.invoiceId,
+    this.appointmentId,
   });
 
   @override

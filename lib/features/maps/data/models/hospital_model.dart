@@ -15,15 +15,16 @@ class HospitalModel extends HospitalEntity {
     super.description,
     super.phone,
     super.workingHours,
+    super.distance,
   });
 
   factory HospitalModel.fromJson(Map<String, dynamic> json) {
     return HospitalModel(
-      id: json['id'] as String? ?? '',
+      id: (json['id'] ?? json['hospitalId'] ?? '').toString(),
       name: json['name'] as String? ?? 'Chưa cập nhật',
       address: json['address'] as String? ?? 'Chưa cập nhật',
-      lat: (json['lat'] as num?)?.toDouble() ?? 0.0,
-      lng: (json['lng'] as num?)?.toDouble() ?? 0.0,
+      lat: (json['lat'] ?? json['latitude'] as num?)?.toDouble() ?? 0.0,
+      lng: (json['lng'] ?? json['longitude'] as num?)?.toDouble() ?? 0.0,
       specialties: (json['specialties'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
       isOpen: json['isOpen'] as bool? ?? false,
@@ -50,6 +51,7 @@ class HospitalModel extends HospitalEntity {
       if (description != null) 'description': description,
       if (phone != null) 'phone': phone,
       if (workingHours != null) 'workingHours': workingHours,
+      if (distance != null) 'distance': distance,
     };
   }
 }

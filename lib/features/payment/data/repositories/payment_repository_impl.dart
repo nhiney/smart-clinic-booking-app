@@ -56,6 +56,7 @@ class PaymentRepositoryImpl implements PaymentRepository {
           id: m['id'],
           userId: m['userId'],
           appointmentId: data['appointmentId'],
+          invoiceId: data['invoiceId'],
           amount: (data['amount'] as num).toDouble(),
           currency: data['currency'] ?? 'VND',
           method:
@@ -87,6 +88,7 @@ class PaymentRepositoryImpl implements PaymentRepository {
       id: transaction.id,
       userId: transaction.userId,
       appointmentId: transaction.appointmentId,
+      invoiceId: transaction.invoiceId,
       amount: transaction.amount,
       currency: transaction.currency,
       method: transaction.method,

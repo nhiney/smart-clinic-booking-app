@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/theme/colors/app_colors.dart';
-import '../../../../core/theme/typography/app_text_styles.dart';
+import '../../../../core/extensions/context_extension.dart';
 import '../../domain/entities/health_article.dart';
 
 /// Section 8: Health News Feed — list of health articles.
@@ -24,7 +23,7 @@ class HealthNewsFeed extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Text('Tin tức sức khỏe', style: AppTextStyles.heading3),
+          child: Text('Tin tức sức khỏe', style: context.textStyles.heading3),
         ),
         const SizedBox(height: 12),
         ListView.separated(
@@ -57,9 +56,9 @@ class _ArticleTile extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: const [BoxShadow(color: AppColors.shadow, blurRadius: 8)],
+          color: context.colors.surface,
+          borderRadius: context.radius.mRadius,
+          boxShadow: [BoxShadow(color: context.colors.shadow, blurRadius: 8)],
         ),
         child: Row(
           children: [
@@ -68,10 +67,10 @@ class _ArticleTile extends StatelessWidget {
               width: 90,
               height: 90,
               decoration: BoxDecoration(
-                color: AppColors.primarySurface,
+                color: context.colors.primary.withOpacity(0.1),
                 borderRadius: const BorderRadius.horizontal(left: Radius.circular(14)),
               ),
-              child: const Icon(Icons.article_rounded, color: AppColors.primary, size: 36),
+              child: Icon(Icons.article_rounded, color: context.colors.primary, size: 36),
             ),
             Expanded(
               child: Padding(
@@ -82,13 +81,13 @@ class _ArticleTile extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: AppColors.primarySurface,
-                        borderRadius: BorderRadius.circular(6),
+                        color: context.colors.primary.withOpacity(0.1),
+                        borderRadius: context.radius.xsRadius,
                       ),
                       child: Text(
                         article.source,
-                        style: AppTextStyles.caption.copyWith(
-                          color: AppColors.primary,
+                        style: context.textStyles.caption.copyWith(
+                          color: context.colors.primary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -96,9 +95,9 @@ class _ArticleTile extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text(
                       article.title,
-                      style: AppTextStyles.bodySmall.copyWith(
+                      style: context.textStyles.bodySmall.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                        color: context.colors.textPrimary,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -106,7 +105,7 @@ class _ArticleTile extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text(
                       timeFormatter.format(article.publishedAt),
-                      style: AppTextStyles.caption,
+                      style: context.textStyles.caption,
                     ),
                   ],
                 ),

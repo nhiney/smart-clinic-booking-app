@@ -66,6 +66,10 @@ class _DoctorSearchScreenState extends State<DoctorSearchScreen> {
         return 'Phổ biến';
       case DoctorCatalogSort.nearest:
         return 'Gần nhất';
+      case DoctorCatalogSort.experienceDesc:
+        return 'Kinh nghiệm nhiều';
+      case DoctorCatalogSort.experienceAsc:
+        return 'Kinh nghiệm ít';
     }
   }
 

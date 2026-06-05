@@ -11,11 +11,15 @@ import 'package:smart_clinic_booking/features/payment/domain/entities/transactio
 class PaymentScreen extends ConsumerStatefulWidget {
   final double amount;
   final String description;
+  final String? invoiceId;
+  final String? appointmentId;
 
   const PaymentScreen({
     super.key,
     required this.amount,
     required this.description,
+    this.invoiceId,
+    this.appointmentId,
   });
 
   @override
@@ -172,6 +176,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
               'method': _selectedMethod,
               'description': widget.description,
               'userId': auth.currentUser!.id,
+              'invoiceId': widget.invoiceId,
+              'appointmentId': widget.appointmentId,
             });
           },
         ),

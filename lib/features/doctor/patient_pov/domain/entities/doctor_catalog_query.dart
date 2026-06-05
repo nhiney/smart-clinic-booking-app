@@ -10,6 +10,12 @@ enum DoctorCatalogSort {
 
   /// Nearest first using [DoctorCatalogQuery.userLatitude] / [userLongitude].
   nearest,
+  
+  /// Most experienced first.
+  experienceDesc,
+
+  /// Least experienced first (rarely used but good for completeness).
+  experienceAsc,
 }
 
 /// Filters + sort for querying the `doctors` Firestore collection.

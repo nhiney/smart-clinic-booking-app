@@ -74,6 +74,7 @@ class AppSpacingProxy {
   double get l   => AppSpacing.l;
   double get xl  => AppSpacing.xl;
   double get xxl => AppSpacing.xxl;
+  double get xxxl => AppSpacing.xxxl;
 }
 
 // ─── Radius Proxy ─────────────────────────────────────────────────────────────

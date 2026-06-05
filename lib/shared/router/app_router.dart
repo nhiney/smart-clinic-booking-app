@@ -8,7 +8,6 @@ import 'package:smart_clinic_booking/features/auth/presentation/screens/staff_lo
 import 'package:smart_clinic_booking/features/auth/presentation/screens/sign_up_screen.dart';
 import 'package:smart_clinic_booking/features/auth/presentation/screens/patient_home_screen.dart';
 import 'package:smart_clinic_booking/features/admin/presentation/screens/admin_dashboard_screen.dart';
-
 import 'package:smart_clinic_booking/features/admission/presentation/screens/admission_registration_screen.dart';
 import 'package:smart_clinic_booking/features/admission/presentation/screens/admission_history_screen.dart';
 import 'package:smart_clinic_booking/features/notification/presentation/screens/notification_screen.dart';
@@ -22,6 +21,7 @@ import 'package:smart_clinic_booking/features/support/presentation/screens/ticke
 import 'package:smart_clinic_booking/features/content/presentation/screens/news_screen.dart';
 import 'package:smart_clinic_booking/features/content/presentation/screens/content_screens.dart';
 import 'package:smart_clinic_booking/features/maps/presentation/screens/hospital_map_screen.dart';
+import 'package:smart_clinic_booking/features/maps/presentation/screens/hospital_list_screen.dart';
 import 'package:smart_clinic_booking/features/maps/presentation/screens/hospital_detail_screen.dart';
 import 'package:smart_clinic_booking/features/maps/domain/entities/hospital_entity.dart';
 import 'package:smart_clinic_booking/features/review/presentation/screens/review_screen.dart';
@@ -40,7 +40,10 @@ import 'package:smart_clinic_booking/features/booking/domain/entities/booking_en
 import 'package:smart_clinic_booking/features/payment/presentation/screens/payment_screen.dart';
 import 'package:smart_clinic_booking/features/payment/presentation/screens/payment_processing_screen.dart';
 import 'package:smart_clinic_booking/features/payment/presentation/screens/transaction_screen.dart';
+import 'package:smart_clinic_booking/features/payment/presentation/screens/transaction_detail_screen.dart';
 import 'package:smart_clinic_booking/features/payment/domain/entities/transaction_entity.dart';
+import 'package:smart_clinic_booking/features/invoice/presentation/screens/invoice_detail_screen.dart';
+import 'package:smart_clinic_booking/features/invoice/domain/entities/invoice_entity.dart';
 import 'package:smart_clinic_booking/features/medical_record/presentation/screens/medical_record_screen.dart';
 import 'package:smart_clinic_booking/features/medical_record/presentation/screens/medical_record_detail_screen.dart';
 import 'package:smart_clinic_booking/features/medical_record/presentation/screens/add_medical_record_screen.dart';
@@ -369,6 +372,10 @@ class AppRouter {
         builder: (context, state) => const HospitalMapScreen(),
       ),
       GoRoute(
+        path: '/hospitals',
+        builder: (context, state) => const HospitalListScreen(),
+      ),
+      GoRoute(
         path: '/hospital/detail/:id',
         builder: (context, state) {
           final hospitalId = state.pathParameters['id']!;
@@ -394,6 +401,8 @@ class AppRouter {
           return PaymentScreen(
             amount: (extras['amount'] as num?)?.toDouble() ?? 0.0,
             description: extras['description'] as String? ?? 'Thanh toán dịch vụ',
+            invoiceId: extras['invoiceId'] as String?,
+            appointmentId: extras['appointmentId'] as String?,
           );
         },
       ),
@@ -406,12 +415,21 @@ class AppRouter {
             method: extras['method'] as PaymentMethod? ?? PaymentMethod.vnpay,
             description: extras['description'] as String? ?? '',
             userId: extras['userId'] as String? ?? '',
+            invoiceId: extras['invoiceId'] as String?,
+            appointmentId: extras['appointmentId'] as String?,
           );
         },
       ),
       GoRoute(
         path: '/transactions',
         builder: (context, state) => const TransactionScreen(),
+      ),
+      GoRoute(
+        path: '/transactions/detail',
+        builder: (context, state) {
+          final transaction = state.extra as TransactionEntity;
+          return TransactionDetailScreen(transaction: transaction);
+        },
       ),
       GoRoute(
         path: '/medical-records',
@@ -431,6 +449,16 @@ class AppRouter {
       GoRoute(
         path: '/invoices',
         builder: (context, state) => const InvoiceScreen(),
+      ),
+      GoRoute(
+        path: '/invoices/detail',
+        builder: (context, state) {
+          final extras = state.extra as Map<String, dynamic>? ?? {};
+          return InvoiceDetailScreen(
+            invoiceId: extras['invoiceId'] as String? ?? '',
+            invoice: extras['invoice'] as InvoiceEntity?,
+          );
+        },
       ),
       GoRoute(
         path: '/appointments',
