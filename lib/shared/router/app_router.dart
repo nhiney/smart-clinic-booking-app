@@ -34,6 +34,7 @@ import 'package:smart_clinic_booking/features/auth/presentation/screens/reset_pa
 import 'package:smart_clinic_booking/features/support/domain/entities/support_entities.dart';
 import 'package:smart_clinic_booking/features/booking/presentation/screens/booking_screen.dart';
 import 'package:smart_clinic_booking/features/checkin/presentation/screens/checkin_screen.dart';
+import 'package:smart_clinic_booking/features/checkin/presentation/screens/clinic_scanner_screen.dart';
 import 'package:smart_clinic_booking/features/checkin/presentation/screens/appointment_qr_screen.dart';
 import 'package:smart_clinic_booking/features/booking/domain/entities/booking_entity.dart';
 
@@ -181,7 +182,8 @@ class AppRouter {
          debugPrint('[ROUTER] Redirecting authenticated user away from public route to home/dashboard');
          if (role == 'doctor') return '/doctor/dashboard';
          if (role == 'admin' || role == 'super_admin' || role == 'hospital_manager') return '/admin/dashboard';
-         return '/home'; 
+         if (role == 'scanner_device') return '/clinic/checkin-scanner';
+         return '/home';
       }
 
       // 4. Registration Flow Guard
@@ -513,6 +515,10 @@ class AppRouter {
             appointmentId: extras['appointmentId'] as String? ?? '',
           );
         },
+      ),
+      GoRoute(
+        path: '/clinic/checkin-scanner',
+        builder: (context, state) => const ClinicScannerScreen(),
       ),
       GoRoute(
         path: '/booking/qr',
