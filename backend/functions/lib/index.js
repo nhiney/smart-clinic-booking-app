@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cleanupAbandonedBookings = void 0;
+exports.setUserRole = exports.syncUserClaims = exports.cleanupAbandonedBookings = void 0;
 const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 admin.initializeApp();
@@ -58,5 +58,76 @@ exports.cleanupAbandonedBookings = functions.pubsub
     await batch.commit();
     console.log(`Đã giải phóng thành công ${snapshot.size} Slot.`);
     return null;
+});
+/**
+ * Đồng bộ Firebase Custom Claims từ document `users/{uid}`.
+ *
+ * Router của app phân quyền dựa trên token claims (role/status), trong khi
+ * đăng ký và duyệt KYC chỉ ghi role/status vào Firestore `users`. Hàm này lắng
+ * nghe mọi thay đổi của `users/{uid}` và set lại custom claims tương ứng, để
+ * sau khi client refresh token thì quyền có hiệu lực.
+ */
+exports.syncUserClaims = functions.firestore
+    .document("users/{uid}")
+    .onWrite(async (change, context) => {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+    const uid = context.params.uid;
+    // Document bị xóa -> gỡ toàn bộ claims.
+    if (!change.after.exists) {
+        try {
+            await admin.auth().setCustomUserClaims(uid, null);
+        }
+        catch (e) {
+            console.error(`Không gỡ được claims cho ${uid}:`, e);
+        }
+        return null;
+    }
+    const data = change.after.data() || {};
+    const role = String((_a = data.role) !== null && _a !== void 0 ? _a : "patient").toLowerCase();
+    const status = String((_b = data.status) !== null && _b !== void 0 ? _b : "active").toLowerCase();
+    const tenantId = (_e = (_d = (_c = data.tenant_id) !== null && _c !== void 0 ? _c : data.tenantId) !== null && _d !== void 0 ? _d : data.hospitalId) !== null && _e !== void 0 ? _e : null;
+    // Bỏ qua nếu claims đã khớp (tránh vòng lặp ghi không cần thiết).
+    const before = change.before.exists ? change.before.data() || {} : {};
+    if (change.before.exists &&
+        String((_f = before.role) !== null && _f !== void 0 ? _f : "").toLowerCase() === role &&
+        String((_g = before.status) !== null && _g !== void 0 ? _g : "").toLowerCase() === status &&
+        ((_k = (_j = (_h = before.tenant_id) !== null && _h !== void 0 ? _h : before.tenantId) !== null && _j !== void 0 ? _j : before.hospitalId) !== null && _k !== void 0 ? _k : null) === tenantId) {
+        return null;
+    }
+    try {
+        await admin.auth().setCustomUserClaims(uid, {
+            role,
+            status,
+            tenant_id: tenantId,
+        });
+        // Đánh dấu thời điểm cập nhật để client biết cần refresh token.
+        await db.collection("users").doc(uid).set({ claimsUpdatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+        console.log(`Đã set claims cho ${uid}: role=${role}, status=${status}`);
+    }
+    catch (e) {
+        console.error(`Không set được claims cho ${uid}:`, e);
+    }
+    return null;
+});
+/**
+ * Callable để admin set role thủ công (vd duyệt bác sĩ).
+ * Chỉ super_admin/admin được phép gọi.
+ */
+exports.setUserRole = functions.https.onCall(async (data, context) => {
+    var _a, _b, _c, _d, _e, _f;
+    const caller = (_a = context.auth) === null || _a === void 0 ? void 0 : _a.token;
+    const callerRole = String((_b = caller === null || caller === void 0 ? void 0 : caller.role) !== null && _b !== void 0 ? _b : "").toLowerCase();
+    if (callerRole !== "super_admin" && callerRole !== "admin" && callerRole !== "hospital_manager") {
+        throw new functions.https.HttpsError("permission-denied", "Chỉ quản trị viên được phép đổi vai trò.");
+    }
+    const uid = String((_c = data.uid) !== null && _c !== void 0 ? _c : "");
+    const role = String((_d = data.role) !== null && _d !== void 0 ? _d : "patient").toLowerCase();
+    const status = String((_e = data.status) !== null && _e !== void 0 ? _e : "active").toLowerCase();
+    if (!uid) {
+        throw new functions.https.HttpsError("invalid-argument", "Thiếu uid.");
+    }
+    await admin.auth().setCustomUserClaims(uid, { role, status, tenant_id: (_f = data.tenant_id) !== null && _f !== void 0 ? _f : null });
+    await db.collection("users").doc(uid).set({ role, status, claimsUpdatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+    return { ok: true, uid, role, status };
 });
 //# sourceMappingURL=index.js.map
