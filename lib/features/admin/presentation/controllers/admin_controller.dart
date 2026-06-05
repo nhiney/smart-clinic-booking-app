@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+// lib/features/admin/presentation/controllers/admin_controller.dart
 import 'package:flutter/material.dart';
 import '../../domain/entities/facility_entities.dart';
 import '../../domain/repositories/facility_repository.dart';
@@ -9,7 +9,6 @@ import '../../../../core/utils/seed_hospital_data.dart';
 
 import '../../../auth/data/datasources/auth_remote_datasource.dart';
 import '../../../auth/data/models/user_model.dart';
-
 
 class AdminController extends ChangeNotifier {
   final FacilityRepository facilityRepository;
@@ -25,22 +24,80 @@ class AdminController extends ChangeNotifier {
   bool isLoading = false;
   String? errorMessage;
 
+  AdminDashboardEntity? dashboardData;
+  String selectedPeriod = '7 ngày';
+  
   List<Hospital> hospitals = [];
   List<Department> selectedDepartments = [];
   List<Room> selectedRooms = [];
+  List<Patient> patients = [];
   List<Device> selectedDevices = [];
   List<DoctorEntity> unassignedDoctors = [];
   List<DoctorEntity> allDoctors = [];
 
-  int patientCount = 0;
-  int appointmentCount = 0;
+  Hospital? selectedHospital;
+  Department? selectedDepartment;
 
-  Future<void> fetchHospitals() async {
+  void changePeriod(String period) {
+    selectedPeriod = period;
+    fetchDashboardOverview();
+  }
+
+  Future<void> fetchDashboardOverview() async {
     try {
       isLoading = true;
+      errorMessage = null;
       notifyListeners();
-      hospitals = await facilityRepository.getAllHospitals();
-      await Future.wait([fetchAllDoctors(), fetchStats()]);
+      
+      final rawData = await facilityRepository.getAdminDashboardData(selectedPeriod);
+      
+      String realAdminName = "Hệ thống Quản trị";
+      try {
+        final UserModel? currentUser = await authRemoteDatasource.getCurrentUser() as UserModel?;
+        if (currentUser != null && currentUser.name.isNotEmpty) {
+          realAdminName = currentUser.name;
+        }
+      } catch (_) {
+        realAdminName = rawData.adminName;
+      }
+
+      final List<double> firebaseRevenueList = rawData.revenue.chartData;
+      
+      double maxVal = firebaseRevenueList.isNotEmpty 
+          ? firebaseRevenueList.reduce((a, b) => a > b ? a : b) 
+          : 1.0;
+
+      final List<HospitalRevenueItem> dynamicTopHospitals = List.generate(firebaseRevenueList.length, (index) {
+        String currentHospitalName = 'Cơ sở thành viên ${index + 1}';
+        if (hospitals.isNotEmpty && index < hospitals.length) {
+          currentHospitalName = hospitals[index].name;
+        }
+        
+        return HospitalRevenueItem(
+          name: currentHospitalName,
+          revenueValue: firebaseRevenueList[index],
+          rank: index + 1,
+          percentageOfMax: firebaseRevenueList[index] / maxVal,
+        );
+      });
+
+      dynamicTopHospitals.sort((a, b) => b.revenueValue.compareTo(a.revenueValue));
+      
+      final List<HospitalRevenueItem> rankedHospitals = List.generate(dynamicTopHospitals.length, (index) {
+        final item = dynamicTopHospitals[index];
+        return HospitalRevenueItem(
+          name: item.name,
+          revenueValue: item.revenueValue,
+          rank: index + 1,
+          percentageOfMax: item.percentageOfMax,
+        );
+      });
+
+      dashboardData = rawData.copyWith(
+        adminName: realAdminName,
+        topHospitals: rankedHospitals,
+      );
+
     } catch (e) {
       errorMessage = e.toString();
     } finally {
@@ -49,22 +106,60 @@ class AdminController extends ChangeNotifier {
     }
   }
 
-  Future<void> fetchStats() async {
+  List<ArticleEntity> articles = [];
+
+  Future<void> fetchHospitals() async {
     try {
-      final firestore = FirebaseFirestore.instance;
-      final patientsSnap = await firestore
-          .collection('users')
-          .where('role', isEqualTo: 'patient')
-          .count()
-          .get();
-      final appointmentsSnap = await firestore
-          .collection('appointments')
-          .count()
-          .get();
-      patientCount = patientsSnap.count ?? 0;
-      appointmentCount = appointmentsSnap.count ?? 0;
+      isLoading = true;
       notifyListeners();
-    } catch (_) {}
+      hospitals = await facilityRepository.getAllHospitals();
+      await fetchAllDoctors();
+      await fetchDashboardOverview();
+
+      articles = List.from([
+        const ArticleEntity(
+          id: 'art_01',
+          title: '5 dấu hiệu cảnh báo bệnh tim mạch',
+          authorName: 'Trần Minh Quân',
+          category: 'Tim mạch',
+          status: 'Đã xuất bản',
+          views: 12400,
+          publishDate: '23/05',
+        ),
+        const ArticleEntity(
+          id: 'art_02',
+          title: 'Chế độ ăn cho người tiểu đường',
+          authorName: 'Nguyễn T. Lan',
+          category: 'Dinh dưỡng',
+          status: 'Đã xuất bản',
+          views: 8200,
+          publishDate: '21/05',
+        ),
+        const ArticleEntity(
+          id: 'art_03',
+          title: 'Hướng dẫn chăm sóc trẻ sốt cao',
+          authorName: 'Phạm V. Đức',
+          category: 'Nhi khoa',
+          status: 'Đang soạn',
+          views: 0,
+          publishDate: 'Nháp',
+        ),
+      ]);
+
+      if (hospitals.isNotEmpty) {
+        await selectHospital(hospitals.first);
+      }
+    } catch (e) {
+      errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  void addNewArticle(ArticleEntity newArticle) {
+    articles.insert(0, newArticle);
+    notifyListeners();
   }
 
   Future<void> fetchAllDoctors() async {
@@ -72,6 +167,43 @@ class AdminController extends ChangeNotifier {
       allDoctors = await doctorRepository.getDoctors();
     } catch (e) {
       errorMessage = e.toString();
+    }
+  }
+
+  Future<void> selectHospital(Hospital hospital) async {
+    selectedHospital = hospital;
+    isLoading = true;
+    notifyListeners();
+    try {
+      selectedDepartments = await facilityRepository.getDepartmentsByHospital(hospital.id);
+      
+      if (selectedDepartments.isNotEmpty) {
+        await selectDepartment(selectedDepartments.first);
+      } else {
+        selectedDepartment = null;
+        patients = [];
+      }
+    } catch (e) {
+      errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> selectDepartment(Department department) async {
+    selectedDepartment = department;
+    isLoading = true;
+    notifyListeners();
+    try {
+      patients = await facilityRepository.getPatientsByDepartment(department.id);
+      
+      selectedRooms = await facilityRepository.getRoomsByDepartment(department.id);
+    } catch (e) {
+      errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
     }
   }
 
@@ -146,6 +278,7 @@ class AdminController extends ChangeNotifier {
         departmentId: departmentId,
       );
       await fetchUnassignedDoctors();
+      await fetchDashboardOverview();
     } catch (e) {
       errorMessage = e.toString();
     } finally {
@@ -190,7 +323,6 @@ class AdminController extends ChangeNotifier {
     }
   }
 
-
   Future<void> seedData() async {
     try {
       isLoading = true;
@@ -228,11 +360,28 @@ class AdminController extends ChangeNotifier {
       isLoading = true;
       notifyListeners();
       await SeedDataService().seedSamplePatients();
+      await fetchDashboardOverview();
+      if (selectedDepartment != null) {
+        await selectDepartment(selectedDepartment!);
+      }
     } catch (e) {
       errorMessage = e.toString();
     } finally {
       isLoading = false;
       notifyListeners();
     }
+  }
+
+  void updateArticle(ArticleEntity updatedArticle) {
+    final index = articles.indexWhere((element) => element.id == updatedArticle.id);
+    if (index != -1) {
+      articles[index] = updatedArticle;
+      notifyListeners();
+    }
+  }
+
+  void deleteArticle(String articleId) {
+    articles.removeWhere((element) => element.id == articleId);
+    notifyListeners();
   }
 }

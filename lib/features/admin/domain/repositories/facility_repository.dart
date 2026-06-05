@@ -1,6 +1,8 @@
 import '../entities/facility_entities.dart';
 
 abstract class FacilityRepository {
+  // Thống kê Dashboard
+  Future<AdminDashboardEntity> getAdminDashboardData(String period);
   // Hospital
   Future<List<Hospital>> getAllHospitals();
   Future<void> addHospital(Hospital hospital);
@@ -21,4 +23,7 @@ abstract class FacilityRepository {
   Future<List<Device>> getDevicesByRoom(String roomId);
   Future<void> addDevice(Device device);
   Future<void> deleteDevice(String id);
+
+  //Patient
+  Future<List<Patient>> getPatientsByDepartment(String departmentId);
 }
