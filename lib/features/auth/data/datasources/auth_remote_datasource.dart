@@ -11,6 +11,7 @@ import 'package:uuid/uuid.dart';
 import '../../domain/entities/user_entity.dart';
 import '../models/user_model.dart';
 import '../../../../core/services/local_account_store.dart';
+import '../../../../shared/router/app_router.dart';
 
 @lazySingleton
 class AuthRemoteDatasource {
@@ -577,6 +578,8 @@ class AuthRemoteDatasource {
     if (user != null) await _logAudit(user.uid, 'LOGOUT', 'User logged out');
     await _firebaseAuth.signOut();
     await clearSession();
+    // Clear cached role so next login resolves fresh
+    AppRouter.clearRoleCache();
   }
 
   Stream<User?> get onAuthStateChanged => _firebaseAuth.authStateChanges();

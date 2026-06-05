@@ -14,6 +14,8 @@ class ReviewModel extends ReviewEntity {
     super.userAvatar,
     super.helpfulCount = 0,
     super.helpfulByUserIds = const [],
+    super.doctorResponse,
+    super.doctorResponseAt,
   });
 
   factory ReviewModel.fromJson(Map<String, dynamic> json, String id) {
@@ -43,5 +45,7 @@ class ReviewModel extends ReviewEntity {
         'userAvatar': userAvatar,
         'helpfulCount': helpfulCount,
         'helpfulByUserIds': helpfulByUserIds,
+        'doctorResponse': doctorResponse,
+        'doctorResponseAt': doctorResponseAt != null ? Timestamp.fromDate(doctorResponseAt!) : null,
       };
 }

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart' as legacy;
 import 'package:smart_clinic_booking/core/theme/colors/app_colors.dart';
@@ -13,11 +13,13 @@ import 'package:smart_clinic_booking/shared/widgets/empty_state_widget.dart';
 class DoctorReviewScreen extends ConsumerWidget {
   final String doctorId;
   final String doctorName;
+  final bool isDoctorPOV;
 
   const DoctorReviewScreen({
     super.key,
     required this.doctorId,
     required this.doctorName,
+    this.isDoctorPOV = false,
   });
 
   @override
@@ -28,7 +30,7 @@ class DoctorReviewScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: BrandedAppBar(title: 'Đánh giá: $doctorName', showBackButton: true),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: isDoctorPOV ? null : FloatingActionButton.extended(
         onPressed: () => _showAddReviewDialog(context, ref, auth),
         label: const Text('Viết đánh giá', style: TextStyle(color: Colors.white)),
         icon: const Icon(Icons.edit, color: Colors.white),
@@ -50,7 +52,7 @@ class DoctorReviewScreen extends ConsumerWidget {
                           padding: const EdgeInsets.all(16),
                           itemCount: state.reviews.length,
                           separatorBuilder: (_, __) => const SizedBox(height: 14),
-                          itemBuilder: (context, index) => _buildReviewCard(state.reviews[index]),
+                          itemBuilder: (context, index) => _buildReviewCard(context, ref, state.reviews[index], isDoctorPOV),
                         ),
                 ),
               ],
@@ -114,7 +116,7 @@ class DoctorReviewScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildReviewCard(dynamic review) {
+  Widget _buildReviewCard(BuildContext context, WidgetRef ref, dynamic review, bool isDoctorPOV) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -153,6 +155,44 @@ class DoctorReviewScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 10),
           Text(review.comment, style: AppTextStyles.body),
+          if (review.doctorResponse != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primarySurface.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.reply_rounded, size: 16, color: AppColors.primary),
+                      SizedBox(width: 4),
+                      Text('Phản hồi của bác sĩ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(review.doctorResponse!, style: AppTextStyles.bodySmall),
+                ],
+              ),
+            ),
+          ] else if (isDoctorPOV) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _showResponseDialog(context, ref, review.id),
+                icon: const Icon(Icons.reply_rounded, size: 18),
+                label: const Text('Phản hồi'),
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -228,6 +268,35 @@ class DoctorReviewScreen extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showResponseDialog(BuildContext context, WidgetRef ref, String reviewId) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Phản hồi đánh giá'),
+        content: TextField(
+          controller: controller,
+          maxLines: 4,
+          decoration: InputDecoration(
+            hintText: 'Nhập nội dung phản hồi...',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+          ElevatedButton(
+            onPressed: () async {
+              if (controller.text.trim().isEmpty) return;
+              await ref.read(doctorReviewControllerProvider(doctorId).notifier).respondToReview(reviewId, controller.text.trim());
+              if (context.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Gửi'),
+          ),
+        ],
       ),
     );
   }

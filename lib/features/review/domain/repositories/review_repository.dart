@@ -9,4 +9,5 @@ abstract class ReviewRepository {
   Future<bool> hasUserReviewed({required String userId, String? hospitalId, String? doctorId});
   Future<void> toggleHelpful(String reviewId, String userId);
   Future<List<ReviewEntity>> getUserReviews(String userId);
+  Future<void> respondToReview(String reviewId, String response);
 }

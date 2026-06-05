@@ -100,6 +100,14 @@ class ReviewController extends StateNotifier<ReviewState> {
     }
   }
 
+  Future<void> respondToReview(String reviewId, String response) async {
+    try {
+      await repository.respondToReview(reviewId, response);
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
   Future<void> toggleHelpful(String reviewId, String userId) async {
     await repository.toggleHelpful(reviewId, userId);
   }
@@ -155,6 +163,14 @@ class DoctorReviewController extends StateNotifier<ReviewState> {
     } catch (e) {
       state = state.copyWith(error: e.toString());
       return false;
+    }
+  }
+
+  Future<void> respondToReview(String reviewId, String response) async {
+    try {
+      await repository.respondToReview(reviewId, response);
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
     }
   }
 

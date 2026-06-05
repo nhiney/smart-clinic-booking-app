@@ -87,8 +87,8 @@ class _LoginScreenState extends State<LoginScreen> {
       final virtualEmail = '$normalizedPhone@icare.patient';
       // Thử đăng nhập Firebase (non-blocking) để sync session
       authController.login(virtualEmail, password).ignore();
-      // Navigate ngay không chờ Firebase
-      navigateByRole(context, 'patient');
+      // Navigate theo role thực tế của account
+      navigateByRole(context, localAccount['role'] ?? 'patient');
       return;
     }
 
@@ -108,8 +108,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (!success) {
       _showError(localizeAuthError(context, authController.errorMessage, fallback: l10n.error_login_failed));
+    } else {
+      // Navigate dựa trên role thực tế từ Firestore profile
+      final role = authController.currentUser?.role ?? 'patient';
+      navigateByRole(context, role);
     }
-    // GoRouter's refreshListenable handles role-based redirect when auth state changes.
   }
 
   bool _isValidPhoneFormat(String phone) {

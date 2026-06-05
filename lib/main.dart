@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -38,7 +37,6 @@ import 'package:smart_clinic_booking/core/services/file_storage_service.dart';
 // Admin
 import 'package:smart_clinic_booking/features/admin/domain/repositories/facility_repository.dart';
 import 'package:smart_clinic_booking/features/admin/presentation/controllers/admin_controller.dart';
-import 'package:smart_clinic_booking/features/admin/data/repositories/firestore_facility_repository.dart';
 
 // Appointment
 import 'package:smart_clinic_booking/features/appointment/domain/repositories/appointment_repository.dart';
@@ -54,9 +52,6 @@ import 'package:smart_clinic_booking/features/profile/domain/usecases/get_patien
 import 'package:smart_clinic_booking/features/profile/domain/usecases/update_patient_profile.dart';
 import 'package:smart_clinic_booking/features/profile/presentation/controllers/profile_controller.dart';
 import 'package:smart_clinic_booking/features/profile/presentation/controllers/patient_profile_controller.dart';
-
-// Maps
-import 'package:smart_clinic_booking/features/maps/domain/repositories/maps_repository.dart';
 
 // Notification
 import 'package:smart_clinic_booking/features/notification/domain/repositories/notification_repository.dart';
@@ -133,8 +128,10 @@ Future<void> main() async {
     // Initialize Dynamic Configuration (Firestore)
     await getIt<AppConfigService>().initialize();
 
-    // Seed sample survey data if collection is empty
-    await SeedDataService().seedSurveys();
+    // Seed sample survey data if collection is empty (only when authenticated)
+    if (FirebaseAuth.instance.currentUser != null) {
+      await SeedDataService().seedSurveys();
+    }
   } catch (e) {
     debugPrint('Service initialization failed: $e');
     // We still try to run the app, but some features might be degraded

@@ -58,6 +58,52 @@ class DoctorEntity {
     this.distanceKm,
   });
 
+  DoctorEntity copyWith({
+    String? id,
+    String? name,
+    String? specialty,
+    String? hospital,
+    String? imageUrl,
+    double? rating,
+    int? totalReviews,
+    int? experience,
+    String? about,
+    String? resumePdfUrl,
+    String? departmentId,
+    double? latitude,
+    double? longitude,
+    String? phone,
+    List<String>? availableDays,
+    List<String>? availableTimeSlots,
+    String? clinicName,
+    String? location,
+    List<DoctorScheduleDay>? schedule,
+    double? distanceKm,
+  }) {
+    return DoctorEntity(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      specialty: specialty ?? this.specialty,
+      hospital: hospital ?? this.hospital,
+      imageUrl: imageUrl ?? this.imageUrl,
+      rating: rating ?? this.rating,
+      totalReviews: totalReviews ?? this.totalReviews,
+      experience: experience ?? this.experience,
+      about: about ?? this.about,
+      resumePdfUrl: resumePdfUrl ?? this.resumePdfUrl,
+      departmentId: departmentId ?? this.departmentId,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      phone: phone ?? this.phone,
+      availableDays: availableDays ?? this.availableDays,
+      availableTimeSlots: availableTimeSlots ?? this.availableTimeSlots,
+      clinicName: clinicName ?? this.clinicName,
+      location: location ?? this.location,
+      schedule: schedule ?? this.schedule,
+      distanceKm: distanceKm ?? this.distanceKm,
+    );
+  }
+
   /// Clinic line for UI: prefers [clinicName], then [hospital].
   String get displayClinic {
     if (clinicName.isNotEmpty) return clinicName;
