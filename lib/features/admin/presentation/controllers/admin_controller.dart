@@ -7,6 +7,9 @@ import '../../../doctor/patient_pov/domain/entities/doctor_entity.dart';
 import '../../../doctor/patient_pov/domain/repositories/doctor_repository.dart';
 import '../../../../core/services/seed_data_service.dart';
 import '../../../../core/utils/seed_hospital_data.dart';
+import '../../domain/entities/admin_dashboard_entity.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../domain/entities/audit_log_entity.dart';
 
 import '../../../auth/data/datasources/auth_remote_datasource.dart';
 import '../../../auth/data/models/user_model.dart';
@@ -15,6 +18,7 @@ class AdminController extends ChangeNotifier {
   final FacilityRepository facilityRepository;
   final DoctorRepository doctorRepository;
   final AuthRemoteDatasource authRemoteDatasource;
+  List<SystemServiceEntity> systemServices = [];
 
   AdminController({
     required this.facilityRepository,
@@ -426,6 +430,33 @@ class AdminController extends ChangeNotifier {
   Future<void> deleteArticle(String articleId) async {
     await _articlesRef.doc(articleId).delete();
     articles.removeWhere((element) => element.id == articleId);
+    notifyListeners();
+  }
+  Future<void> fetchSystemStatus() async {
+    try {
+      isLoading = true;
+      notifyListeners();
+      
+      final snapshot = await FirebaseFirestore.instance.collection('system_status').get();
+      
+      systemServices = snapshot.docs.map((doc) => 
+        SystemServiceEntity.fromMap(doc.data() as Map<String, dynamic>, doc.id)
+      ).toList();
+      
+    } catch (e) {
+      errorMessage = "Lỗi tải trạng thái hệ thống: $e";
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+List<AuditLogEntity> auditLogs = [];
+
+  Future<void> fetchAuditLogs() async {
+    final snapshot = await FirebaseFirestore.instance.collection('audit_logs')
+        .orderBy('timestamp', descending: true).get(); // Sắp xếp theo thời gian
+    auditLogs = snapshot.docs.map((doc) => AuditLogEntity.fromMap(doc.data(), doc.id)).toList();
     notifyListeners();
   }
 }

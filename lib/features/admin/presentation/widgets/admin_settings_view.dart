@@ -1,233 +1,194 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../controllers/admin_controller.dart';
+import '../../domain/entities/admin_dashboard_entity.dart';
+import '../screens/audit_log_screen.dart';
 import 'admin_setting_tile.dart';
 
 class AdminSettingsView extends StatelessWidget {
   final VoidCallback onLogoutTap;
-
-  const AdminSettingsView({
-    super.key,
-    required this.onLogoutTap,
-  });
+  const AdminSettingsView({super.key, required this.onLogoutTap});
 
   @override
   Widget build(BuildContext context) {
     final authController = context.watch<AuthController>();
+    final adminController = context.watch<AdminController>();
     final user = authController.currentUser;
 
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          color: Colors.white,
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 32,
-                  backgroundColor: const Color(0xFF2563EB).withOpacity(0.1),
-                  child: Text(
-                    (user?.name ?? 'A').substring(0, 1).toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 24, 
-                      fontWeight: FontWeight.bold, 
-                      color: Color(0xFF2563EB),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        user?.name ?? 'Quản trị viên',
-                        style: const TextStyle(
-                          fontSize: 18, 
-                          fontWeight: FontWeight.bold, 
-                          color: Color(0xFF0F172A),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        user?.email ?? 'admin@icare.com',
-                        style: const TextStyle(
-                          fontSize: 14, 
-                          color: Color(0xFF64748B),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
-
-        const Padding(
-          padding: EdgeInsets.only(left: 8, bottom: 8),
-          child: Text(
-            'QUẢN LÝ HỆ THỐNG',
-            style: TextStyle(
-              fontSize: 12, 
-              fontWeight: FontWeight.bold, 
-              color: Color(0xFF64748B),
-              letterSpacing: 0.5,
-            ),
-          ),
-        ),
-        Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          color: Colors.white,
-          child: Column(
-            children: [
-              AdminSettingTile(
-                icon: Icons.person_outline_rounded,
-                iconColor: const Color(0xFF2563EB),
-                title: 'Thông tin tài khoản Admin',
-                subtitle: 'Cập nhật mật khẩu và hồ sơ cá nhân',
-                onTap: () => _showAccountInfo(context),
-              ),
-              const Divider(height: 1, indent: 56, color: Color(0xFFF1F5F9)),
-              AdminSettingTile(
-                icon: Icons.notifications_none_rounded,
-                iconColor: Colors.amber.shade700,
-                title: 'Cấu hình thông báo',
-                subtitle: 'Quản lý thông báo đẩy và nhắc lịch',
-                onTap: () => context.push('/notifications/settings'),
-              ),
-              const Divider(height: 1, indent: 56, color: Color(0xFFF1F5F9)),
-              AdminSettingTile(
-                icon: Icons.security_rounded,
-                iconColor: Colors.green.shade600,
-                title: 'Bảo mật & Quyền truy cập',
-                subtitle: 'Phân quyền và nhật ký hoạt động',
-                onTap: () => _showSecurityInfo(context),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
-
-        const Padding(
-          padding: EdgeInsets.only(left: 8, bottom: 8),
-          child: Text(
-            'ỨNG DỤNG & HỖ TRỢ',
-            style: TextStyle(
-              fontSize: 12, 
-              fontWeight: FontWeight.bold, 
-              color: Color(0xFF64748B),
-              letterSpacing: 0.5,
-            ),
-          ),
-        ),
-        Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          color: Colors.white,
-          child: Column(
-            children: [
-              AdminSettingTile(
-                icon: Icons.info_outline_rounded,
-                iconColor: Colors.teal,
-                title: 'Thông tin phiên bản',
-                subtitle: 'Phiên bản hiện tại: v1.0.0 (iCare Pro)',
-                onTap: () => showAboutDialog(
-                  context: context,
-                  applicationName: 'iCare Pro — Quản trị',
-                  applicationVersion: 'v1.0.0',
-                  children: const [Text('Hệ thống quản lý phòng khám thông minh ICare.')],
-                ),
-              ),
-            ],
-          ),
-        ),
+        _buildProfileHeader(user),
         const SizedBox(height: 24),
-
-        Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          color: Colors.white,
-          child: AdminSettingTile(
-            icon: Icons.logout_rounded,
-            iconColor: Colors.red,
-            title: 'Đăng xuất tài khoản',
-            isDestructive: true,
-            onTap: onLogoutTap,
-          ),
-        ),
+        
+        _buildSectionTitle('TÌNH TRẠNG HỆ THỐNG'),
+        _buildSystemStatusGrid(adminController.systemServices),
+        
+        const SizedBox(height: 24),
+        _buildSectionTitle('QUẢN LÝ'),
+        _buildManagementCard(context),
+        
+        const SizedBox(height: 24),
+        _buildSectionTitle('ỨNG DỤNG & HỖ TRỢ'),
+        _buildSupportCard(),
+        
+        const SizedBox(height: 24),
+        _buildLogoutButton(),
       ],
     );
   }
 
-  void _showAccountInfo(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Thông tin tài khoản'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildProfileHeader(user) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
           children: [
-            Text('Email: ${user?.email ?? '—'}'),
-            const SizedBox(height: 8),
-            Text('UID: ${user?.uid ?? '—'}'),
-            const SizedBox(height: 8),
-            Text('Tên hiển thị: ${user?.displayName ?? 'Quản trị viên'}'),
+            CircleAvatar(radius: 32, child: Text((user?.name ?? 'A')[0])),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(user?.name ?? 'Admin', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(color: Colors.red.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                    child: const Text("ROOT ACCESS", style: TextStyle(color: Colors.red, fontSize: 10, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              final email = user?.email;
-              Navigator.pop(context);
-              if (email != null) {
-                await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Đã gửi email đổi mật khẩu.')),
-                  );
-                }
-              }
-            },
-            child: const Text('Đổi mật khẩu'),
+      ),
+    );
+  }
+
+  Widget _buildSystemStatusGrid(List<SystemServiceEntity> services) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: services.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2, childAspectRatio: 3.5, crossAxisSpacing: 10, mainAxisSpacing: 10,
+      ),
+      itemBuilder: (context, index) {
+        final s = services[index];
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+          child: Row(
+            children: [
+              Text(s.name, style: const TextStyle(color: Colors.grey, fontSize: 13)),
+              const Spacer(),
+              Icon(Icons.circle, size: 8, color: s.status == 'active' ? Colors.green : Colors.orange),
+              const SizedBox(width: 4),
+              Text("${s.latency}ms", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+            ],
           ),
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Đóng')),
+        );
+      },
+    );
+  }
+
+  Widget _buildManagementCard(BuildContext context) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Column(
+        children: [
+          AdminSettingTile(
+            icon: Icons.history_rounded, 
+            iconColor: Colors.purple, 
+            title: 'Nhật ký truy cập', 
+            onTap: () {
+              Navigator.push(
+                context, 
+                MaterialPageRoute(builder: (context) => AuditLogScreen()),
+              );
+            }
+          ),
+          const Divider(height: 1, indent: 56),
+          AdminSettingTile(
+            icon: Icons.shield_outlined,
+            iconColor: Colors.blue,
+            title: 'Phân quyền & vai trò',
+            onTap: () => _showInfoDialog(
+              context,
+              'Phân quyền & vai trò',
+              'Các vai trò: Quản trị (super_admin/hospital_manager), Bác sĩ, '
+                  'Bệnh nhân, Thiết bị quét. Quyền được cấp qua custom claims khi '
+                  'đăng ký/duyệt hồ sơ.',
+            ),
+          ),
+          const Divider(height: 1, indent: 56),
+          AdminSettingTile(
+            icon: Icons.description_outlined,
+            iconColor: Colors.green,
+            title: 'Cấu hình BHYT',
+            onTap: () => _showInfoDialog(context, 'Cấu hình BHYT', 'Tính năng đang được phát triển.'),
+          ),
+          const Divider(height: 1, indent: 56),
+          AdminSettingTile(
+            icon: Icons.receipt_long_outlined,
+            iconColor: Colors.amber,
+            title: 'Phí dịch vụ & hoa hồng',
+            onTap: () => _showInfoDialog(context, 'Phí dịch vụ & hoa hồng', 'Tính năng đang được phát triển.'),
+          ),
         ],
       ),
     );
   }
 
-  void _showSecurityInfo(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+  void _showInfoDialog(BuildContext context, String title, String message) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Bảo mật & Quyền truy cập'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Tài khoản: ${user?.email ?? '—'}'),
-            const SizedBox(height: 8),
-            const Text('Vai trò: Quản trị viên (Admin)'),
-            const SizedBox(height: 8),
-            Text('Email đã xác thực: ${user?.emailVerified == true ? 'Có' : 'Chưa'}'),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Đóng')),
-        ],
+        title: Text(title),
+        content: Text(message),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Đóng'))],
       ),
+    );
+  }
+
+  Widget _buildSupportCard() {
+    return Builder(
+      builder: (context) => Card(
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: AdminSettingTile(
+          icon: Icons.info_outline,
+          iconColor: Colors.teal,
+          title: 'Thông tin phiên bản',
+          subtitle: 'v1.0.0',
+          onTap: () => showAboutDialog(
+            context: context,
+            applicationName: 'iCare Pro — Quản trị',
+            applicationVersion: 'v1.0.0',
+            children: const [Text('Hệ thống quản lý phòng khám thông minh ICare.')],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLogoutButton() {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: AdminSettingTile(icon: Icons.logout, iconColor: Colors.red, title: 'Đăng xuất', isDestructive: true, onTap: onLogoutTap),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8, bottom: 12),
+      child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF64748B))),
     );
   }
 }
