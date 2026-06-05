@@ -52,4 +52,18 @@ abstract class AuthRepository {
   // Token Management
   /// Refresh Firebase ID Token. Returns token mới hoặc null.
   Future<String?> refreshToken();
+
+  // Password reset after OTP verification
+  Future<void> resetPasswordAfterOtp(String newPassword);
+
+  // Device binding
+  Future<void> bindDevice(String uid);
+  Future<String?> getCurrentDeviceId();
+
+  // Session management
+  Future<List<Map<String, dynamic>>> getActiveSessions(String uid);
+  Future<void> revokeSession(String sessionId);
+
+  // Token refresh
+  Future<String?> refreshIdToken();
 }

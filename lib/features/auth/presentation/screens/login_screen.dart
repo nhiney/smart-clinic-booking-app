@@ -273,7 +273,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
                 TextButton(
-                  onPressed: () => _showForgotPasswordDialog(context),
+                  onPressed: () => context.push('/forgot-password'),
                   child: Text(
                     l10n.forgot_password,
                     style: context.textStyles.bodyBold.copyWith(color: context.colors.primary, fontSize: 13),
@@ -365,68 +365,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  void _showForgotPasswordDialog(BuildContext context) {
-    final emailCtrl = TextEditingController();
-    bool isSending = false;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Quên mật khẩu', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Text('Nhập email để nhận link đặt lại mật khẩu.', style: TextStyle(fontSize: 14)),
-            const SizedBox(height: 16),
-            TextField(
-              controller: emailCtrl,
-              keyboardType: TextInputType.emailAddress,
-              decoration: InputDecoration(
-                hintText: 'Email của bạn',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              ),
-            ),
-          ]),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
-            ElevatedButton(
-              onPressed: isSending
-                  ? null
-                  : () async {
-                      final email = emailCtrl.text.trim();
-                      if (email.isEmpty) return;
-                      setDialogState(() => isSending = true);
-                      try {
-                        await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-                        if (ctx.mounted) {
-                          Navigator.pop(ctx);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Email đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư.'),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-                        }
-                      } catch (e) {
-                        setDialogState(() => isSending = false);
-                        if (ctx.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Lỗi: ${e.toString()}'), backgroundColor: Colors.red),
-                          );
-                        }
-                      }
-                    },
-              child: isSending
-                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Text('Gửi email'),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
