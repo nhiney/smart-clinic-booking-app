@@ -1,4 +1,5 @@
 // lib/features/admin/presentation/controllers/admin_controller.dart
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../../domain/entities/facility_entities.dart';
 import '../../domain/repositories/facility_repository.dart';
@@ -168,6 +169,17 @@ class AdminController extends ChangeNotifier {
     } catch (e) {
       errorMessage = e.toString();
     }
+  }
+
+  /// Approve or reject a doctor account by writing its `status`
+  /// ('approved' | 'rejected') to the `doctors` collection.
+  Future<void> setDoctorStatus(String doctorId, String status) async {
+    await FirebaseFirestore.instance
+        .collection('doctors')
+        .doc(doctorId)
+        .update({'status': status, 'statusUpdatedAt': FieldValue.serverTimestamp()});
+    await fetchAllDoctors();
+    notifyListeners();
   }
 
   Future<void> selectHospital(Hospital hospital) async {

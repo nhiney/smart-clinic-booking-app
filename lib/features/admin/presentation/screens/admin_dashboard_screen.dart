@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/extensions/context_extension.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
@@ -275,6 +276,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 DoctorSearchBar(
                   onChanged: (value) => setState(() => _searchDoctorQuery = value),
                 ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => context.push('/admin/kyc-approvals'),
+                    icon: const Icon(Icons.assignment_turned_in_outlined, size: 18),
+                    label: const Text('Duyệt hồ sơ đăng ký bác sĩ (KYC)'),
+                  ),
+                ),
                 const SizedBox(height: 16),
                 DoctorStatusTabBar(
                   activeTab: _activeDoctorTab,
@@ -296,22 +306,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     itemCount: _filteredDoctors.length,
                     itemBuilder: (context, index) {
                       final doctor = _filteredDoctors[index];
-                      
-                      Map<String, dynamic> currentDocMap = {};
-                      try { currentDocMap = (doctor as dynamic).toMap(); } catch (_) {}
 
                       return DoctorApprovalCard(
                         doctor: doctor,
                         onApprove: () async {
-                          await controller.assignDoctor(
-                            doctorId: doctor.id,
-                            hospitalId: currentDocMap['hospitalId'] ?? '',
-                            departmentId: currentDocMap['departmentId'] ?? '',
-                          );
-                          await controller.fetchAllDoctors();
+                          await controller.setDoctorStatus(doctor.id, 'approved');
+                          if (!context.mounted) return;
                           setState(() {});
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Đã duyệt BS. ${doctor.name}'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
                         },
                         onReject: () async {
+                          await controller.setDoctorStatus(doctor.id, 'rejected');
+                          if (!context.mounted) return;
+                          setState(() {});
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text('Đã từ chối hồ sơ của BS. ${doctor.name}')),
                           );
