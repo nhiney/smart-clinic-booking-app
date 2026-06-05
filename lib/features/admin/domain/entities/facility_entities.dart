@@ -475,6 +475,17 @@ class ArticleEntity extends Equatable {
     );
   }
 
+  Map<String, dynamic> toMap() {
+    return {
+      'title': title,
+      'authorName': authorName,
+      'category': category,
+      'status': status,
+      'views': views,
+      'publishDate': publishDate,
+    };
+  }
+
   @override
   List<Object?> get props => [id, title, authorName, category, status, views, publishDate];
 }

@@ -116,36 +116,7 @@ class AdminController extends ChangeNotifier {
       hospitals = await facilityRepository.getAllHospitals();
       await fetchAllDoctors();
       await fetchDashboardOverview();
-
-      articles = List.from([
-        const ArticleEntity(
-          id: 'art_01',
-          title: '5 dấu hiệu cảnh báo bệnh tim mạch',
-          authorName: 'Trần Minh Quân',
-          category: 'Tim mạch',
-          status: 'Đã xuất bản',
-          views: 12400,
-          publishDate: '23/05',
-        ),
-        const ArticleEntity(
-          id: 'art_02',
-          title: 'Chế độ ăn cho người tiểu đường',
-          authorName: 'Nguyễn T. Lan',
-          category: 'Dinh dưỡng',
-          status: 'Đã xuất bản',
-          views: 8200,
-          publishDate: '21/05',
-        ),
-        const ArticleEntity(
-          id: 'art_03',
-          title: 'Hướng dẫn chăm sóc trẻ sốt cao',
-          authorName: 'Phạm V. Đức',
-          category: 'Nhi khoa',
-          status: 'Đang soạn',
-          views: 0,
-          publishDate: 'Nháp',
-        ),
-      ]);
+      await fetchArticles();
 
       if (hospitals.isNotEmpty) {
         await selectHospital(hospitals.first);
@@ -158,8 +129,33 @@ class AdminController extends ChangeNotifier {
     }
   }
 
-  void addNewArticle(ArticleEntity newArticle) {
-    articles.insert(0, newArticle);
+  CollectionReference<Map<String, dynamic>> get _articlesRef =>
+      FirebaseFirestore.instance.collection('articles');
+
+  /// Loads articles from Firestore. Seeds a few defaults on first run so the
+  /// content tab is not empty.
+  Future<void> fetchArticles() async {
+    final snap = await _articlesRef.get();
+    if (snap.docs.isEmpty) {
+      const defaults = [
+        ArticleEntity(id: 'art_01', title: '5 dấu hiệu cảnh báo bệnh tim mạch', authorName: 'Trần Minh Quân', category: 'Tim mạch', status: 'Đã xuất bản', views: 12400, publishDate: '23/05'),
+        ArticleEntity(id: 'art_02', title: 'Chế độ ăn cho người tiểu đường', authorName: 'Nguyễn T. Lan', category: 'Dinh dưỡng', status: 'Đã xuất bản', views: 8200, publishDate: '21/05'),
+        ArticleEntity(id: 'art_03', title: 'Hướng dẫn chăm sóc trẻ sốt cao', authorName: 'Phạm V. Đức', category: 'Nhi khoa', status: 'Đang soạn', views: 0, publishDate: 'Nháp'),
+      ];
+      for (final a in defaults) {
+        await _articlesRef.doc(a.id).set(a.toMap());
+      }
+      articles = List.from(defaults);
+    } else {
+      articles = snap.docs.map((d) => ArticleEntity.fromMap(d.data(), d.id)).toList();
+    }
+    notifyListeners();
+  }
+
+  Future<void> addNewArticle(ArticleEntity newArticle) async {
+    final id = newArticle.id.isNotEmpty ? newArticle.id : _articlesRef.doc().id;
+    await _articlesRef.doc(id).set(newArticle.toMap());
+    articles.insert(0, ArticleEntity.fromMap(newArticle.toMap(), id));
     notifyListeners();
   }
 
@@ -416,15 +412,19 @@ class AdminController extends ChangeNotifier {
     }
   }
 
-  void updateArticle(ArticleEntity updatedArticle) {
+  Future<void> updateArticle(ArticleEntity updatedArticle) async {
+    await _articlesRef.doc(updatedArticle.id).set(updatedArticle.toMap());
     final index = articles.indexWhere((element) => element.id == updatedArticle.id);
     if (index != -1) {
       articles[index] = updatedArticle;
-      notifyListeners();
+    } else {
+      articles.insert(0, updatedArticle);
     }
+    notifyListeners();
   }
 
-  void deleteArticle(String articleId) {
+  Future<void> deleteArticle(String articleId) async {
+    await _articlesRef.doc(articleId).delete();
     articles.removeWhere((element) => element.id == articleId);
     notifyListeners();
   }

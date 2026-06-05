@@ -1,4 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import 'admin_setting_tile.dart';
@@ -92,7 +94,7 @@ class AdminSettingsView extends StatelessWidget {
                 iconColor: const Color(0xFF2563EB),
                 title: 'Thông tin tài khoản Admin',
                 subtitle: 'Cập nhật mật khẩu và hồ sơ cá nhân',
-                onTap: () {},
+                onTap: () => _showAccountInfo(context),
               ),
               const Divider(height: 1, indent: 56, color: Color(0xFFF1F5F9)),
               AdminSettingTile(
@@ -100,7 +102,7 @@ class AdminSettingsView extends StatelessWidget {
                 iconColor: Colors.amber.shade700,
                 title: 'Cấu hình thông báo',
                 subtitle: 'Quản lý thông báo đẩy và nhắc lịch',
-                onTap: () {},
+                onTap: () => context.push('/notifications/settings'),
               ),
               const Divider(height: 1, indent: 56, color: Color(0xFFF1F5F9)),
               AdminSettingTile(
@@ -108,7 +110,7 @@ class AdminSettingsView extends StatelessWidget {
                 iconColor: Colors.green.shade600,
                 title: 'Bảo mật & Quyền truy cập',
                 subtitle: 'Phân quyền và nhật ký hoạt động',
-                onTap: () {},
+                onTap: () => _showSecurityInfo(context),
               ),
             ],
           ),
@@ -138,7 +140,12 @@ class AdminSettingsView extends StatelessWidget {
                 iconColor: Colors.teal,
                 title: 'Thông tin phiên bản',
                 subtitle: 'Phiên bản hiện tại: v1.0.0 (iCare Pro)',
-                onTap: () {},
+                onTap: () => showAboutDialog(
+                  context: context,
+                  applicationName: 'iCare Pro — Quản trị',
+                  applicationVersion: 'v1.0.0',
+                  children: const [Text('Hệ thống quản lý phòng khám thông minh ICare.')],
+                ),
               ),
             ],
           ),
@@ -158,6 +165,69 @@ class AdminSettingsView extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  void _showAccountInfo(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Thông tin tài khoản'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Email: ${user?.email ?? '—'}'),
+            const SizedBox(height: 8),
+            Text('UID: ${user?.uid ?? '—'}'),
+            const SizedBox(height: 8),
+            Text('Tên hiển thị: ${user?.displayName ?? 'Quản trị viên'}'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              final email = user?.email;
+              Navigator.pop(context);
+              if (email != null) {
+                await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Đã gửi email đổi mật khẩu.')),
+                  );
+                }
+              }
+            },
+            child: const Text('Đổi mật khẩu'),
+          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Đóng')),
+        ],
+      ),
+    );
+  }
+
+  void _showSecurityInfo(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Bảo mật & Quyền truy cập'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Tài khoản: ${user?.email ?? '—'}'),
+            const SizedBox(height: 8),
+            const Text('Vai trò: Quản trị viên (Admin)'),
+            const SizedBox(height: 8),
+            Text('Email đã xác thực: ${user?.emailVerified == true ? 'Có' : 'Chưa'}'),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Đóng')),
+        ],
+      ),
     );
   }
 }
