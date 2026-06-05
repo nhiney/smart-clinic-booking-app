@@ -1,41 +1,24 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+
 import '../../../../core/theme/colors/app_colors.dart';
 import '../../../../core/widgets/branded_app_bar.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/extensions/context_extension.dart';
 import '../../../../shared/widgets/empty_state_widget.dart';
-import 'package:intl/intl.dart';
+import '../../../../shared/widgets/loading_widget.dart';
 
+/// Patient prescriptions, sourced from the `medical_records` written by doctors
+/// during an examination (diagnosis + free-text prescription).
 class PrescriptionScreen extends StatelessWidget {
   const PrescriptionScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Mock data for prescriptions
-    final prescriptions = [
-      {
-        'id': 'RX-88291',
-        'doctor': 'BS. Nguyễn Văn A',
-        'date': DateTime.now().subtract(const Duration(days: 2)),
-        'diagnosis': 'Viêm họng cấp',
-        'medicines': [
-          {'name': 'Amoxicillin 500mg', 'dosage': '1 viên x 3 lần/ngày', 'duration': '5 ngày'},
-          {'name': 'Paracetamol 500mg', 'dosage': '1 viên khi sốt > 38.5 độ', 'duration': '3 ngày'},
-        ],
-        'status': 'active'
-      },
-      {
-        'id': 'RX-77102',
-        'doctor': 'BS. Lê Thị B',
-        'date': DateTime.now().subtract(const Duration(days: 30)),
-        'diagnosis': 'Rối loạn tiêu hóa',
-        'medicines': [
-          {'name': 'Smecta', 'dosage': '1 gói x 2 lần/ngày', 'duration': '3 ngày'},
-        ],
-        'status': 'completed'
-      }
-    ];
+    final uid = FirebaseAuth.instance.currentUser?.uid;
 
     return Scaffold(
       backgroundColor: context.colors.background,
@@ -43,25 +26,66 @@ class PrescriptionScreen extends StatelessWidget {
         title: "Đơn thuốc của tôi",
         showBackButton: true,
       ),
-      body: prescriptions.isEmpty
+      body: uid == null
           ? const EmptyStateWidget(
-              title: "Bạn chưa có đơn thuốc nào.",
-              icon: Icons.medication_outlined,
+              title: "Vui lòng đăng nhập để xem đơn thuốc.",
+              icon: Icons.lock_outline,
             )
-          : ListView.builder(
-              padding: EdgeInsets.all(context.spacing.l),
-              itemCount: prescriptions.length,
-              itemBuilder: (context, index) {
-                final rx = prescriptions[index];
-                return _buildPrescriptionCard(context, rx);
+          : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: FirebaseFirestore.instance
+                  .collection('medical_records')
+                  .where('patientId', isEqualTo: uid)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const LoadingWidget(itemCount: 3);
+                }
+                if (snapshot.hasError) {
+                  return EmptyStateWidget(
+                    title: "Không tải được đơn thuốc.\n${snapshot.error}",
+                    icon: Icons.error_outline,
+                  );
+                }
+
+                // Keep only records that actually contain a prescription, newest first.
+                final docs = (snapshot.data?.docs ?? [])
+                    .where((d) => (d.data()['prescription'] ?? '').toString().trim().isNotEmpty)
+                    .toList()
+                  ..sort((a, b) {
+                    final ta = a.data()['examinedAt'] as Timestamp?;
+                    final tb = b.data()['examinedAt'] as Timestamp?;
+                    return (tb?.millisecondsSinceEpoch ?? 0)
+                        .compareTo(ta?.millisecondsSinceEpoch ?? 0);
+                  });
+
+                if (docs.isEmpty) {
+                  return const EmptyStateWidget(
+                    title: "Bạn chưa có đơn thuốc nào.",
+                    icon: Icons.medication_outlined,
+                  );
+                }
+
+                return ListView.builder(
+                  padding: EdgeInsets.all(context.spacing.l),
+                  itemCount: docs.length,
+                  itemBuilder: (context, index) =>
+                      _buildPrescriptionCard(context, docs[index], index == 0),
+                );
               },
             ),
     );
   }
 
-  Widget _buildPrescriptionCard(BuildContext context, Map<String, dynamic> rx) {
-    final bool isActive = rx['status'] == 'active';
-    final List medicines = rx['medicines'] as List;
+  Widget _buildPrescriptionCard(
+    BuildContext context,
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+    bool isMostRecent,
+  ) {
+    final rx = doc.data();
+    final examinedAt = (rx['examinedAt'] as Timestamp?)?.toDate();
+    final diagnosis = (rx['diagnosis'] ?? '').toString();
+    final doctor = (rx['doctorName'] ?? 'Bác sĩ').toString();
+    final prescription = (rx['prescription'] ?? '').toString();
 
     return Container(
       margin: EdgeInsets.only(bottom: context.spacing.l),
@@ -77,26 +101,25 @@ class PrescriptionScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      rx['id'],
+                      "RX-${doc.id.substring(0, 6).toUpperCase()}",
                       style: context.textStyles.bodyBold.copyWith(color: context.colors.primary),
                     ),
                     Text(
-                      DateFormat('dd/MM/yyyy').format(rx['date']),
+                      examinedAt != null ? DateFormat('dd/MM/yyyy').format(examinedAt) : '—',
                       style: context.textStyles.caption.copyWith(color: context.colors.textHint),
                     ),
                   ],
                 ),
-                _buildStatusChip(context, isActive),
+                _buildStatusChip(context, isMostRecent),
               ],
             ),
             Divider(height: context.spacing.l, color: context.colors.divider),
+            if (diagnosis.isNotEmpty) ...[
+              Text("Chẩn đoán: $diagnosis", style: context.textStyles.bodyBold),
+              const SizedBox(height: 4),
+            ],
             Text(
-              "Chẩn đoán: ${rx['diagnosis']}",
-              style: context.textStyles.bodyBold,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              "Bác sĩ kê đơn: ${rx['doctor']}",
+              "Bác sĩ kê đơn: $doctor",
               style: context.textStyles.bodySmall.copyWith(color: context.colors.textSecondary),
             ),
             const SizedBox(height: 16),
@@ -105,38 +128,27 @@ class PrescriptionScreen extends StatelessWidget {
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
-            ...medicines.map((m) => _buildMedicineItem(context, m)).toList(),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: context.colors.surface,
+                borderRadius: context.radius.sRadius,
+                border: Border.all(color: context.colors.divider.withValues(alpha: 0.5)),
+              ),
+              child: Text(prescription, style: context.textStyles.body),
+            ),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Tính năng xuất PDF đang được cập nhật trong phiên bản tiếp theo.'), duration: Duration(seconds: 3)),
-                    ),
-                    icon: const Icon(Icons.download_rounded, size: 18),
-                    label: const Text("Tải PDF"),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: context.colors.primary,
-                      side: BorderSide(color: context.colors.primary),
-                      shape: RoundedRectangleBorder(borderRadius: context.radius.sRadius),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => context.push('/notifications/settings'),
-                    icon: const Icon(Icons.alarm_add_rounded, size: 18),
-                    label: const Text("Đặt nhắc hẹn"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: context.colors.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: context.radius.sRadius),
-                    ),
-                  ),
-                ),
-              ],
+            ElevatedButton.icon(
+              onPressed: () => context.push('/notifications/settings'),
+              icon: const Icon(Icons.alarm_add_rounded, size: 18),
+              label: const Text("Đặt nhắc uống thuốc"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: context.colors.primary,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 44),
+                shape: RoundedRectangleBorder(borderRadius: context.radius.sRadius),
+              ),
             ),
           ],
         ),
@@ -152,49 +164,12 @@ class PrescriptionScreen extends StatelessWidget {
         borderRadius: context.radius.xsRadius,
       ),
       child: Text(
-        isActive ? "ĐANG SỬ DỤNG" : "ĐÃ HOÀN THÀNH",
+        isActive ? "MỚI NHẤT" : "TRƯỚC ĐÓ",
         style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w800,
           color: isActive ? AppColors.success : context.colors.textHint,
         ),
-      ),
-    );
-  }
-
-  Widget _buildMedicineItem(BuildContext context, Map<String, dynamic> medicine) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: context.colors.surface,
-        borderRadius: context.radius.sRadius,
-        border: Border.all(color: context.colors.divider.withValues(alpha: 0.5)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: context.colors.primary.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.medication_liquid_rounded, color: context.colors.primary, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(medicine['name'], style: context.textStyles.bodyBold),
-                Text(
-                  "${medicine['dosage']} • ${medicine['duration']}",
-                  style: context.textStyles.caption.copyWith(color: context.colors.textSecondary),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
