@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../../core/theme/icare_tokens.dart';
+import '../../data/datasources/doctor_remote_datasource.dart';
+import '../../data/models/doctor_model.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Patient → Tìm bác sĩ — Full Search / Filter Screen
@@ -15,11 +17,76 @@ class PatientFindDoctorScreen extends StatefulWidget {
 }
 
 class _PatientFindDoctorScreenState extends State<PatientFindDoctorScreen> {
-  final _searchCtrl = TextEditingController(text: 'Tim mạch can thiệp');
-  bool _showClear = true;
+  final _searchCtrl = TextEditingController();
+  bool _showClear = false;
 
-  final _activeFilters = ['Tim mạch', '<5km', '4.5★+'];
-  final _inactiveFilters = ['Còn lịch hôm nay', 'BHYT'];
+  final _activeFilters = <String>[];
+  final _inactiveFilters = ['Còn lịch hôm nay', 'BHYT', '<5km', '4.5★+'];
+
+  // Dữ liệu thật từ Firestore.
+  final _ds = DoctorRemoteDatasource();
+  List<DoctorModel> _doctors = [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDoctors();
+  }
+
+  Future<void> _loadDoctors() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final list = await _ds.getDoctors();
+      list.sort((a, b) => b.rating.compareTo(a.rating));
+      if (mounted) {
+        setState(() {
+          _doctors = list;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  List<DoctorModel> get _filtered {
+    final q = _searchCtrl.text.trim().toLowerCase();
+    if (q.isEmpty) return _doctors;
+    return _doctors.where((d) {
+      return d.name.toLowerCase().contains(q) ||
+          d.specialty.toLowerCase().contains(q) ||
+          d.hospital.toLowerCase().contains(q);
+    }).toList();
+  }
+
+  // Màu avatar ổn định theo tên.
+  Color _avatarColor(String name) {
+    const palette = [
+      Color(0xFF1565C0), Color(0xFFD43F75), Color(0xFF5B47D6),
+      Color(0xFF0F9D58), Color(0xFFE8710A), Color(0xFF00838F),
+    ];
+    return palette[name.hashCode.abs() % palette.length];
+  }
+
+  String _initials(String name) {
+    final parts = name.replaceAll(RegExp(r'(BS\.?|TS\.?|PGS\.?|GS\.?|CK\s?I*I*\.?)', caseSensitive: false), '')
+        .trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) return parts.first.characters.first.toUpperCase();
+    return (parts[parts.length - 2].characters.first +
+            parts.last.characters.first)
+        .toUpperCase();
+  }
 
   @override
   void dispose() {
@@ -38,76 +105,92 @@ class _PatientFindDoctorScreenState extends State<PatientFindDoctorScreen> {
             _buildSearchBar(),
             _buildFilterChips(),
             _buildSortRow(),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-                children: [
-                  _buildDoctorCard(
-                    isTop: true,
-                    name: 'BS. Trần Minh Quân',
-                    specialty: 'Tim mạch · Can thiệp',
-                    degree: 'CK II',
-                    years: 15,
-                    langs: 'VI · EN',
-                    rating: 4.9,
-                    reviewCount: 312,
-                    distance: 1.2,
-                    hospital: 'BV Bạch Mai',
-                    bhytRange: 'GD1–GD5',
-                    slots: ['09:30', '10:30', '14:00'],
-                    slotCount: 4,
-                    price: 350000,
-                    bhytDiscount: 80,
-                    avatarColor: const Color(0xFF1565C0),
-                    initials: 'MQ',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildDoctorCard(
-                    isTop: false,
-                    name: 'BS. Nguyễn Thị Hoa',
-                    specialty: 'Tim mạch · Siêu âm',
-                    degree: 'TS.BS',
-                    years: 12,
-                    langs: 'VI',
-                    rating: 4.7,
-                    reviewCount: 198,
-                    distance: 3.4,
-                    hospital: 'BV Việt Đức',
-                    bhytRange: 'GD1–GD3',
-                    slots: [],
-                    soonest: 'T7, 25/05',
-                    slotCount: 0,
-                    price: 280000,
-                    bhytDiscount: 70,
-                    avatarColor: const Color(0xFFD43F75),
-                    initials: 'NH',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildDoctorCard(
-                    isTop: false,
-                    name: 'PGS.BS. Lê Văn Đức',
-                    specialty: 'Tim mạch · Nhịp học',
-                    degree: 'PGS.TS',
-                    years: 22,
-                    langs: 'VI · FR',
-                    rating: 4.8,
-                    reviewCount: 421,
-                    distance: 4.8,
-                    hospital: 'Viện Tim mạch QG',
-                    bhytRange: 'GD1–GD5',
-                    slots: ['10:00', '15:30'],
-                    slotCount: 2,
-                    price: 450000,
-                    bhytDiscount: 80,
-                    avatarColor: const Color(0xFF5B47D6),
-                    initials: 'LD',
-                  ),
-                ],
-              ),
-            ),
+            Expanded(child: _buildBody()),
           ],
         ),
       ),
+    );
+  }
+
+  // ─── Body (dữ liệu thật) ─────────────────────────────────────────────────────
+  Widget _buildBody() {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.cloud_off_rounded, size: 52, color: IColors.ink3),
+              const SizedBox(height: 12),
+              Text('Không tải được danh sách bác sĩ.\n$_error',
+                  textAlign: TextAlign.center,
+                  style: IText.body(size: 13, color: IColors.ink2)),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: _loadDoctors,
+                icon: const Icon(Icons.refresh_rounded, size: 18),
+                label: const Text('Thử lại'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    final docs = _filtered;
+    if (docs.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.person_search_rounded, size: 52, color: IColors.ink3),
+            const SizedBox(height: 12),
+            Text(
+                _doctors.isEmpty
+                    ? 'Chưa có dữ liệu bác sĩ'
+                    : 'Không tìm thấy bác sĩ phù hợp',
+                style: IText.body(size: 15, color: IColors.ink2)),
+          ],
+        ),
+      );
+    }
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+      itemCount: docs.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (_, i) => _realDoctorCard(docs[i], i == 0),
+    );
+  }
+
+  Widget _realDoctorCard(DoctorModel d, bool isTop) {
+    return _buildDoctorCard(
+      isTop: isTop,
+      doctorId: d.id,
+      name: d.name,
+      specialty: d.specialty.isEmpty ? 'Đa khoa' : d.specialty,
+      degree: d.experience >= 20
+          ? 'PGS.TS'
+          : d.experience >= 10
+              ? 'TS.BS'
+              : 'BS',
+      years: d.experience,
+      langs: 'VI',
+      rating: d.rating,
+      reviewCount: d.totalReviews,
+      distance: d.distanceKm ?? 0,
+      hospital: d.hospital.isEmpty ? 'Phòng khám ICare' : d.hospital,
+      bhytRange: 'GD1–GD5',
+      slots: const [],
+      soonest: null,
+      slotCount: 0,
+      price: 200000,
+      bhytDiscount: 80,
+      avatarColor: _avatarColor(d.name),
+      initials: _initials(d.name),
+      imageUrl: d.imageUrl,
     );
   }
 
@@ -136,7 +219,11 @@ class _PatientFindDoctorScreenState extends State<PatientFindDoctorScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Tìm bác sĩ', style: IText.display(size: 20, color: IColors.ink)),
-                Text('1.247 bác sĩ · 24 chuyên khoa', style: IText.body(size: 12, color: IColors.ink3)),
+                Text(
+                    _loading
+                        ? 'Đang tải...'
+                        : '${_doctors.length} bác sĩ · ${_doctors.map((d) => d.specialty).where((s) => s.isNotEmpty).toSet().length} chuyên khoa',
+                    style: IText.body(size: 12, color: IColors.ink3)),
               ],
             ),
           ),
@@ -313,7 +400,8 @@ class _PatientFindDoctorScreenState extends State<PatientFindDoctorScreen> {
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 4),
       child: Row(
         children: [
-          Text('Hiển thị 3/42 bác sĩ', style: IText.body(size: 12.5, color: IColors.ink3)),
+          Text('Hiển thị ${_filtered.length}/${_doctors.length} bác sĩ',
+              style: IText.body(size: 12.5, color: IColors.ink3)),
           const Spacer(),
           GestureDetector(
             onTap: () => _showSortSheet(context),
@@ -366,6 +454,8 @@ class _PatientFindDoctorScreenState extends State<PatientFindDoctorScreen> {
     required int bhytDiscount,
     required Color avatarColor,
     required String initials,
+    String doctorId = '',
+    String? imageUrl,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -402,10 +492,23 @@ class _PatientFindDoctorScreenState extends State<PatientFindDoctorScreen> {
                             blurRadius: 12, offset: const Offset(0, 4),
                           )],
                         ),
-                        child: Center(child: Text(initials, style: TextStyle(
-                          fontFamily: IFont.interTight, fontSize: 20,
-                          fontWeight: FontWeight.w800, color: Colors.white,
-                        ))),
+                        clipBehavior: Clip.antiAlias,
+                        child: (imageUrl != null && imageUrl.isNotEmpty)
+                            ? Image.network(
+                                imageUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Center(
+                                    child: Text(initials,
+                                        style: const TextStyle(
+                                            fontFamily: IFont.interTight,
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w800,
+                                            color: Colors.white))),
+                              )
+                            : Center(child: Text(initials, style: const TextStyle(
+                                fontFamily: IFont.interTight, fontSize: 20,
+                                fontWeight: FontWeight.w800, color: Colors.white,
+                              ))),
                       ),
                       Positioned(
                         right: -1, bottom: -1,
@@ -530,7 +633,7 @@ class _PatientFindDoctorScreenState extends State<PatientFindDoctorScreen> {
                   GestureDetector(
                     onTap: () {
                       HapticFeedback.mediumImpact();
-                      context.push('/doctor/profile-booking');
+                      context.push('/doctor/profile-booking', extra: doctorId);
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
