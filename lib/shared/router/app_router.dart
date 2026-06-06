@@ -55,6 +55,7 @@ import 'package:smart_clinic_booking/features/appointment/presentation/screens/a
 import 'package:smart_clinic_booking/features/medical_record/presentation/screens/prescription_screen.dart';
 import 'package:smart_clinic_booking/features/home/presentation/screens/services_screen.dart';
 import 'package:smart_clinic_booking/features/medication/presentation/screens/medication_screen.dart';
+import 'package:smart_clinic_booking/features/insurance/presentation/screens/insurance_card_screen.dart';
 import 'package:smart_clinic_booking/features/content/presentation/screens/health_library_screen.dart';
 import 'package:smart_clinic_booking/features/review/presentation/screens/doctor_review_screen.dart';
 import 'package:smart_clinic_booking/shared/widgets/under_development_screen.dart';
@@ -473,6 +474,10 @@ class AppRouter {
       GoRoute(
         path: '/medication',
         builder: (context, state) => const MedicationScreen(),
+      ),
+      GoRoute(
+        path: '/insurance',
+        builder: (context, state) => const InsuranceCardScreen(),
       ),
       GoRoute(
         path: '/profile/patient',

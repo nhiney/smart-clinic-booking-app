@@ -53,7 +53,7 @@ class ServicesScreen extends StatelessWidget {
                   icon: Icons.volunteer_activism_outlined,
                   title: 'Bảo hiểm y tế',
                   subtitle: 'Tra cứu và quản lý thẻ BHYT',
-                  onTap: () => context.push('/under-development?title=${Uri.encodeComponent('Bảo hiểm y tế')}'),
+                  onTap: () => context.push('/insurance'),
                 ),
                 _buildServiceTile(
                   context,
