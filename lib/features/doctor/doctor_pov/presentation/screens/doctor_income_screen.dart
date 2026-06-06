@@ -6,30 +6,35 @@ import '../../../patient_pov/domain/entities/doctor_workspace_models.dart';
 class DoctorIncomeScreen extends StatelessWidget {
   const DoctorIncomeScreen({super.key});
 
-  static const _accent = Color(0xFF059669);
-
   @override
   Widget build(BuildContext context) {
     final ctrl = context.watch<DoctorController>();
-
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9),
+      backgroundColor: const Color(0xFFF0F4F8),
       body: CustomScrollView(
         slivers: [
-          _buildAppBar(ctrl),
+          _buildAppBar(),
+          SliverToBoxAdapter(child: _HeroCard(ctrl: ctrl)),
+          SliverToBoxAdapter(child: _TrendSection(ctrl: ctrl)),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Thanh toán gần đây', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF0F172A))),
+                  TextButton(onPressed: () {}, child: const Text('Xem tất cả', style: TextStyle(color: Color(0xFF1D4ED8), fontWeight: FontWeight.w600))),
+                ],
+              ),
+            ),
+          ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
             sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                _buildSummaryRow(ctrl),
-                const SizedBox(height: 16),
-                _buildTrendCard(ctrl),
-                const SizedBox(height: 20),
-                _buildSectionHeader(),
-                const SizedBox(height: 10),
-                ...ctrl.incomeEntries.map((e) => _IncomeEntryTile(entry: e)),
-                const SizedBox(height: 16),
-              ]),
+              delegate: SliverChildBuilderDelegate(
+                (_, i) => _PaymentTile(entry: ctrl.incomeEntries[i]),
+                childCount: ctrl.incomeEntries.length,
+              ),
             ),
           ),
         ],
@@ -37,85 +42,129 @@ class DoctorIncomeScreen extends StatelessWidget {
     );
   }
 
-  SliverAppBar _buildAppBar(DoctorController ctrl) {
+  SliverAppBar _buildAppBar() {
     return SliverAppBar(
-      expandedHeight: 140,
       pinned: true,
       elevation: 0,
-      backgroundColor: _accent,
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF065F46), Color(0xFF10B981)],
-            ),
-          ),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 44, 20, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Thu nhập', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 4),
-                  Text('${ctrl.monthlyIncome.toStringAsFixed(1)}M VNĐ tháng này',
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 14, fontWeight: FontWeight.w500)),
-                ],
-              ),
-            ),
-          ),
-        ),
-        title: const Text('Thu nhập', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
-        titlePadding: const EdgeInsets.only(left: 56, bottom: 16),
-        collapseMode: CollapseMode.pin,
-      ),
-      leading: const BackButton(color: Colors.white),
-    );
-  }
-
-  Widget _buildSummaryRow(DoctorController ctrl) {
-    return Row(
-      children: [
-        _SummaryCard(
-          label: 'Tháng này',
-          value: '${ctrl.monthlyIncome.toStringAsFixed(1)}M',
-          icon: Icons.trending_up_rounded,
-          color: _accent,
-          bgColor: const Color(0xFFECFDF5),
-        ),
-        const SizedBox(width: 10),
-        _SummaryCard(
-          label: 'Đã nhận',
-          value: '${ctrl.receivedIncome.toStringAsFixed(1)}M',
-          icon: Icons.check_circle_rounded,
-          color: const Color(0xFF2563EB),
-          bgColor: const Color(0xFFEFF6FF),
-        ),
-        const SizedBox(width: 10),
-        _SummaryCard(
-          label: 'Chờ xử lý',
-          value: '${ctrl.pendingIncome.toStringAsFixed(1)}M',
-          icon: Icons.schedule_rounded,
-          color: const Color(0xFFF59E0B),
-          bgColor: const Color(0xFFFEF3C7),
-        ),
+      backgroundColor: Colors.white,
+      foregroundColor: const Color(0xFF0F172A),
+      title: const Text('Thu nhập', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18, color: Color(0xFF0F172A))),
+      leading: const BackButton(color: Color(0xFF0F172A)),
+      actions: [
+        IconButton(icon: const Icon(Icons.more_horiz_rounded, color: Color(0xFF0F172A)), onPressed: () {}),
       ],
     );
   }
+}
 
-  Widget _buildTrendCard(DoctorController ctrl) {
-    final trend = ctrl.monthlyIncomeTrend;
-    final growthPct = trend.length >= 2
-        ? ((trend.last - trend.first) / trend.first * 100).toStringAsFixed(1)
-        : '0.0';
+class _HeroCard extends StatelessWidget {
+  final DoctorController ctrl;
+  const _HeroCard({required this.ctrl});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1D4ED8), Color(0xFF3B82F6)],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: const Color(0xFF1D4ED8).withValues(alpha: 0.35), blurRadius: 20, offset: const Offset(0, 8))],
+      ),
+      child: Stack(
+        children: [
+          Positioned(right: -20, top: -20,
+            child: Container(width: 120, height: 120,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withValues(alpha: 0.06)))),
+          Positioned(right: 20, bottom: -30,
+            child: Container(width: 80, height: 80,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withValues(alpha: 0.04)))),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('THU NHẬP THÁNG 5/2026', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+              const SizedBox(height: 6),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text('đ${ctrl.monthlyIncome.toStringAsFixed(1)}M',
+                      style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w800, height: 1)),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(20)),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.trending_up_rounded, size: 14, color: Colors.white),
+                    SizedBox(width: 4),
+                    Text('+18.4% vs tháng trước', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(height: 1, color: Colors.white.withValues(alpha: 0.15)),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('ĐÃ NHẬN', style: TextStyle(color: Colors.white60, fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+                        const SizedBox(height: 4),
+                        Text('đ${ctrl.receivedIncome.toStringAsFixed(1)}M',
+                            style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
+                        const Text('73 ca', style: TextStyle(color: Colors.white60, fontSize: 11)),
+                      ],
+                    ),
+                  ),
+                  Container(width: 1, height: 48, color: Colors.white.withValues(alpha: 0.2)),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('CHỜ CHUYỂN', style: TextStyle(color: Colors.white60, fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+                          const SizedBox(height: 4),
+                          Text('đ${ctrl.pendingIncome.toStringAsFixed(1)}M',
+                              style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
+                          const Text('24 ca', style: TextStyle(color: Colors.white60, fontSize: 11)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TrendSection extends StatelessWidget {
+  final DoctorController ctrl;
+  const _TrendSection({required this.ctrl});
+
+  @override
+  Widget build(BuildContext context) {
+    final trend = ctrl.monthlyIncomeTrend;
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -123,221 +172,125 @@ class DoctorIncomeScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Xu hướng 6 tháng', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Color(0xFF0F172A))),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('6 THÁNG GẦN NHẤT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF94A3B8), letterSpacing: 0.5)),
+                  const SizedBox(height: 2),
+                  const Text('đ32.7M / tháng TB', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF0F172A))),
+                ],
+              ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(color: _accent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Row(
                   children: [
-                    const Icon(Icons.trending_up_rounded, size: 14, color: _accent),
-                    const SizedBox(width: 4),
-                    Text('+$growthPct%', style: const TextStyle(color: _accent, fontSize: 12, fontWeight: FontWeight.w600)),
+                    Text('6 tháng', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF475569))),
+                    SizedBox(width: 4),
+                    Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: Color(0xFF475569)),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          const Text('triệu VNĐ', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           SizedBox(
             height: 80,
-            child: _TrendChart(data: trend.map((e) => e.toDouble()).toList()),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(trend.length, (i) {
-              final months = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6'];
-              final label = i < months.length ? months[i] : 'T${i + 1}';
-              return Column(
-                children: [
-                  Text(trend[i].toStringAsFixed(1), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
-                  const SizedBox(height: 2),
-                  Text(label, style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
-                ],
-              );
-            }),
+            child: _BarChart(data: trend, labels: const ['T12', 'T1', 'T2', 'T3', 'T4', 'T5']),
           ),
         ],
       ),
     );
   }
-
-  Widget _buildSectionHeader() {
-    return Row(
-      children: [
-        Container(width: 4, height: 18, decoration: BoxDecoration(color: _accent, borderRadius: BorderRadius.circular(2))),
-        const SizedBox(width: 8),
-        const Text('Lịch sử thanh toán', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: Color(0xFF0F172A))),
-      ],
-    );
-  }
 }
 
-class _SummaryCard extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-  final Color bgColor;
-  const _SummaryCard({required this.label, required this.value, required this.icon, required this.color, required this.bgColor});
+class _BarChart extends StatelessWidget {
+  final List<double> data;
+  final List<String> labels;
+  const _BarChart({required this.data, required this.labels});
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2))],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(8)),
-              child: Icon(icon, size: 16, color: color),
-            ),
-            const SizedBox(height: 8),
-            Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: color)),
-            const SizedBox(height: 2),
-            Text(label, style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8), fontWeight: FontWeight.w500)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TrendChart extends StatelessWidget {
-  final List<double> data;
-  const _TrendChart({required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      size: const Size(double.infinity, 80),
-      painter: _TrendPainter(data: data),
-    );
-  }
-}
-
-class _TrendPainter extends CustomPainter {
-  final List<double> data;
-  static const _color = Color(0xFF059669);
-  const _TrendPainter({required this.data});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (data.length < 2) return;
-    final minV = data.reduce((a, b) => a < b ? a : b);
+    if (data.isEmpty) return const SizedBox.shrink();
     final maxV = data.reduce((a, b) => a > b ? a : b);
-    final range = maxV - minV;
-    double norm(double v) => range == 0 ? 0.5 : (v - minV) / range;
-
-    final pts = List.generate(data.length, (i) {
-      final x = i / (data.length - 1) * size.width;
-      final y = size.height - norm(data[i]) * size.height * 0.85 - size.height * 0.05;
-      return Offset(x, y);
-    });
-
-    final fillPath = Path()..moveTo(pts.first.dx, size.height)..lineTo(pts.first.dx, pts.first.dy);
-    final linePath = Path()..moveTo(pts.first.dx, pts.first.dy);
-    for (int i = 1; i < pts.length; i++) {
-      final cp1 = Offset((pts[i - 1].dx + pts[i].dx) / 2, pts[i - 1].dy);
-      final cp2 = Offset((pts[i - 1].dx + pts[i].dx) / 2, pts[i].dy);
-      fillPath.cubicTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy, pts[i].dx, pts[i].dy);
-      linePath.cubicTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy, pts[i].dx, pts[i].dy);
-    }
-    fillPath..lineTo(pts.last.dx, size.height)..close();
-
-    canvas.drawPath(fillPath, Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topCenter, end: Alignment.bottomCenter,
-        colors: [Color(0x40059669), Color(0x00059669)],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
-      ..style = PaintingStyle.fill);
-
-    canvas.drawPath(linePath, Paint()
-      ..color = _color
-      ..strokeWidth = 2.5
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round);
-
-    canvas.drawCircle(pts.last, 5, Paint()..color = _color);
-    canvas.drawCircle(pts.last, 5, Paint()..color = Colors.white..style = PaintingStyle.stroke..strokeWidth = 2);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: List.generate(data.length, (i) {
+        final frac = maxV > 0 ? data[i] / maxV : 0.0;
+        final isLast = i == data.length - 1;
+        return Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 3),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (isLast)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(color: const Color(0xFF1D4ED8), borderRadius: BorderRadius.circular(4)),
+                    child: Text('đ${data[i].toStringAsFixed(1)}M', style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700)),
+                  ),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 400),
+                  height: (frac * 48).clamp(4, 48),
+                  decoration: BoxDecoration(
+                    color: isLast ? const Color(0xFF1D4ED8) : const Color(0xFFE2E8F0),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(labels[i], style: TextStyle(fontSize: 10, color: isLast ? const Color(0xFF1D4ED8) : const Color(0xFF94A3B8), fontWeight: isLast ? FontWeight.w700 : FontWeight.normal)),
+              ],
+            ),
+          ),
+        );
+      }),
+    );
   }
-
-  @override
-  bool shouldRepaint(_TrendPainter old) => old.data != data;
 }
 
-class _IncomeEntryTile extends StatelessWidget {
+class _PaymentTile extends StatelessWidget {
   final DoctorIncomeEntry entry;
-  const _IncomeEntryTile({required this.entry});
+  const _PaymentTile({required this.entry});
 
   @override
   Widget build(BuildContext context) {
-    final isPaid = entry.isPaid;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6, offset: const Offset(0, 2))],
       ),
       child: Row(
         children: [
           Container(
-            width: 44, height: 44,
-            decoration: BoxDecoration(
-              color: isPaid ? const Color(0xFFECFDF5) : const Color(0xFFFEF3C7),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              isPaid ? Icons.check_circle_rounded : Icons.schedule_rounded,
-              color: isPaid ? const Color(0xFF059669) : const Color(0xFFF59E0B),
-              size: 22,
-            ),
+            width: 40, height: 40,
+            decoration: BoxDecoration(color: const Color(0xFFECFDF5), borderRadius: BorderRadius.circular(10)),
+            child: const Icon(Icons.receipt_long_rounded, size: 20, color: Color(0xFF059669)),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(entry.title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Color(0xFF0F172A))),
                 const SizedBox(height: 2),
-                Text(entry.dateLabel, style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                Text(entry.dateLabel, style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8))),
               ],
             ),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(entry.amountLabel, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: Color(0xFF059669))),
+              Text('+đ${entry.amountLabel}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: Color(0xFF059669))),
               const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: isPaid ? const Color(0xFFECFDF5) : const Color(0xFFFEF3C7),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  entry.statusLabel,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: isPaid ? const Color(0xFF059669) : const Color(0xFFF59E0B),
-                  ),
-                ),
-              ),
+              Text(entry.statusLabel, style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
             ],
           ),
         ],

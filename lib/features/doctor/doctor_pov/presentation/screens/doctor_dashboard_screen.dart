@@ -1,3 +1,4 @@
+import 'dart:developer' as dev;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -11,8 +12,25 @@ import '../widgets/today_progress_card.dart';
 import '../widgets/stat_card.dart';
 import '../widgets/next_patient_card.dart';
 
-class DoctorDashboardScreen extends StatelessWidget {
+class DoctorDashboardScreen extends StatefulWidget {
   const DoctorDashboardScreen({super.key});
+
+  @override
+  State<DoctorDashboardScreen> createState() => _DoctorDashboardScreenState();
+}
+
+class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    dev.registerExtension('ext.app.navigate', (method, params) async {
+      final route = params['route'] ?? '/doctor/dashboard';
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.go(route);
+      });
+      return dev.ServiceExtensionResponse.result('{"navigating": "$route"}');
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

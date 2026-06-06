@@ -7,15 +7,12 @@ class DoctorScheduleSettingsScreen extends StatefulWidget {
   const DoctorScheduleSettingsScreen({super.key});
 
   @override
-  State<DoctorScheduleSettingsScreen> createState() => _DoctorScheduleSettingsScreenState();
+  State<DoctorScheduleSettingsScreen> createState() => _State();
 }
 
-class _DoctorScheduleSettingsScreenState extends State<DoctorScheduleSettingsScreen> {
-  static const _accent = Color(0xFF0891B2);
-
+class _State extends State<DoctorScheduleSettingsScreen> {
   Future<void> _save() async {
-    final ctrl = context.read<DoctorController>();
-    await ctrl.saveWorkSchedule();
+    await context.read<DoctorController>().saveWorkSchedule();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Đã lưu lịch làm việc'), backgroundColor: Colors.green, behavior: SnackBarBehavior.floating),
@@ -26,148 +23,133 @@ class _DoctorScheduleSettingsScreenState extends State<DoctorScheduleSettingsScr
   Widget build(BuildContext context) {
     final ctrl = context.watch<DoctorController>();
     final days = ctrl.workDays;
+    final activeDays = days.where((d) => d.enabled).length;
+    final totalSlots = days.fold<int>(0, (s, d) => s + d.slots.length);
+    final totalHours = totalSlots * 3.5; // rough: each slot ~3.5h
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9),
-      body: CustomScrollView(
-        slivers: [
-          _buildAppBar(),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: _buildLegend(),
-            ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, i) => _DayCard(
-                  day: days[i],
-                  dayIndex: i,
-                  accent: _accent,
-                  onToggle: () => ctrl.toggleWorkDay(i),
-                  onAddSlot: () => _showAddSlotDialog(context, ctrl, i),
-                  onRemoveSlot: (slotId) => ctrl.removeWorkSlot(i, slotId),
-                ),
-                childCount: days.length,
-              ),
-            ),
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        foregroundColor: const Color(0xFF0F172A),
+        title: const Text('Lịch làm việc', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18, color: Color(0xFF0F172A))),
+        actions: [
+          TextButton(
+            onPressed: _save,
+            child: const Text('Lưu', style: TextStyle(color: Color(0xFF1D4ED8), fontWeight: FontWeight.w700, fontSize: 15)),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: ctrl.isLoading ? null : _save,
-        backgroundColor: _accent,
-        icon: ctrl.isLoading
-            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-            : const Icon(Icons.save_rounded, color: Colors.white),
-        label: const Text('Lưu lịch', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          // Title
+          const Text('Khung giờ của tôi', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
+          const SizedBox(height: 4),
+          RichText(
+            text: const TextSpan(
+              style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+              children: [
+                TextSpan(text: 'Cài đặt khung giờ bệnh nhân có thể đặt khám. Áp dụng từ '),
+                TextSpan(text: 'tuần này', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF0F172A))),
+                TextSpan(text: '.'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Stats row
+          Row(
+            children: [
+              _StatPill(value: '$activeDays', label: 'Ngày/tuần', color: const Color(0xFF1D4ED8)),
+              const SizedBox(width: 10),
+              _StatPill(value: '$totalSlots', label: 'Khung giờ', color: const Color(0xFF059669)),
+              const SizedBox(width: 10),
+              _StatPill(value: '${totalHours.toStringAsFixed(0)}h', label: 'Tổng giờ', color: const Color(0xFF7C3AED)),
+            ],
+          ),
+          const SizedBox(height: 20),
+          const Text('Theo ngày trong tuần', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF0F172A))),
+          const SizedBox(height: 4),
+          const Text('Nhấn ngày để chỉnh sửa', style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8))),
+          const SizedBox(height: 12),
+          ...days.asMap().entries.map((e) => _DayCard(
+            day: e.value,
+            index: e.key,
+            onToggle: () => ctrl.toggleWorkDay(e.key),
+            onAddSlot: () => _showAddSlot(ctrl, e.key),
+            onRemoveSlot: (id) => ctrl.removeWorkSlot(e.key, id),
+          )),
+          const SizedBox(height: 80),
+        ],
       ),
     );
   }
 
-  void _showAddSlotDialog(BuildContext context, DoctorController ctrl, int dayIndex) {
-    final labelCtrl = TextEditingController();
-    final rangeCtrl = TextEditingController();
-    showDialog(
+  void _showAddSlot(DoctorController ctrl, int dayIndex) {
+    final labelCtrl = TextEditingController(text: '08:00–11:30');
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Thêm khung giờ', style: TextStyle(fontWeight: FontWeight.w700)),
-        content: Column(
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(ctx).viewInsets.bottom + 20),
+        child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const Text('Thêm ca làm việc', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 16),
             TextField(
               controller: labelCtrl,
+              autofocus: true,
               decoration: InputDecoration(
-                labelText: 'Giờ (vd: 08:00–11:30)',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                labelText: 'Giờ làm việc (vd: 08:00–11:30)',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                filled: true, fillColor: const Color(0xFFF8FAFC),
               ),
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: rangeCtrl,
-              decoration: InputDecoration(
-                labelText: 'Mô tả (vd: 4 slot 30 phút)',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1D4ED8), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                onPressed: () {
+                  final label = labelCtrl.text.trim();
+                  if (label.isNotEmpty) ctrl.addWorkSlot(dayIndex, label, 'Khung giờ làm việc');
+                  Navigator.pop(ctx);
+                },
+                child: const Text('Thêm ca', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
               ),
             ),
           ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: _accent, foregroundColor: Colors.white),
-            onPressed: () {
-              final label = labelCtrl.text.trim();
-              final range = rangeCtrl.text.trim();
-              if (label.isNotEmpty) {
-                ctrl.addWorkSlot(dayIndex, label, range.isNotEmpty ? range : 'Khung giờ làm việc');
-              }
-              Navigator.pop(ctx);
-            },
-            child: const Text('Thêm'),
-          ),
-        ],
       ),
     );
   }
+}
 
-  SliverAppBar _buildAppBar() {
-    return SliverAppBar(
-      expandedHeight: 130,
-      pinned: true,
-      elevation: 0,
-      backgroundColor: _accent,
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF0E7490), Color(0xFF06B6D4)],
-            ),
-          ),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 44, 20, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Cài đặt lịch làm việc', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 4),
-                  Text('Bật/tắt ngày và thêm khung giờ khám', style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 13)),
-                ],
-              ),
-            ),
-          ),
+class _StatPill extends StatelessWidget {
+  final String value, label;
+  final Color color;
+  const _StatPill({required this.value, required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8)]),
+        child: Column(
+          children: [
+            Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: color)),
+            const SizedBox(height: 2),
+            Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
+          ],
         ),
-        title: const Text('Cài đặt lịch', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
-        titlePadding: const EdgeInsets.only(left: 56, bottom: 16),
-        collapseMode: CollapseMode.pin,
-      ),
-      leading: const BackButton(color: Colors.white),
-    );
-  }
-
-  Widget _buildLegend() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: _accent.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _accent.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.info_outline_rounded, size: 16, color: _accent),
-          const SizedBox(width: 8),
-          const Expanded(
-            child: Text('Bật/tắt từng ngày và thêm các khung giờ khám cụ thể. Nhấn "Lưu lịch" để áp dụng.',
-                style: TextStyle(fontSize: 12, color: Color(0xFF0E7490))),
-          ),
-        ],
       ),
     );
   }
@@ -175,115 +157,116 @@ class _DoctorScheduleSettingsScreenState extends State<DoctorScheduleSettingsScr
 
 class _DayCard extends StatelessWidget {
   final DoctorWorkDay day;
-  final int dayIndex;
-  final Color accent;
-  final VoidCallback onToggle;
-  final VoidCallback onAddSlot;
-  final void Function(String slotId) onRemoveSlot;
-
-  const _DayCard({
-    required this.day,
-    required this.dayIndex,
-    required this.accent,
-    required this.onToggle,
-    required this.onAddSlot,
-    required this.onRemoveSlot,
-  });
+  final int index;
+  final VoidCallback onToggle, onAddSlot;
+  final void Function(String) onRemoveSlot;
+  const _DayCard({required this.day, required this.index, required this.onToggle, required this.onAddSlot, required this.onRemoveSlot});
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
+    final slotCount = day.slots.length;
+    final slotDesc = slotCount > 0 ? '$slotCount ca · ${slotCount * 7} slot 30 phút' : 'Chưa có ca';
+    return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: day.enabled ? Colors.white : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: day.enabled ? accent.withValues(alpha: 0.25) : const Color(0xFFE2E8F0)),
-        boxShadow: day.enabled ? [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))] : [],
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8)],
       ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Container(
-                  width: 36, height: 36,
-                  decoration: BoxDecoration(
-                    color: day.enabled ? accent.withValues(alpha: 0.12) : const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(Icons.calendar_today_rounded, size: 18, color: day.enabled ? accent : const Color(0xFF94A3B8)),
-                ),
-                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(day.dayLabel, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: day.enabled ? const Color(0xFF0F172A) : const Color(0xFF94A3B8))),
-                      Text('${day.slots.length} khung giờ', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                      Text(day.dayLabel, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF0F172A))),
+                      Text(slotDesc, style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8))),
                     ],
                   ),
                 ),
                 Switch(
                   value: day.enabled,
                   onChanged: (_) => onToggle(),
-                  activeColor: accent,
+                  activeColor: const Color(0xFF1D4ED8),
+                  trackColor: WidgetStateProperty.resolveWith((s) =>
+                    s.contains(WidgetState.selected) ? const Color(0xFF1D4ED8).withValues(alpha: 0.25) : const Color(0xFFE2E8F0)),
                 ),
               ],
             ),
-          ),
-          if (day.enabled) ...[
-            const Divider(height: 1, color: Color(0xFFF1F5F9)),
-            ...day.slots.map((slot) => _SlotTile(slot: slot, accent: accent, onDelete: () => onRemoveSlot(slot.id))),
-            InkWell(
-              onTap: onAddSlot,
-              borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(14), bottomRight: Radius.circular(14)),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.add_circle_outline_rounded, size: 18, color: accent),
-                    const SizedBox(width: 6),
-                    Text('Thêm khung giờ', style: TextStyle(color: accent, fontWeight: FontWeight.w600, fontSize: 13)),
-                  ],
-                ),
+            if (day.enabled) ...[
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8, runSpacing: 8,
+                children: [
+                  ...day.slots.map((slot) => _SlotChip(label: slot.label, onRemove: () => onRemoveSlot(slot.id))),
+                  _AddSlotChip(onTap: onAddSlot),
+                ],
               ),
-            ),
+            ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SlotChip extends StatelessWidget {
+  final String label;
+  final VoidCallback onRemove;
+  const _SlotChip({required this.label, required this.onRemove});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF6FF),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFBFDBFE)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1D4ED8))),
+          const SizedBox(width: 6),
+          GestureDetector(
+            onTap: onRemove,
+            child: const Icon(Icons.close_rounded, size: 14, color: Color(0xFF64A0FF)),
+          ),
         ],
       ),
     );
   }
 }
 
-class _SlotTile extends StatelessWidget {
-  final DoctorWorkSlot slot;
-  final Color accent;
-  final VoidCallback onDelete;
-  const _SlotTile({required this.slot, required this.accent, required this.onDelete});
+class _AddSlotChip extends StatelessWidget {
+  final VoidCallback onTap;
+  const _AddSlotChip({required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(color: accent.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
-            child: Text(slot.label, style: TextStyle(color: accent, fontWeight: FontWeight.w600, fontSize: 13)),
-          ),
-          const SizedBox(width: 10),
-          Expanded(child: Text(slot.timeRange, style: const TextStyle(color: Color(0xFF64748B), fontSize: 12))),
-          IconButton(
-            icon: const Icon(Icons.remove_circle_outline_rounded, size: 20, color: Colors.redAccent),
-            onPressed: onDelete,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-          ),
-        ],
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFCBD5E1), style: BorderStyle.solid),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.add_rounded, size: 14, color: Color(0xFF94A3B8)),
+            SizedBox(width: 4),
+            Text('Thêm ca', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+          ],
+        ),
       ),
     );
   }

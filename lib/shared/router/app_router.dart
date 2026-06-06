@@ -7,7 +7,15 @@ import 'package:smart_clinic_booking/features/auth/presentation/screens/login_sc
 import 'package:smart_clinic_booking/features/auth/presentation/screens/staff_login_screen.dart';
 import 'package:smart_clinic_booking/features/auth/presentation/screens/sign_up_screen.dart';
 import 'package:smart_clinic_booking/features/auth/presentation/screens/patient_home_screen.dart';
+import 'package:smart_clinic_booking/features/consultation/presentation/screens/online_consultation_screen.dart';
+import 'package:smart_clinic_booking/features/lab/presentation/screens/lab_results_screen.dart';
+import 'package:smart_clinic_booking/features/family/presentation/screens/family_profile_screen.dart';
+import 'package:smart_clinic_booking/features/sos/presentation/screens/emergency_sos_screen.dart';
 import 'package:smart_clinic_booking/features/admin/presentation/screens/admin_dashboard_screen.dart';
+import 'package:smart_clinic_booking/features/admin/presentation/screens/admin_appointments_screen.dart';
+import 'package:smart_clinic_booking/features/admin/presentation/screens/admin_notification_broadcast_screen.dart';
+import 'package:smart_clinic_booking/features/admin/presentation/screens/admin_all_patients_screen.dart';
+import 'package:smart_clinic_booking/features/admin/presentation/screens/admin_review_moderation_screen.dart';
 import 'package:smart_clinic_booking/features/admission/presentation/screens/admission_registration_screen.dart';
 import 'package:smart_clinic_booking/features/admission/presentation/screens/admission_history_screen.dart';
 import 'package:smart_clinic_booking/features/notification/presentation/screens/notification_screen.dart';
@@ -77,6 +85,10 @@ import '../../features/doctor/doctor_pov/presentation/screens/doctor_dashboard_s
 import '../../features/doctor/doctor_pov/presentation/screens/doctor_schedule_list_screen.dart';
 import '../../features/doctor/doctor_pov/presentation/screens/doctor_schedule_settings_screen.dart';
 import '../../features/doctor/doctor_pov/presentation/screens/doctor_income_screen.dart';
+import '../../features/doctor/doctor_pov/presentation/screens/doctor_analytics_screen.dart';
+import '../../features/doctor/doctor_pov/presentation/screens/doctor_patient_record_screen.dart';
+import '../../features/doctor/doctor_pov/presentation/screens/doctor_soap_screen.dart';
+import '../../features/doctor/doctor_pov/presentation/screens/doctor_chat_screen.dart';
 import 'package:smart_clinic_booking/features/clinical/presentation/screens/patient_profile_screen.dart' as clinical;
 import 'package:smart_clinic_booking/features/clinical/presentation/screens/clinical_encounter_screen.dart';
 import 'package:smart_clinic_booking/features/clinical/presentation/screens/treatment_plan_screen.dart';
@@ -194,7 +206,7 @@ class AppRouter {
                                      path == '/forgot-password' ||
                                      path == '/reset-password';
 
-      if ((isPublicRoute || path == '/pending-approval') && !isRegistrationFlow && path != '/' && path != '/qr-login') {
+      if ((isPublicRoute || path == '/pending-approval') && !isRegistrationFlow && path != '/qr-login') {
          debugPrint('[ROUTER] Redirecting authenticated user away from public route to home/dashboard');
          if (role == 'doctor') return '/doctor/dashboard';
          if (role == 'admin' || role == 'super_admin' || role == 'hospital_manager') return '/admin/dashboard';
@@ -348,6 +360,34 @@ class AppRouter {
         builder: (context, state) => const DoctorIncomeScreen(),
       ),
       GoRoute(
+        path: '/doctor/analytics',
+        builder: (context, state) => const DoctorAnalyticsScreen(),
+      ),
+      GoRoute(
+        path: '/doctor/patient/:patientId',
+        builder: (context, state) => DoctorPatientRecordScreen(
+          patientId: state.pathParameters['patientId']!,
+          appointmentExtra: state.extra as Map<String, dynamic>?,
+        ),
+      ),
+      GoRoute(
+        path: '/doctor/soap/:patientId',
+        builder: (context, state) => DoctorSoapScreen(
+          patientId: state.pathParameters['patientId']!,
+        ),
+      ),
+      GoRoute(
+        path: '/doctor/chat/:patientId',
+        builder: (context, state) => DoctorChatScreen(
+          patientId: state.pathParameters['patientId']!,
+          patientName: (state.extra as Map<String, dynamic>?)?['patientName'] as String?,
+        ),
+      ),
+      GoRoute(
+        path: '/doctor/chat',
+        builder: (context, state) => const DoctorChatScreen(patientId: ''),
+      ),
+      GoRoute(
         path: '/patient/:patientId',
         builder: (context, state) => clinical.PatientProfileScreen(
           patientId: state.pathParameters['patientId']!,
@@ -372,6 +412,22 @@ class AppRouter {
       GoRoute(
         path: '/admin/kyc-approvals',
         builder: (context, state) => const KycApprovalScreen(),
+      ),
+      GoRoute(
+        path: '/admin/appointments',
+        builder: (context, state) => const AdminAppointmentsScreen(),
+      ),
+      GoRoute(
+        path: '/admin/broadcast',
+        builder: (context, state) => const AdminNotificationBroadcastScreen(),
+      ),
+      GoRoute(
+        path: '/admin/patients',
+        builder: (context, state) => const AdminAllPatientsScreen(),
+      ),
+      GoRoute(
+        path: '/admin/reviews',
+        builder: (context, state) => const AdminReviewModerationScreen(),
       ),
       GoRoute(
         path: '/ai/voice-assistant',
@@ -523,6 +579,23 @@ class AppRouter {
       GoRoute(
         path: '/medication',
         builder: (context, state) => const MedicationScreen(),
+      ),
+      // ── Tính năng mới ────────────────────────────────────────────────
+      GoRoute(
+        path: '/consultation',
+        builder: (context, state) => const OnlineConsultationScreen(),
+      ),
+      GoRoute(
+        path: '/lab-results',
+        builder: (context, state) => const LabResultsScreen(),
+      ),
+      GoRoute(
+        path: '/family',
+        builder: (context, state) => const FamilyProfileScreen(),
+      ),
+      GoRoute(
+        path: '/sos',
+        builder: (context, state) => const EmergencySosScreen(),
       ),
       GoRoute(
         path: '/insurance',
