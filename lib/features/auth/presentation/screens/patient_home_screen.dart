@@ -1613,10 +1613,56 @@ class _HospitalCard extends StatelessWidget {
   final HospitalEntity data;
   const _HospitalCard({required this.data});
 
+  // Pool ảnh bệnh viện CORS-safe (Unsplash) — dùng làm fallback khi ảnh gốc
+  // trống hoặc lỗi tải. Chọn theo id để mỗi bệnh viện có ảnh ổn định.
+  static const List<String> _fallbackImages = [
+    'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600&q=80',
+    'https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=600&q=80',
+    'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=600&q=80',
+    'https://images.unsplash.com/photo-1551076805-e1869033e561?w=600&q=80',
+    'https://images.unsplash.com/photo-1504439468489-c8920d796a29?w=600&q=80',
+    'https://images.unsplash.com/photo-1516549655169-df83a0774514?w=600&q=80',
+  ];
+
+  Widget _placeholder() => Container(
+        height: 120,
+        color: _P.surface,
+        child: const Center(
+          child: Icon(Icons.local_hospital_rounded, color: _P.primary, size: 32),
+        ),
+      );
+
+  /// Ảnh bệnh viện: thử ảnh gốc trước, lỗi thì rơi về ảnh Unsplash CORS-safe,
+  /// lỗi nốt mới hiện icon. Dùng Image.network (hiển thị tốt trên web như avatar
+  /// bác sĩ) thay cho CachedNetworkImage vốn hay lỗi ảnh cross-origin trên web.
+  Widget _hospitalImage() {
+    final fallback =
+        _fallbackImages[data.id.hashCode.abs() % _fallbackImages.length];
+    final primary =
+        (data.imageUrl?.isNotEmpty == true) ? data.imageUrl! : fallback;
+
+    Widget netImage(String url, {required Widget Function() onError}) {
+      return Image.network(
+        url,
+        height: 120,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        loadingBuilder: (_, child, progress) =>
+            progress == null ? child : _placeholder(),
+        errorBuilder: (_, __, ___) => onError(),
+      );
+    }
+
+    return netImage(
+      primary,
+      onError: () => primary == fallback
+          ? _placeholder()
+          : netImage(fallback, onError: _placeholder),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final defaultImage = 'https://images.unsplash.com/photo-1587350859728-117699f4a13d?auto=format&fit=crop&q=80&w=400';
-    
     return GestureDetector(
       onTap: () => context.push('/hospital/detail/${data.id}', extra: data),
       child: Container(
@@ -1639,26 +1685,7 @@ class _HospitalCard extends StatelessWidget {
             ClipRRect(
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(20)),
-              child: CachedNetworkImage(
-                imageUrl: data.imageUrl?.isNotEmpty == true ? data.imageUrl! : defaultImage,
-                height: 120,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                placeholder: (_, __) => Container(
-                  color: _P.surface,
-                  child: const Center(
-                    child: Icon(Icons.local_hospital_rounded,
-                        color: _P.primary, size: 32),
-                  ),
-                ),
-                errorWidget: (_, __, ___) => Container(
-                  color: _P.surface,
-                  child: const Center(
-                    child: Icon(Icons.local_hospital_rounded,
-                        color: _P.primary, size: 32),
-                  ),
-                ),
-              ),
+              child: _hospitalImage(),
             ),
             Padding(
               padding: const EdgeInsets.all(12),
