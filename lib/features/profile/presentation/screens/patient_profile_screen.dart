@@ -247,10 +247,11 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
       width: double.infinity,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [_cPrimaryDark, _cPrimary, _cPrimaryMid],
+          // Deep navy → blue for a more professional, premium look.
+          colors: [Color(0xFF0A2540), Color(0xFF103A6B), Color(0xFF1763AE)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          stops: [0.0, 0.55, 1.0],
+          stops: [0.0, 0.5, 1.0],
         ),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(32),
