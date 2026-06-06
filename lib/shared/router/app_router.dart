@@ -62,7 +62,6 @@ import 'package:smart_clinic_booking/shared/widgets/under_development_screen.dar
 
 import 'package:smart_clinic_booking/shared/screens/status_screens.dart';
 
-import '../../features/doctor/patient_pov/presentation/screens/doctor_home_screen.dart';
 import '../../features/doctor/patient_pov/domain/entities/doctor_entity.dart';
 import '../../features/doctor/patient_pov/presentation/screens/doctor_detail_screen.dart';
 import '../../features/doctor/patient_pov/presentation/screens/doctor_search_screen.dart';
@@ -73,6 +72,14 @@ import '../../features/doctor/doctor_pov/presentation/screens/doctor_schedule_ti
 import '../../features/doctor/patient_pov/presentation/screens/patient_find_doctor_screen.dart';
 import '../../features/doctor/patient_pov/presentation/screens/patient_doctor_profile_booking_screen.dart';
 import '../../features/booking/presentation/screens/booking_confirmation_screen.dart';
+import '../../features/doctor/doctor_pov/presentation/screens/doctor_workspace_screen.dart';
+import '../../features/doctor/doctor_pov/presentation/screens/doctor_dashboard_screen.dart';
+import '../../features/doctor/doctor_pov/presentation/screens/doctor_schedule_list_screen.dart';
+import '../../features/doctor/doctor_pov/presentation/screens/doctor_schedule_settings_screen.dart';
+import '../../features/doctor/doctor_pov/presentation/screens/doctor_income_screen.dart';
+import 'package:smart_clinic_booking/features/clinical/presentation/screens/patient_profile_screen.dart' as clinical;
+import 'package:smart_clinic_booking/features/clinical/presentation/screens/clinical_encounter_screen.dart';
+import 'package:smart_clinic_booking/features/clinical/presentation/screens/treatment_plan_screen.dart';
 
 /// Custom notifier to bridge FirebaseAuth streams into GoRouter's refresh Listenable.
 class GoRouterRefreshStream extends ChangeNotifier {
@@ -96,6 +103,14 @@ class AppRouter {
   
   /// Global notifier for mock login sessions (Debug only)
   static final ValueNotifier<bool> mockAuthNotifier = ValueNotifier(false);
+
+  // Cache role to avoid repeated network calls in every redirect
+  static String? _cachedRole;
+  static String? _cachedUid;
+  static void clearRoleCache() {
+    _cachedRole = null;
+    _cachedUid = null;
+  }
 
   static final GoRouter router = GoRouter(
     initialLocation: '/',
@@ -314,7 +329,41 @@ class AppRouter {
       ),
       GoRoute(
         path: '/doctor/dashboard',
-        builder: (context, state) => const DoctorHomeScreen(),
+        builder: (context, state) => const DoctorDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/doctor/profile',
+        builder: (context, state) => const DoctorWorkspaceScreen(),
+      ),
+      GoRoute(
+        path: '/doctor/schedule-list',
+        builder: (context, state) => const DoctorScheduleListScreen(),
+      ),
+      GoRoute(
+        path: '/doctor/schedule-settings',
+        builder: (context, state) => const DoctorScheduleSettingsScreen(),
+      ),
+      GoRoute(
+        path: '/doctor/income',
+        builder: (context, state) => const DoctorIncomeScreen(),
+      ),
+      GoRoute(
+        path: '/patient/:patientId',
+        builder: (context, state) => clinical.PatientProfileScreen(
+          patientId: state.pathParameters['patientId']!,
+        ),
+      ),
+      GoRoute(
+        path: '/encounter/:encounterId',
+        builder: (context, state) => ClinicalEncounterScreen(
+          encounterId: state.pathParameters['encounterId']!,
+        ),
+      ),
+      GoRoute(
+        path: '/encounter/:encounterId/plan',
+        builder: (context, state) => TreatmentPlanScreen(
+          encounterId: state.pathParameters['encounterId']!,
+        ),
       ),
       GoRoute(
         path: '/admin/dashboard',

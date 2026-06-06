@@ -8,6 +8,7 @@ import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/branded_app_bar.dart';
 import '../../../../core/widgets/auth_header.dart';
 import '../controllers/auth_controller.dart';
+import '../navigation/role_navigation.dart';
 
 class StaffLoginScreen extends StatefulWidget {
   const StaffLoginScreen({super.key});
@@ -45,11 +46,11 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
 
     if (!success) {
       _showError(authController.errorMessage ?? l10n.error_login_failed);
+    } else {
+      // Navigate dựa trên role thực tế từ Firestore profile
+      final role = authController.currentUser?.role ?? 'patient';
+      navigateByRole(context, role);
     }
-    // GoRouter's refreshListenable fires when Firebase auth state changes and
-    // redirects /staff-login → /doctor/dashboard or /admin/dashboard automatically.
-    // Calling navigateByRole() here would race with that redirect and cause
-    // the !_debugLocked NavigatorState assertion.
   }
 
   void _showError(String message) {

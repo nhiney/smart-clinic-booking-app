@@ -11,7 +11,7 @@ class FirestoreDoctorRepository implements DoctorRepository {
   Future<List<DoctorEntity>> getDoctors() async {
     final snapshot = await _firestore
         .collection('users')
-        .where('role', isEqualTo: 'doctor')
+        .where('role', whereIn: ['doctor', 'DOCTOR'])
         .get();
 
     return snapshot.docs.map((doc) {

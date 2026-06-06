@@ -51,8 +51,6 @@ import 'package:smart_clinic_booking/features/profile/domain/usecases/update_pat
 import 'package:smart_clinic_booking/features/profile/presentation/controllers/profile_controller.dart';
 import 'package:smart_clinic_booking/features/profile/presentation/controllers/patient_profile_controller.dart';
 
-// Maps
-
 // Notification
 import 'package:smart_clinic_booking/features/notification/domain/repositories/notification_repository.dart';
 import 'package:smart_clinic_booking/features/notification/presentation/controllers/notification_controller.dart';
@@ -128,8 +126,10 @@ Future<void> main() async {
     // Initialize Dynamic Configuration (Firestore)
     await getIt<AppConfigService>().initialize();
 
-    // Seed sample survey data if collection is empty
-    await SeedDataService().seedSurveys();
+    // Seed sample survey data if collection is empty (only when authenticated)
+    if (FirebaseAuth.instance.currentUser != null) {
+      await SeedDataService().seedSurveys();
+    }
   } catch (e) {
     debugPrint('Service initialization failed: $e');
     // We still try to run the app, but some features might be degraded
