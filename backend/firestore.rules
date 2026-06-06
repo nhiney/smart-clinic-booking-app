@@ -42,6 +42,32 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // L?ch h?n (Appointments)
+    match /appointments/{appointmentId} {
+      allow read: if isSignedIn() && (
+        request.auth.uid == resource.data.patientId || 
+        request.auth.uid == resource.data.doctorId || 
+        isDoctor() || 
+        isAdmin()
+      );
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        request.auth.uid == resource.data.patientId || 
+        request.auth.uid == resource.data.doctorId || 
+        isDoctor() || 
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Th?ng b?o (Notifications)
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && (request.auth.uid == resource.data.userId || isAdmin());
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (request.auth.uid == resource.data.userId || isAdmin());
+      allow delete: if isSignedIn() && (request.auth.uid == resource.data.userId || isAdmin());
+    }
+
     // Các quy tắc khác giữ nguyên...
     match /users/{userId} {
       allow read: if isSignedIn();
