@@ -47,6 +47,27 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
             child: ListView(
               padding: EdgeInsets.all(context.spacing.l),
               children: [
+                Container(
+                  margin: EdgeInsets.only(bottom: context.spacing.m),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline_rounded, size: 18, color: Colors.amber.shade800),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          "Chế độ minh hoạ (demo) — giao dịch được mô phỏng, không phát sinh phí thật.",
+                          style: context.textStyles.caption.copyWith(color: Colors.amber.shade900),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 Text("Chọn phương thức thanh toán",
                     style: context.textStyles.subtitle
                         .copyWith(fontWeight: FontWeight.bold)),
