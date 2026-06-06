@@ -73,11 +73,13 @@ class PatientProfileScreen extends ConsumerWidget {
                       VitalCard(
                         title: 'Huyết áp',
                         value: recentVitals.bloodPressureLabel,
+                        unit: recentVitals.bloodPressureUnit,
                         isAlert: recentVitals.isBloodPressureHigh,
                       ),
                       VitalCard(
                         title: 'Nhịp tim',
-                        value: '${recentVitals.heartRate} bpm',
+                        value: '${recentVitals.heartRate}',
+                        unit: 'bpm',
                         isAlert: recentVitals.isHeartRateHigh,
                       ),
                       VitalCard(

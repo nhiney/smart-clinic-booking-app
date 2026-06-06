@@ -15,7 +15,8 @@ class VitalSign extends Equatable {
     required this.measuredAt,
   });
 
-  String get bloodPressureLabel => '$systolic/$diastolic mmHg';
+  String get bloodPressureLabel => '$systolic/$diastolic';
+  String get bloodPressureUnit => 'mmHg';
 
   bool get isBloodPressureHigh => systolic >= 140 || diastolic >= 90;
   bool get isHeartRateHigh => heartRate >= 100;

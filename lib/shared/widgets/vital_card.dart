@@ -6,12 +6,14 @@ import '../../core/widgets/app_card.dart';
 class VitalCard extends StatelessWidget {
   final String title;
   final String value;
+  final String? unit;
   final bool isAlert;
 
   const VitalCard({
     super.key,
     required this.title,
     required this.value,
+    this.unit,
     this.isAlert = false,
   });
 
@@ -45,14 +47,26 @@ class VitalCard extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             value,
             style: context.textStyles.heading3.copyWith(
               color: color,
               fontWeight: FontWeight.w800,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
+          if (unit != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              unit!,
+              style: context.textStyles.caption.copyWith(
+                color: color.withValues(alpha: 0.7),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ],
       ),
     );
