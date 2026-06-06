@@ -224,9 +224,24 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
   }
 
   // ── Hero banner ──────────────────────────────────────────────────────────────
+  double _completeness() {
+    final checks = <bool>[
+      _nameController.text.trim().isNotEmpty,
+      _selectedDob != null,
+      _selectedGender != null,
+      _addressController.text.trim().isNotEmpty,
+      _selectedBloodType != null,
+      _allergiesController.text.trim().isNotEmpty,
+      _historyController.text.trim().isNotEmpty,
+      _emailController.text.trim().isNotEmpty,
+    ];
+    return checks.where((c) => c).length / checks.length;
+  }
+
   Widget _buildHero() {
     final phone = context.read<AuthController>().currentUser?.phone ?? '';
     final name  = _nameController.text.isNotEmpty ? _nameController.text : 'Người dùng';
+    final pct = (_completeness() * 100).round();
 
     return Container(
       width: double.infinity,
@@ -242,82 +257,205 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
           bottomRight: Radius.circular(32),
         ),
       ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 36),
-          child: Column(
-            children: [
-              // Avatar
-              Stack(
-                alignment: Alignment.bottomRight,
+      child: Stack(
+        children: [
+          // Decorative background circles for depth.
+          Positioned(
+            top: -40,
+            right: -30,
+            child: _decoCircle(140, Colors.white.withValues(alpha: 0.08)),
+          ),
+          Positioned(
+            bottom: 10,
+            left: -40,
+            child: _decoCircle(120, Colors.white.withValues(alpha: 0.06)),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 28),
+              child: Column(
                 children: [
-                  Container(
-                    width: 96,
-                    height: 96,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 3),
-                      boxShadow: [
-                        BoxShadow(
-                          color: _cPrimaryDark.withValues(alpha: 0.35),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
+                  // Avatar
+                  Stack(
+                    alignment: Alignment.bottomRight,
+                    children: [
+                      Container(
+                        width: 96,
+                        height: 96,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 3),
+                          boxShadow: [
+                            BoxShadow(
+                              color: _cPrimaryDark.withValues(alpha: 0.35),
+                              blurRadius: 20,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: ClipOval(
-                      child: _avatarPath != null
-                          ? Image.file(File(_avatarPath!), fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => _defaultAvatar())
-                          : _defaultAvatar(),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: _pickAvatar,
-                    child: Container(
-                      padding: const EdgeInsets.all(7),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.12),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2)),
-                        ],
+                        child: ClipOval(
+                          child: _avatarPath != null
+                              ? Image.file(File(_avatarPath!), fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => _defaultAvatar())
+                              : _defaultAvatar(),
+                        ),
                       ),
-                      child: const Icon(Icons.camera_alt_rounded, size: 15, color: _cPrimary),
-                    ),
+                      GestureDetector(
+                        onTap: _pickAvatar,
+                        child: Container(
+                          padding: const EdgeInsets.all(7),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.12),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2)),
+                            ],
+                          ),
+                          child: const Icon(Icons.camera_alt_rounded, size: 15, color: _cPrimary),
+                        ),
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          name,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.4,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      const Icon(Icons.verified_rounded, color: Color(0xFF7FD1FF), size: 20),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text('Thành viên ICare',
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 12.5)),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      if (phone.isNotEmpty)
+                        _HeroPill(icon: Icons.phone_iphone_rounded, label: phone),
+                      if (_selectedBloodType != null)
+                        _HeroPill(
+                          icon: Icons.bloodtype_rounded,
+                          label: _selectedBloodType!,
+                          accent: const Color(0xFFFFABAB),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  _buildCompletenessBar(pct),
+                  const SizedBox(height: 16),
+                  _buildHeroActions(),
                 ],
               ),
-              const SizedBox(height: 16),
-              Text(
-                name,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.4,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: [
-                  if (phone.isNotEmpty)
-                    _HeroPill(icon: Icons.phone_iphone_rounded, label: phone),
-                  if (_selectedBloodType != null)
-                    _HeroPill(
-                      icon: Icons.bloodtype_rounded,
-                      label: _selectedBloodType!,
-                      accent: const Color(0xFFFFABAB),
-                    ),
-                ],
-              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _decoCircle(double size, Color color) =>
+      Container(width: size, height: size, decoration: BoxDecoration(color: color, shape: BoxShape.circle));
+
+  Widget _buildCompletenessBar(int pct) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.shield_moon_rounded, color: Colors.white, size: 16),
+              const SizedBox(width: 6),
+              const Text('Mức độ hoàn thiện hồ sơ',
+                  style: TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w600)),
+              const Spacer(),
+              Text('$pct%',
+                  style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800)),
             ],
           ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: pct / 100,
+              minHeight: 7,
+              backgroundColor: Colors.white.withValues(alpha: 0.25),
+              valueColor: const AlwaysStoppedAnimation(Colors.white),
+            ),
+          ),
+          if (pct < 100) ...[
+            const SizedBox(height: 6),
+            Text('Hoàn thiện hồ sơ để được phục vụ tốt hơn.',
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 11)),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroActions() {
+    return Row(
+      children: [
+        Expanded(
+          child: _heroActionButton(
+            icon: Icons.qr_code_2_rounded,
+            label: 'Mã QR của tôi',
+            onTap: () => context.push('/account-qr'),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _heroActionButton(
+            icon: Icons.folder_shared_rounded,
+            label: 'Hồ sơ bệnh án',
+            onTap: () => context.push('/medical-records'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _heroActionButton({required IconData icon, required String label, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 11),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 18, color: _cPrimary),
+            const SizedBox(width: 7),
+            Text(label,
+                style: const TextStyle(color: _cPrimary, fontSize: 13, fontWeight: FontWeight.w700)),
+          ],
         ),
       ),
     );
