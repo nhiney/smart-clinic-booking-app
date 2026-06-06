@@ -30,15 +30,21 @@ class DoctorWorkspaceScreen extends StatelessWidget {
   SliverAppBar _buildAppBar(BuildContext context, DoctorEntity? doc) {
     final initials = (doc?.name ?? 'BS').split(' ').where((p) => p.isNotEmpty).take(2).map((p) => p[0]).join().toUpperCase();
     return SliverAppBar(
-      expandedHeight: 220,
+      expandedHeight: 264,
       pinned: true,
       elevation: 0,
       backgroundColor: const Color(0xFF1D4ED8),
       leading: const BackButton(color: Colors.white),
       actions: [
         IconButton(
+          tooltip: 'Thông báo',
+          icon: const Icon(Icons.notifications_rounded, color: Colors.white),
+          onPressed: () => context.push('/notifications'),
+        ),
+        IconButton(
+          tooltip: 'Cài đặt',
           icon: const Icon(Icons.settings_rounded, color: Colors.white),
-          onPressed: () {},
+          onPressed: () => context.push('/notifications/settings'),
         ),
       ],
       flexibleSpace: FlexibleSpaceBar(
@@ -53,9 +59,10 @@ class DoctorWorkspaceScreen extends StatelessWidget {
           ),
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 40, 20, 20),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 14),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Stack(
                     clipBehavior: Clip.none,
@@ -91,9 +98,16 @@ class DoctorWorkspaceScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _BadgePill(icon: Icons.star_rounded, label: '${doc?.rating.toStringAsFixed(1) ?? "4.9"}', color: const Color(0xFFFBBF24)),
+                      _BadgePill(icon: Icons.star_rounded, label: doc?.rating.toStringAsFixed(1) ?? '4.9', color: const Color(0xFFFBBF24)),
                       const SizedBox(width: 8),
-                      _BadgePill(icon: Icons.local_hospital_rounded, label: doc?.hospital ?? 'BV Bạch Mai', color: Colors.white.withValues(alpha: 0.7)),
+                      Flexible(
+                        child: _BadgePill(
+                            icon: Icons.local_hospital_rounded,
+                            label: (doc?.hospital.isNotEmpty ?? false)
+                                ? doc!.hospital
+                                : 'BV Bạch Mai',
+                            color: Colors.white.withValues(alpha: 0.7)),
+                      ),
                     ],
                   ),
                 ],
@@ -260,7 +274,13 @@ class _BadgePill extends StatelessWidget {
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(icon, size: 13, color: color),
         const SizedBox(width: 4),
-        Text(label, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
+        Flexible(
+          child: Text(label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                  color: color, fontSize: 12, fontWeight: FontWeight.w600)),
+        ),
       ]),
     );
   }
