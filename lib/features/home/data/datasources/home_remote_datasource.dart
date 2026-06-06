@@ -107,9 +107,90 @@ class HomeRemoteDatasourceImpl implements HomeRemoteDatasource {
 
   @override
   Future<List<HealthArticle>> getHealthNews({int limit = 5}) async {
+    // 1) VnExpress Sức khỏe RSS — embeds real article thumbnails, so images load
+    //    reliably and it is one of the most up-to-date Vietnamese health sources.
     try {
-      final url = 'https://news.google.com/rss/search?q=${Uri.encodeComponent("y tế sức khỏe việt nam")}&hl=vi&gl=VN&ceid=VN:vi';
-      final response = await DioClient.dio.get(url);
+      final vn = await _fetchVnExpressHealth(limit);
+      if (vn.isNotEmpty) return vn;
+    } catch (e) {
+      debugPrint('VnExpress news failed, falling back to Google News: $e');
+    }
+
+    // 2) Google News RSS fallback (aggregated, but images often need scraping).
+    try {
+      final google = await _fetchGoogleNews(limit: limit);
+      if (google.isNotEmpty) return google;
+    } catch (e) {
+      debugPrint('Google News failed: $e');
+    }
+
+    // 3) Firestore / mock fallback.
+    if (getIt<AppConfigService>().config.useMockData) {
+      return HealthArticleModel.mockList();
+    }
+    final snapshot = await _firestore
+        .collection(getIt<AppConfigService>().config.newsCollection)
+        .orderBy('publishedAt', descending: true)
+        .limit(limit)
+        .get();
+    return snapshot.docs
+        .map((doc) => HealthArticleModel.fromJson(doc.data(), doc.id))
+        .toList();
+  }
+
+  /// Latest health articles from VnExpress with real thumbnail images.
+  Future<List<HealthArticle>> _fetchVnExpressHealth(int limit) async {
+    const url = 'https://vnexpress.net/rss/suc-khoe.rss';
+    final response = await DioClient.dio.get(url);
+    final document = XmlDocument.parse(response.data.toString());
+    final items = document.findAllElements('item');
+
+    final articles = items.take(limit).map((node) {
+      final title = node.findElements('title').first.innerText.trim();
+      final link = node.findElements('link').first.innerText.trim();
+      final pubDateStr =
+          node.findElements('pubDate').isNotEmpty ? node.findElements('pubDate').first.innerText : '';
+      final description =
+          node.findElements('description').isNotEmpty ? node.findElements('description').first.innerText : '';
+
+      String? imageUrl;
+      final imgMatch = RegExp(r'<img[^>]+src="([^"]+)"').firstMatch(description);
+      if (imgMatch != null) imageUrl = imgMatch.group(1);
+
+      DateTime publishedAt;
+      try {
+        publishedAt = DateFormat("EEE, dd MMM yyyy HH:mm:ss Z", "en_US").parse(pubDateStr);
+      } catch (_) {
+        publishedAt = DateTime.now();
+      }
+
+      return HealthArticle(
+        id: link.hashCode.toString(),
+        title: title,
+        summary: description.replaceAll(RegExp(r'<[^>]*>|&nbsp;'), ' ').trim(),
+        imageUrl: imageUrl,
+        source: 'VnExpress Sức khỏe',
+        publishedAt: publishedAt,
+        articleUrl: link,
+      );
+    }).where((a) => a.imageUrl != null && a.imageUrl!.startsWith('http')).toList();
+
+    return articles;
+  }
+
+  /// Curated health images used when an article has no usable thumbnail
+  /// (never shows the generic Google News logo).
+  static const List<String> _healthPlaceholders = [
+    'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=600&q=80',
+    'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&q=80',
+    'https://images.unsplash.com/photo-1530026405186-ed1f139313f8?w=600&q=80',
+    'https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=600&q=80',
+    'https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=600&q=80',
+  ];
+
+  Future<List<HealthArticle>> _fetchGoogleNews({int limit = 5}) async {
+    final url = 'https://news.google.com/rss/search?q=${Uri.encodeComponent("y tế sức khỏe việt nam")}&hl=vi&gl=VN&ceid=VN:vi';
+    final response = await DioClient.dio.get(url);
       final document = XmlDocument.parse(response.data.toString());
       final items = document.findAllElements('item');
 
@@ -148,42 +229,23 @@ class HomeRemoteDatasourceImpl implements HomeRemoteDatasource {
         );
       }).toList();
 
-      // Enhance with images from source pages
-      return await Future.wait(initialArticles.map((article) async {
-        if (article.articleUrl != null && (article.imageUrl == null || article.imageUrl!.contains('lh3.googleusercontent.com'))) {
-          final scrapedImage = await _fetchImageFromUrl(article.articleUrl!);
-          if (scrapedImage != null) {
-            return HealthArticle(
-              id: article.id,
-              title: article.title,
-              summary: article.summary,
-              imageUrl: scrapedImage,
-              source: article.source,
-              publishedAt: article.publishedAt,
-              articleUrl: article.articleUrl,
-            );
-          }
-        }
-        return article;
-      }));
-    } catch (e) {
-      if (getIt<AppConfigService>().config.useMockData) {
-        return HealthArticleModel.mockList();
+    // Enhance with the real article image; fall back to a curated health image
+    // so a card never shows the generic Google News logo.
+    final enhanced = await Future.wait(initialArticles.asMap().entries.map((entry) async {
+      final i = entry.key;
+      final article = entry.value;
+      var img = article.imageUrl;
+      final needsImage =
+          img == null || img.contains('googleusercontent.com') || img.contains('news.google');
+      if (needsImage && article.articleUrl != null) {
+        img = await _fetchImageFromUrl(article.articleUrl!);
       }
-      // Fallback to Firestore
-      try {
-        final snapshot = await _firestore
-            .collection(getIt<AppConfigService>().config.newsCollection)
-            .orderBy('publishedAt', descending: true)
-            .limit(limit)
-            .get();
-        return snapshot.docs
-            .map((doc) => HealthArticleModel.fromJson(doc.data(), doc.id))
-            .toList();
-      } catch (_) {
-        throw ServerException(message: 'Failed to load health news: $e');
+      if (img == null || img.contains('google')) {
+        img = _healthPlaceholders[i % _healthPlaceholders.length];
       }
-    }
+      return article.copyWith(imageUrl: img);
+    }));
+    return enhanced;
   }
 
   Future<String?> _fetchImageFromUrl(String url) async {

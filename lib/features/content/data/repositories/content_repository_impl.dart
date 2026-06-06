@@ -32,9 +32,15 @@ class ContentRepositoryImpl implements ContentRepository {
     String? category
   }) async {
     try {
-      // Fetch from Google News RSS
-      final articles = await _fetchFromGoogleNews(category: category);
-      
+      // 1) VnExpress Sức khỏe RSS first — its feed embeds real article
+      //    thumbnails, so images load reliably and stay up to date.
+      var articles = await _fetchFromVnExpress(category: category);
+
+      // 2) Fall back to Google News RSS aggregation if VnExpress returns nothing.
+      if (articles.isEmpty) {
+        articles = await _fetchFromGoogleNews(category: category);
+      }
+
       // Limit and offset (RSS usually returns ~30 items, we just take a slice)
       final slicedArticles = articles.skip(offset).take(limit).toList();
 
@@ -76,6 +82,62 @@ class ContentRepositoryImpl implements ContentRepository {
       return Right(articles);
     } catch (e) {
       return Left(ServerFailure(message: 'Không thể tải tin tức: $e'));
+    }
+  }
+
+  /// Curated health images used when an article has no usable thumbnail,
+  /// so a card never falls back to the generic Google News logo.
+  static const List<String> _healthPlaceholders = [
+    'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=600&q=80',
+    'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&q=80',
+    'https://images.unsplash.com/photo-1530026405186-ed1f139313f8?w=600&q=80',
+    'https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=600&q=80',
+    'https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=600&q=80',
+  ];
+
+  /// Latest Vietnamese health articles from VnExpress, with real thumbnails
+  /// taken directly from the RSS feed (no per-article scraping needed).
+  Future<List<HealthArticle>> _fetchFromVnExpress({String? category}) async {
+    const url = 'https://vnexpress.net/rss/suc-khoe.rss';
+    try {
+      final response = await DioClient.dio.get(url);
+      final document = XmlDocument.parse(response.data.toString());
+      final items = document.findAllElements('item');
+
+      return items.map((node) {
+        final title = node.findElements('title').first.innerText.trim();
+        final link = node.findElements('link').first.innerText.trim();
+        final pubDateStr =
+            node.findElements('pubDate').isNotEmpty ? node.findElements('pubDate').first.innerText : '';
+        final description =
+            node.findElements('description').isNotEmpty ? node.findElements('description').first.innerText : '';
+
+        String? imageUrl;
+        final imgMatch = RegExp(r'<img[^>]+src="([^"]+)"').firstMatch(description);
+        if (imgMatch != null) {
+          imageUrl = imgMatch.group(1);
+          if (imageUrl!.startsWith('//')) imageUrl = 'https:$imageUrl';
+        }
+
+        DateTime publishedAt;
+        try {
+          publishedAt = _parseRFC822Date(pubDateStr);
+        } catch (_) {
+          publishedAt = DateTime.now();
+        }
+
+        return HealthArticle(
+          id: link.hashCode.toString(),
+          title: title,
+          summary: _stripHtml(description),
+          imageUrl: imageUrl,
+          source: 'VnExpress Sức khỏe',
+          publishedAt: publishedAt,
+          articleUrl: link,
+        );
+      }).where((a) => a.imageUrl != null && a.imageUrl!.startsWith('http')).toList();
+    } catch (_) {
+      return [];
     }
   }
 
@@ -143,18 +205,21 @@ class ContentRepositoryImpl implements ContentRepository {
           final index = entry.key;
           final article = entry.value;
           
-          // Only scrape images for top 8 articles or if image is missing/low quality
-          bool needsImage = article.imageUrl == null || 
-                           article.imageUrl!.isEmpty || 
-                           article.imageUrl!.contains('lh3.googleusercontent.com');
-          
+          // Only scrape images for top articles or if image is missing/low quality
+          bool needsImage = article.imageUrl == null ||
+                           article.imageUrl!.isEmpty ||
+                           article.imageUrl!.contains('googleusercontent.com') ||
+                           article.imageUrl!.contains('news.google');
+
+          String? img = article.imageUrl;
           if (index < 10 && needsImage && article.articleUrl != null) {
-            final scrapedImage = await _fetchImageFromUrl(article.articleUrl!);
-            if (scrapedImage != null) {
-              return article.copyWith(imageUrl: scrapedImage);
-            }
+            img = await _fetchImageFromUrl(article.articleUrl!);
           }
-          return article;
+          // Never show the Google News logo — use a curated health image instead.
+          if (img == null || img.isEmpty || img.contains('google')) {
+            img = _healthPlaceholders[index % _healthPlaceholders.length];
+          }
+          return article.copyWith(imageUrl: img);
         })
       );
 
