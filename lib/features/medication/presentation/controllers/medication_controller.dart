@@ -47,13 +47,17 @@ class MedicationController extends ChangeNotifier {
       final created = await repository.addMedication(medication);
       medications.add(created);
 
-      // Schedule local reminder
+      // Đặt nhắc nhở cục bộ — không để lỗi thông báo chặn việc thêm thuốc.
       if (created.isActive) {
-        await MedicationNotificationService.scheduleMedicationReminder(created);
+        try {
+          await MedicationNotificationService.scheduleMedicationReminder(created);
+        } catch (_) {
+          // bỏ qua: thuốc vẫn được thêm, chỉ là chưa đặt được nhắc nhở.
+        }
       }
       return true;
     } catch (e) {
-      errorMessage = 'Failed to add medication';
+      errorMessage = 'Không thể thêm thuốc: $e';
       return false;
     } finally {
       isLoading = false;

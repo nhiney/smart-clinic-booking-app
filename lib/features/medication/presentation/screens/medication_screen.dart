@@ -76,12 +76,26 @@ class _MedicationScreenState extends State<MedicationScreen> {
                   height: 52,
                   child: ElevatedButton.icon(
                     onPressed: () async {
-                      if (nameController.text.trim().isEmpty) return;
+                      final messenger = ScaffoldMessenger.of(context);
+                      if (nameController.text.trim().isEmpty) {
+                        messenger.showSnackBar(const SnackBar(
+                          content: Text('Vui lòng nhập tên thuốc'),
+                          backgroundColor: Colors.orange,
+                        ));
+                        return;
+                      }
                       final auth = context.read<AuthController>();
                       final medController = context.read<MedicationController>();
+                      if (auth.currentUser == null) {
+                        messenger.showSnackBar(const SnackBar(
+                          content: Text('Vui lòng đăng nhập để thêm thuốc'),
+                          backgroundColor: Colors.red,
+                        ));
+                        return;
+                      }
                       final medication = MedicationModel(
                         id: '',
-                        patientId: auth.currentUser?.id ?? '',
+                        patientId: auth.currentUser!.id,
                         name: nameController.text.trim(),
                         dosage: dosageController.text.trim(),
                         frequency: selectedFrequency,
@@ -89,8 +103,15 @@ class _MedicationScreenState extends State<MedicationScreen> {
                         startDate: DateTime.now(),
                         notes: notesController.text.trim(),
                       );
-                      await medController.addMedication(medication);
-                      if (mounted) Navigator.pop(context);
+                      final ok = await medController.addMedication(medication);
+                      if (!mounted) return;
+                      Navigator.pop(context);
+                      messenger.showSnackBar(SnackBar(
+                        content: Text(ok
+                            ? 'Đã thêm ${medication.name}'
+                            : (medController.errorMessage ?? 'Thêm thuốc thất bại')),
+                        backgroundColor: ok ? Colors.green : Colors.red,
+                      ));
                     },
                     icon: const Icon(Icons.add),
                     label: const Text('Thêm thuốc'),
