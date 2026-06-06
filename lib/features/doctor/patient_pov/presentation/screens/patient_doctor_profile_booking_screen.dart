@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../../core/theme/icare_tokens.dart';
+import '../../data/datasources/doctor_remote_datasource.dart';
+import '../../../../appointment/data/datasources/appointment_remote_datasource.dart';
+import '../../../../appointment/data/models/appointment_model.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Patient Doctor Profile + Full Booking Flow
 // ═══════════════════════════════════════════════════════════════════════════
 
 class PatientDoctorProfileBookingScreen extends StatefulWidget {
-  const PatientDoctorProfileBookingScreen({super.key});
+  final String? doctorId;
+  const PatientDoctorProfileBookingScreen({super.key, this.doctorId});
 
   @override
   State<PatientDoctorProfileBookingScreen> createState() =>
@@ -53,14 +58,56 @@ class _PatientDoctorProfileBookingScreenState
     ),
   ];
 
-  static const _dates = [
-    ('T3', 21, _Dot.many),
-    ('T4', 22, _Dot.few),
-    ('T5', 23, _Dot.many),
-    ('T6', 24, _Dot.few),
-    ('T7', 25, _Dot.none),
-    ('CN', 26, _Dot.off),
-  ];
+  // Ngày khám động: hôm nay + 5 ngày tới. (label, ngày, tháng, dot)
+  final List<(String, int, int, _Dot)> _dates = [];
+
+  // Thông tin bác sĩ — mặc định là demo, ghi đè bằng dữ liệu thật nếu có doctorId.
+  String _docName = 'BS. Trần Minh Quân';
+  String _docSpecialty = 'TIM MẠCH · CHUYÊN KHOA II';
+  String _docHospital = 'BV Bạch Mai · 15 năm kinh nghiệm';
+  String _docSpecialtyRaw = 'Tim mạch';
+
+  final _doctorDs = DoctorRemoteDatasource();
+  final _apptDs = AppointmentRemoteDatasource();
+  bool _booking = false;
+
+  static const _weekdayLabels = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+
+  void _generateDates() {
+    final now = DateTime.now();
+    for (var i = 0; i < 6; i++) {
+      final d = DateTime(now.year, now.month, now.day + i);
+      final isSunday = d.weekday == DateTime.sunday;
+      _dates.add((
+        _weekdayLabels[d.weekday - 1],
+        d.day,
+        d.month,
+        isSunday ? _Dot.off : (i.isEven ? _Dot.many : _Dot.few),
+      ));
+    }
+    // Chọn ngày khả dụng đầu tiên.
+    _selectedDateIndex =
+        _dates.indexWhere((e) => e.$4 != _Dot.off).clamp(0, _dates.length - 1);
+  }
+
+  Future<void> _loadDoctor() async {
+    final id = widget.doctorId;
+    if (id == null || id.isEmpty) return;
+    try {
+      final doc = await _doctorDs.getDoctorById(id);
+      if (doc != null && mounted) {
+        setState(() {
+          _docName = doc.name.isNotEmpty ? doc.name : _docName;
+          _docSpecialtyRaw = doc.specialty.isNotEmpty ? doc.specialty : _docSpecialtyRaw;
+          _docSpecialty = doc.specialty.toUpperCase();
+          final exp = doc.experience > 0 ? ' · ${doc.experience} năm kinh nghiệm' : '';
+          _docHospital = '${doc.hospital.isNotEmpty ? doc.hospital : 'Phòng khám ICare'}$exp';
+        });
+      }
+    } catch (_) {
+      // giữ thông tin mặc định nếu lỗi.
+    }
+  }
 
   static const _morningSlots = [
     ('08:00', false), ('08:30', false), ('09:00', false), ('09:30', true),
@@ -76,6 +123,8 @@ class _PatientDoctorProfileBookingScreenState
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _generateDates();
+    _loadDoctor();
   }
 
   @override
@@ -160,13 +209,13 @@ class _PatientDoctorProfileBookingScreenState
             const SizedBox(height: 14),
 
             // Meta
-            Text('TIM MẠCH · CHUYÊN KHOA II',
+            Text(_docSpecialty,
                 style: IText.label(size: 11, color: IColors.primary700)),
             const SizedBox(height: 6),
-            Text('BS. Trần Minh Quân',
+            Text(_docName,
                 style: IText.display(size: 22, color: IColors.ink)),
             const SizedBox(height: 4),
-            Text('BV Bạch Mai · 15 năm kinh nghiệm',
+            Text(_docHospital,
                 style: IText.body(size: 13, color: IColors.ink3)),
             const SizedBox(height: 12),
 
@@ -453,7 +502,7 @@ class _PatientDoctorProfileBookingScreenState
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (_, i) {
           final d = _dates[i];
-          final isOff = d.$3 == _Dot.off;
+          final isOff = d.$4 == _Dot.off;
           final sel = _selectedDateIndex == i && !isOff;
 
           return GestureDetector(
@@ -490,7 +539,7 @@ class _PatientDoctorProfileBookingScreenState
                           ? Colors.white.withValues(alpha: 0.5)
                           : isOff
                               ? IColors.ink200
-                              : _dotColor(d.$3),
+                              : _dotColor(d.$4),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -1057,6 +1106,81 @@ class _PatientDoctorProfileBookingScreenState
     ]),
   );
 
+  // ─── Đặt khám: lưu lịch hẹn thật ─────────────────────────────────────────────
+  Future<void> _confirmBooking() async {
+    HapticFeedback.mediumImpact();
+    if (_selectedTime == null) return;
+
+    final d = _dates[_selectedDateIndex];
+    final parts = _selectedTime!.split(':');
+    final now = DateTime.now();
+    final dt = DateTime(now.year, d.$3, d.$2,
+        int.parse(parts[0]), int.parse(parts[1]));
+
+    // Chế độ demo (mở trực tiếp, không có doctorId): chỉ điều hướng xác nhận.
+    final docId = widget.doctorId;
+    if (docId == null || docId.isEmpty) {
+      context.push('/booking/confirmation');
+      return;
+    }
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Vui lòng đăng nhập để đặt khám'),
+        backgroundColor: Colors.red,
+      ));
+      return;
+    }
+
+    setState(() => _booking = true);
+    try {
+      await _apptDs.createAppointment(AppointmentModel(
+        id: '',
+        patientId: user.uid,
+        patientName: user.displayName ?? '',
+        doctorId: docId,
+        doctorName: _docName,
+        specialty: _docSpecialtyRaw,
+        dateTime: dt,
+        notes: _notesCtrl.text.trim(),
+      ));
+      if (!mounted) return;
+      setState(() => _booking = false);
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          icon: const Icon(Icons.check_circle_rounded,
+              color: IColors.success, size: 48),
+          title: const Text('Đặt khám thành công',
+              style: TextStyle(fontWeight: FontWeight.w800)),
+          content: Text(
+              '$_docName\n${d.$1}, ${d.$2}/${d.$3.toString().padLeft(2, '0')} · $_selectedTime',
+              textAlign: TextAlign.center),
+          actions: [
+            Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  context.push('/booking/confirmation');
+                },
+                child: const Text('Xem lịch hẹn'),
+              ),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _booking = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Đặt khám thất bại: $e'),
+        backgroundColor: Colors.red,
+      ));
+    }
+  }
+
   // ─── Sticky Bottom CTA ───────────────────────────────────────────────────────
   Widget _buildStickyBottom() {
     final s = _services[_selectedService];
@@ -1085,7 +1209,7 @@ class _PatientDoctorProfileBookingScreenState
               children: [
                 Text(
                   canBook
-                      ? '${d.$1}, ${d.$2}/05 · $_selectedTime · ${s.title}'
+                      ? '${d.$1}, ${d.$2}/${d.$3.toString().padLeft(2, '0')} · $_selectedTime · ${s.title}'
                       : 'Chọn ngày & giờ để đặt khám',
                   style: IText.label(size: 11, color: Colors.white.withValues(alpha: 0.8)),
                   maxLines: 1, overflow: TextOverflow.ellipsis,
@@ -1112,10 +1236,7 @@ class _PatientDoctorProfileBookingScreenState
             )),
             const SizedBox(width: 14),
             GestureDetector(
-              onTap: canBook ? () {
-                HapticFeedback.mediumImpact();
-                context.push('/booking/confirmation');
-              } : null,
+              onTap: (canBook && !_booking) ? _confirmBooking : null,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 width: 56, height: 56,
