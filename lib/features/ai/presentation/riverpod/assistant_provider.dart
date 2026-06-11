@@ -25,6 +25,7 @@ class AssistantNotifier extends StateNotifier<AssistantState> {
   final AiService _aiService;
 
   ParsedIntent? _lastIntent;
+  bool _processingLock = false;
 
   AssistantNotifier({
     required VoiceService voiceService,
@@ -38,7 +39,16 @@ class AssistantNotifier extends StateNotifier<AssistantState> {
   VoiceService get voiceService => _voiceService;
 
   Future<void> startListening() async {
-    state = state.copyWith(status: AssistantStatus.listening, currentText: '', responseText: '');
+    if (state.status == AssistantStatus.processing || state.status == AssistantStatus.speaking) {
+      return;
+    }
+    _processingLock = false;
+    state = state.copyWith(
+      status: AssistantStatus.listening,
+      currentText: '',
+      responseText: '',
+      clearPendingBooking: true,
+    );
 
     await _voiceService.startListening(
       onResult: (text) {
@@ -46,7 +56,7 @@ class AssistantNotifier extends StateNotifier<AssistantState> {
       },
       onListeningChange: (isListening) {
         if (!isListening && state.status == AssistantStatus.listening) {
-          processVoiceInput();
+          _triggerProcess();
         }
       },
       onError: (error) {
@@ -57,9 +67,17 @@ class AssistantNotifier extends StateNotifier<AssistantState> {
 
   Future<void> stopListening() async {
     await _voiceService.stopListening();
+    // finalResult callback may have already triggered _triggerProcess().
+    // Only call here if state is still listening (callback didn't fire yet).
     if (state.status == AssistantStatus.listening) {
-      processVoiceInput();
+      _triggerProcess();
     }
+  }
+
+  void _triggerProcess() {
+    if (_processingLock) return;
+    _processingLock = true;
+    processVoiceInput();
   }
 
   Future<void> processVoiceInput() async {
@@ -77,12 +95,15 @@ class AssistantNotifier extends StateNotifier<AssistantState> {
     debugPrint('AI Intent: ${intent.type}, Entities: ${intent.entities}');
 
     String response = '';
+    BookingIntentData? pendingBooking;
 
     try {
       if (intent.type != IntentType.unknown) {
         switch (intent.type) {
           case IntentType.booking:
-            response = await _handleBooking(intent);
+            final result = await _handleBooking(intent);
+            response = result.$1;
+            pendingBooking = result.$2;
             break;
           case IntentType.cancel:
             response = await _handleCancel(intent);
@@ -126,23 +147,38 @@ class AssistantNotifier extends StateNotifier<AssistantState> {
       status: AssistantStatus.speaking,
       responseText: response,
       history: newHistory.length > 10 ? newHistory.sublist(newHistory.length - 10) : newHistory,
+      pendingBooking: pendingBooking,
     );
 
     await _voiceService.speak(response);
+    _processingLock = false;
     state = state.copyWith(status: AssistantStatus.idle);
   }
 
-  Future<String> _handleBooking(ParsedIntent intent) async {
+  /// Returns (voiceResponse, bookingData). bookingData is null when info is incomplete.
+  Future<(String, BookingIntentData?)> _handleBooking(ParsedIntent intent) async {
     final specialty = intent.entities['specialty'];
     final date = intent.entities['date'] ?? 'ngày mai';
+    final timeSlot = intent.entities['time_slot'];
+
     if (specialty == null) {
-      return 'Bạn muốn đặt lịch khám chuyên khoa nào ạ? Ví dụ như nhi khoa hay nội khoa?';
+      return ('Bạn muốn đặt lịch khám chuyên khoa nào ạ? Ví dụ như nhi khoa hay nội khoa?', null);
     }
-    return 'Đã hiểu. Tôi đang tiến hành đăng ký lịch khám $specialty cho bạn vào $date. Bạn chờ một chút nhé.';
+
+    final timeText = timeSlot != null ? ' $timeSlot' : '';
+    final bookingData = BookingIntentData(specialty: specialty, date: date, timeSlot: timeSlot);
+    return (
+      'Được rồi! Tôi nhận yêu cầu đặt lịch khám $specialty vào $date$timeText. Hãy xác nhận thông tin để hoàn tất nhé.',
+      bookingData,
+    );
   }
 
   Future<String> _handleCancel(ParsedIntent intent) async {
-    return 'Đã nhận yêu cầu. Tôi đã hủy lịch khám gần nhất của bạn thành công.';
+    return 'Đã nhận yêu cầu hủy lịch. Vui lòng vào mục Lịch hẹn để xác nhận hủy.';
+  }
+
+  void clearPendingBooking() {
+    state = state.copyWith(clearPendingBooking: true);
   }
 
   void clearChat() {

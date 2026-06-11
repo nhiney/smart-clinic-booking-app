@@ -894,10 +894,14 @@ class _BannerCard extends StatelessWidget {
 class _QuickActionsGrid extends ConsumerWidget {
   List<_Action> _getItems(AppLanguage lang) => [
     _Action(Icons.add_circle_outline_rounded, lang.localize('Đặt khám', 'Book Visit'), const Color(0xFF2196F3), '/doctor/find', assetPath: 'assets/icons/quick_actions/book_appointment.png'),
+    _Action(Icons.video_call_rounded, lang.localize('Khám trực tuyến', 'Tele-visit'), const Color(0xFF0EA5E9), '/consultation'),
+    _Action(Icons.emergency_rounded, lang.localize('Cấp cứu', 'Emergency'), const Color(0xFFE53935), '/sos'),
+    _Action(Icons.science_rounded, lang.localize('Kết quả XN', 'Lab Results'), const Color(0xFF0891B2), '/lab-results'),
+    _Action(Icons.groups_rounded, lang.localize('Gia đình', 'Family'), const Color(0xFF8B5CF6), '/family'),
     _Action(Icons.history_rounded, lang.localize('Lịch sử', 'History'), const Color(0xFF7C3AED), '/appointments', assetPath: 'assets/icons/quick_actions/appointment_history.png'),
-    _Action(Icons.receipt_long_rounded, lang.localize('Hóa đơn', 'Invoices'), const Color(0xFF00BFA5), '/invoices', assetPath: 'assets/icons/quick_actions/invoice.png'),
-    _Action(Icons.medication_rounded, lang.localize('Đơn thuốc', 'Prescription'), const Color(0xFFE91E63), '/prescriptions', assetPath: 'assets/icons/quick_actions/invoice.png'),
-    _Action(Icons.folder_open_rounded, lang.localize('Hồ sơ', 'Records'), const Color(0xFFFF6D00), '/medical-records', assetPath: 'assets/icons/quick_actions/medical_records.png'),
+    _Action(Icons.receipt_long_rounded, lang.localize('Hóa đơn', 'Invoices'), const Color(0xFF00BFA5), '/invoice-bill', assetPath: 'assets/icons/quick_actions/invoice.png'),
+    _Action(Icons.medication_rounded, lang.localize('Lịch thuốc', 'Medication'), const Color(0xFFE91E63), '/medication-schedule', assetPath: 'assets/icons/quick_actions/invoice.png'),
+    _Action(Icons.folder_open_rounded, lang.localize('Hồ sơ', 'Records'), const Color(0xFFFF6D00), '/medical-history', assetPath: 'assets/icons/quick_actions/medical_records.png'),
     _Action(Icons.local_hospital_rounded, lang.localize('Nhập viện', 'Admission'), const Color(0xFF5C6BC0), '/admission/history/me', assetPath: 'assets/icons/quick_actions/inpatient_admission.png'),
     _Action(Icons.payments_outlined, lang.localize('Thanh toán', 'Payment'), const Color(0xFF43A047), '/payment', assetPath: 'assets/icons/quick_actions/fee_payment.png'),
     _Action(Icons.poll_outlined, lang.localize('Khảo sát', 'Survey'), const Color(0xFFFB8C00), '/surveys', assetPath: 'assets/icons/quick_actions/lab_results.png'),
@@ -1045,8 +1049,12 @@ class _ActionCell extends StatelessWidget {
       onTap: () {
         if (item.route != null) {
           final uid = FirebaseAuth.instance.currentUser?.uid ?? 'me';
-          final route = item.route!
-              .replaceAll('/me', '/$uid');
+          // Only replace /me as a complete path segment to avoid mangling routes
+          // like /medication-schedule or /medical-history that start with /me.
+          final route = item.route!.replaceAllMapped(
+            RegExp(r'/me(?=/|$)'),
+            (_) => '/$uid',
+          );
           GoRouter.of(context).push(route);
         } else {
           GoRouter.of(context).push('/under-development?title=${Uri.encodeComponent(item.label)}');

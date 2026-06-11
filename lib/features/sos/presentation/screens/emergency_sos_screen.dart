@@ -64,8 +64,17 @@ class _EmergencySosScreenState extends State<EmergencySosScreen>
     return Scaffold(
       backgroundColor: _bg,
       body: SafeArea(
-        child: Column(
-          children: [
+        child: SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.of(context).size.height
+                  - MediaQuery.of(context).padding.top
+                  - MediaQuery.of(context).padding.bottom,
+            ),
+            child: IntrinsicHeight(
+              child: Column(
+                children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 8, 16, 8),
               child: Row(
@@ -155,6 +164,9 @@ class _EmergencySosScreenState extends State<EmergencySosScreen>
             ),
           ],
         ),
+      ),
+      ),
+      ),
       ),
     );
   }

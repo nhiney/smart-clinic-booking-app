@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Kết quả xét nghiệm — tóm tắt AI dễ hiểu + chi tiết từng chỉ số có thước đo.
 /// Route /lab-results. Dữ liệu demo theo thiết kế.
@@ -13,6 +14,89 @@ class LabResultsScreen extends StatelessWidget {
   static const _amber = Color(0xFFF59E0B);
   static const _red = Color(0xFFEF4444);
 
+  void _showOptionsMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Center(
+              child: Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text('Tùy chọn', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _textPrimary)),
+            const SizedBox(height: 16),
+            _menuTile(context, Icons.share_rounded, 'Chia sẻ kết quả', const Color(0xFF1D4ED8), () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Đang chuẩn bị chia sẻ...')),
+              );
+            }),
+            _menuTile(context, Icons.download_rounded, 'Tải PDF', const Color(0xFF10B981), () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Đang tải hồ sơ PDF...')),
+              );
+            }),
+            _menuTile(context, Icons.content_copy_rounded, 'Sao chép mã xét nghiệm', const Color(0xFF7C3AED), () {
+              Navigator.pop(context);
+              Clipboard.setData(const ClipboardData(text: '#XN-23052026-0451'));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Đã sao chép mã #XN-23052026-0451')),
+              );
+            }),
+            _menuTile(context, Icons.calendar_month_rounded, 'Đặt lịch tái khám', const Color(0xFFF59E0B), () {
+              Navigator.pop(context);
+              Navigator.of(context).popUntil((r) => r.isFirst);
+              Future.delayed(const Duration(milliseconds: 200), () {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Chuyển đến trang đặt lịch...')),
+                  );
+                }
+              });
+            }),
+            _menuTile(context, Icons.flag_outlined, 'Báo kết quả sai', const Color(0xFFEF4444), () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Đã gửi báo cáo đến hệ thống')),
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _menuTile(BuildContext context, IconData icon, String label, Color color, VoidCallback onTap) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+      leading: Container(
+        width: 40, height: 40,
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: color, size: 20),
+      ),
+      title: Text(label, style: const TextStyle(fontWeight: FontWeight.w600, color: _textPrimary)),
+      trailing: const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8)),
+      onTap: onTap,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,7 +109,10 @@ class LabResultsScreen extends StatelessWidget {
             style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
         centerTitle: true,
         actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.more_horiz_rounded)),
+          IconButton(
+            onPressed: () => _showOptionsMenu(context),
+            icon: const Icon(Icons.more_horiz_rounded),
+          ),
         ],
       ),
       body: ListView(

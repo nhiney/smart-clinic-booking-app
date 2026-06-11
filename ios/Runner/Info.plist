@@ -32,6 +32,10 @@
 	<string>Ứng dụng cần quyền truy cập thư viện ảnh để lưu mã QR đăng nhập.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Ứng dụng cần quyền truy cập camera để quét mã QR đăng nhập.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Ứng dụng cần quyền truy cập micro để nhận lệnh giọng nói đặt lịch khám.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Ứng dụng cần nhận dạng giọng nói để hỗ trợ đặt lịch khám bằng giọng nói.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

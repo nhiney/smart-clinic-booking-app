@@ -166,6 +166,7 @@ class _KycApprovalScreenState extends State<KycApprovalScreen>
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: _applications
           .where('status', isEqualTo: status)
+          .limit(50)
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {

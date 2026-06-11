@@ -455,8 +455,179 @@ List<AuditLogEntity> auditLogs = [];
 
   Future<void> fetchAuditLogs() async {
     final snapshot = await FirebaseFirestore.instance.collection('audit_logs')
-        .orderBy('timestamp', descending: true).get(); // Sắp xếp theo thời gian
+        .orderBy('timestamp', descending: true).get();
     auditLogs = snapshot.docs.map((doc) => AuditLogEntity.fromMap(doc.data(), doc.id)).toList();
     notifyListeners();
+  }
+
+  // ── Appointment Management ───────────────────────────────────────────────────
+  List<Map<String, dynamic>> allAppointments = [];
+  bool appointmentsLoading = false;
+
+  Future<void> fetchAllAppointments({String? statusFilter}) async {
+    try {
+      appointmentsLoading = true;
+      notifyListeners();
+      Query<Map<String, dynamic>> query = FirebaseFirestore.instance
+          .collection('appointments')
+          .orderBy('dateTime', descending: true)
+          .limit(100);
+      if (statusFilter != null && statusFilter != 'all') {
+        query = query.where('status', isEqualTo: statusFilter);
+      }
+      final snap = await query.get();
+      allAppointments = snap.docs.map((d) => {...d.data(), 'id': d.id}).toList();
+    } catch (e) {
+      errorMessage = e.toString();
+    } finally {
+      appointmentsLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateAppointmentStatus(String id, String status) async {
+    await FirebaseFirestore.instance.collection('appointments').doc(id).update({
+      'status': status,
+      'statusUpdatedAt': FieldValue.serverTimestamp(),
+    });
+    final idx = allAppointments.indexWhere((a) => a['id'] == id);
+    if (idx != -1) {
+      allAppointments[idx] = {...allAppointments[idx], 'status': status};
+      notifyListeners();
+    }
+  }
+
+  // ── Patient Management (global) ──────────────────────────────────────────────
+  List<Map<String, dynamic>> allPatientUsers = [];
+
+  Future<void> fetchAllPatientUsers({String? searchQuery}) async {
+    try {
+      isLoading = true;
+      notifyListeners();
+      final snap = await FirebaseFirestore.instance
+          .collection('users')
+          .where('role', isEqualTo: 'patient')
+          .limit(200)
+          .get();
+      allPatientUsers = snap.docs.map((d) => {...d.data(), 'id': d.id}).where((u) {
+        if (searchQuery == null || searchQuery.isEmpty) return true;
+        final name = (u['name'] as String? ?? '').toLowerCase();
+        final phone = (u['phone'] as String? ?? '').toLowerCase();
+        return name.contains(searchQuery.toLowerCase()) || phone.contains(searchQuery.toLowerCase());
+      }).toList();
+    } catch (e) {
+      errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // ── Review Moderation ────────────────────────────────────────────────────────
+  List<Map<String, dynamic>> allReviews = [];
+
+  Future<void> fetchAllReviews() async {
+    try {
+      isLoading = true;
+      notifyListeners();
+      final snap = await FirebaseFirestore.instance
+          .collection('reviews')
+          .orderBy('createdAt', descending: true)
+          .limit(100)
+          .get();
+      allReviews = snap.docs.map((d) => {...d.data(), 'id': d.id}).toList();
+    } catch (e) {
+      errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> setReviewHidden(String id, {required bool hidden}) async {
+    await FirebaseFirestore.instance.collection('reviews').doc(id).update({'isHidden': hidden});
+    final idx = allReviews.indexWhere((r) => r['id'] == id);
+    if (idx != -1) {
+      allReviews[idx] = {...allReviews[idx], 'isHidden': hidden};
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteReview(String id) async {
+    await FirebaseFirestore.instance.collection('reviews').doc(id).delete();
+    allReviews.removeWhere((r) => r['id'] == id);
+    notifyListeners();
+  }
+
+  // ── Notification Broadcast ───────────────────────────────────────────────────
+  List<Map<String, dynamic>> broadcastHistory = [];
+  bool broadcastLoading = false;
+
+  Future<int> broadcastNotification({
+    required String title,
+    required String body,
+    required String targetRole,
+  }) async {
+    try {
+      broadcastLoading = true;
+      notifyListeners();
+      Query<Map<String, dynamic>> q = FirebaseFirestore.instance.collection('users');
+      if (targetRole != 'all') {
+        q = q.where('role', isEqualTo: targetRole);
+      }
+      final usersSnap = await q.limit(500).get();
+      final batches = <WriteBatch>[];
+      var batch = FirebaseFirestore.instance.batch();
+      int count = 0;
+      for (final userDoc in usersSnap.docs) {
+        final notifRef = FirebaseFirestore.instance.collection('notifications').doc();
+        batch.set(notifRef, {
+          'userId': userDoc.id,
+          'title': title,
+          'body': body,
+          'type': 'broadcast',
+          'isRead': false,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        count++;
+        if (count % 400 == 0) {
+          batches.add(batch);
+          batch = FirebaseFirestore.instance.batch();
+        }
+      }
+      batches.add(batch);
+      for (final b in batches) {
+        await b.commit();
+      }
+      await FirebaseFirestore.instance.collection('broadcast_notifications').add({
+        'title': title,
+        'body': body,
+        'targetRole': targetRole,
+        'recipientCount': usersSnap.docs.length,
+        'sentAt': FieldValue.serverTimestamp(),
+      });
+      await fetchBroadcastHistory();
+      return usersSnap.docs.length;
+    } catch (e) {
+      errorMessage = e.toString();
+      return 0;
+    } finally {
+      broadcastLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchBroadcastHistory() async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('broadcast_notifications')
+          .orderBy('sentAt', descending: true)
+          .limit(20)
+          .get();
+      broadcastHistory = snap.docs.map((d) => {...d.data(), 'id': d.id}).toList();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('fetchBroadcastHistory error: $e');
+    }
   }
 }

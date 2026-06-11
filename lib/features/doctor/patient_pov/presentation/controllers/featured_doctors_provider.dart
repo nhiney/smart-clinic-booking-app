@@ -3,14 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/doctor_model.dart';
 import '../../domain/entities/doctor_entity.dart';
 
-/// Top-rated doctors from the `doctors` Firestore collection.
-/// Returns up to 8 doctors ordered by rating descending.
-final featuredDoctorsProvider = FutureProvider<List<DoctorEntity>>((ref) async {
+/// Top-rated doctors — cached for the app session (keepAlive prevents re-fetch on navigation).
+final featuredDoctorsProvider = FutureProvider.autoDispose<List<DoctorEntity>>((ref) async {
+  ref.keepAlive();
+
   final snap = await FirebaseFirestore.instance
       .collection('doctors')
       .orderBy('rating', descending: true)
       .limit(8)
-      .get();
+      .get(const GetOptions(source: Source.serverAndCache));
 
   return snap.docs
       .map((doc) => DoctorModel.fromJson(doc.data(), doc.id))

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../riverpod/assistant_provider.dart';
 import '../riverpod/assistant_state.dart';
+import '../widgets/voice_booking_confirm_sheet.dart';
 
 class VoiceAssistantScreen extends ConsumerStatefulWidget {
   const VoiceAssistantScreen({super.key});
@@ -43,10 +44,32 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen>
     super.dispose();
   }
 
+  void _showBookingSheet(BuildContext context, BookingIntentData data) {
+    final notifier = ref.read(assistantProvider.notifier);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => VoiceBookingConfirmSheet(
+        data: data,
+        onClose: notifier.clearPendingBooking,
+      ),
+    ).then((_) => notifier.clearPendingBooking());
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(assistantProvider);
     final notifier = ref.read(assistantProvider.notifier);
+
+    // Show booking confirmation sheet when intent is detected.
+    ref.listen<AssistantState>(assistantProvider, (prev, next) {
+      if (next.pendingBooking != null && prev?.pendingBooking == null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _showBookingSheet(context, next.pendingBooking!);
+        });
+      }
+    });
 
     return Scaffold(
       backgroundColor: const Color(0xFF0D1117),
@@ -151,6 +174,32 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen>
   }
 
   Widget _buildCurrentSpeechArea(AssistantState state) {
+    // Show error message when status is error.
+    if (state.status == AssistantStatus.error && state.responseText.isNotEmpty) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 24),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.orange.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.orange.withValues(alpha: 0.4)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 16),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                state.responseText,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.orange, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     if (state.currentText.isEmpty) return const SizedBox(height: 40);
     return Container(
       height: 48,
@@ -185,22 +234,41 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen>
 
   Widget _buildMicButton(AssistantState state, AssistantNotifier notifier) {
     final isListening = state.status == AssistantStatus.listening;
-    final color = isListening ? Colors.redAccent : Colors.blueAccent;
+    final isError = state.status == AssistantStatus.error;
+    final isBusy = state.status == AssistantStatus.processing || state.status == AssistantStatus.speaking;
+
+    final color = isListening
+        ? Colors.redAccent
+        : isError
+            ? Colors.orange
+            : Colors.blueAccent;
 
     return GestureDetector(
-      onTapDown: (_) => notifier.startListening(),
-      onTapUp: (_) => notifier.stopListening(),
-      onTapCancel: () => notifier.stopListening(),
+      // Tap once to start, tap again to stop (or auto-stop after 2s pause).
+      onTap: () {
+        if (isListening) {
+          notifier.stopListening();
+        } else if (!isBusy) {
+          notifier.startListening();
+        }
+      },
+      // Also support press-and-hold for quick queries.
+      onLongPressStart: (_) {
+        if (!isBusy) notifier.startListening();
+      },
+      onLongPressEnd: (_) {
+        if (isListening) notifier.stopListening();
+      },
       child: AnimatedBuilder(
         animation: _pulseAnim,
         builder: (context, child) {
-          final scale = isListening ? (1.0 + _soundLevel * 0.3) : 1.0;
+          final scale = isListening ? (1.0 + _soundLevel * 0.3) : (isBusy ? 0.9 : 1.0);
           return Transform.scale(
             scale: scale,
             child: Container(
               padding: const EdgeInsets.all(22),
               decoration: BoxDecoration(
-                color: color,
+                color: isBusy ? Colors.grey.shade600 : color,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
@@ -211,7 +279,11 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen>
                 ],
               ),
               child: Icon(
-                isListening ? Icons.stop_rounded : Icons.mic_rounded,
+                isListening
+                    ? Icons.stop_rounded
+                    : isBusy
+                        ? Icons.hourglass_top_rounded
+                        : Icons.mic_rounded,
                 color: Colors.white,
                 size: 38,
               ),
@@ -225,15 +297,15 @@ class _VoiceAssistantScreenState extends ConsumerState<VoiceAssistantScreen>
   String _getHelperText(AssistantStatus status) {
     switch (status) {
       case AssistantStatus.listening:
-        return 'Đang lắng nghe... (thả tay để dừng)';
+        return 'Đang lắng nghe... (nhấn để dừng)';
       case AssistantStatus.processing:
         return 'Đang xử lý...';
       case AssistantStatus.speaking:
         return 'Đang trả lời...';
       case AssistantStatus.error:
-        return 'Có lỗi xảy ra, thử lại nhé';
+        return 'Có lỗi — nhấn mic để thử lại';
       default:
-        return 'Nhấn và giữ để nói';
+        return 'Nhấn mic để bắt đầu nói';
     }
   }
 }

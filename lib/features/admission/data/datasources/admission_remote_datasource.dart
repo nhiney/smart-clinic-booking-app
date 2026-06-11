@@ -37,14 +37,12 @@ class AdmissionRemoteDataSource {
     return _firestore
         .collection('admissions')
         .where('patientId', isEqualTo: patientId)
+        .orderBy('createdAt', descending: true)
+        .limit(20)
         .snapshots()
-        .map((snapshot) {
-          final list = snapshot.docs
-              .map((doc) => AdmissionModel.fromJson(doc.data(), doc.id))
-              .toList();
-          list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-          return list;
-        });
+        .map((snapshot) => snapshot.docs
+            .map((doc) => AdmissionModel.fromJson(doc.data(), doc.id))
+            .toList());
   }
 
   Future<String> createAdmissionRequest(AdmissionModel admission) async {

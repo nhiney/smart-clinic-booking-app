@@ -75,6 +75,37 @@ post_install do |installer|
         'PERMISSION_MICROPHONE=1',
         'PERMISSION_LOCATION=1',
       ]
+
+      # 9. Fix header search paths for Firebase/gRPC/abseil on newer Xcode
+      extra_paths = [
+        '"${PODS_ROOT}/abseil"',
+        '"${PODS_ROOT}/gRPC-C++/include"',
+        '"${PODS_ROOT}/gRPC-Core/include"',
+      ]
+      existing = config.build_settings['HEADER_SEARCH_PATHS'] || '$(inherited)'
+      extra_paths.each do |path|
+        existing = "#{existing} #{path}" unless existing.include?(path)
+      end
+      config.build_settings['HEADER_SEARCH_PATHS'] = existing
+    end
+  end
+
+  # 10. Patch generated xcconfig files directly so they survive pod install
+  #     (build_settings writes to pbxproj; xcconfig can override it at compile time)
+  extra_xcconfig_paths = [
+    '"${PODS_ROOT}/abseil"',
+    '"${PODS_ROOT}/gRPC-C++/include"',
+    '"${PODS_ROOT}/gRPC-Core/include"',
+  ]
+  Dir.glob("#{installer.sandbox.root}/Target Support Files/**/*.xcconfig") do |xcconfig_path|
+    content = File.read(xcconfig_path)
+    if content.match?(/^HEADER_SEARCH_PATHS\s*=/)
+      extra_xcconfig_paths.each do |path|
+        unless content.include?(path)
+          content.gsub!(/^(HEADER_SEARCH_PATHS\s*=\s*.*)$/, "\\1 #{path}")
+        end
+      end
+      File.write(xcconfig_path, content)
     end
   end
 end

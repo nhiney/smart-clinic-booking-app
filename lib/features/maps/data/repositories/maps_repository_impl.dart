@@ -11,8 +11,15 @@ class MapsRepositoryImpl implements MapsRepository {
 
   @override
   Future<List<HospitalEntity>> getHospitals() async {
+    // Serve SQLite cache first — avoids burning Firestore reads on every open.
+    final cached = await _getCachedHospitals();
+    if (cached.isNotEmpty) return cached;
+
     try {
-      final snapshot = await _firestore.collection('hospitals').get();
+      final snapshot = await _firestore
+          .collection('hospitals')
+          .limit(100)
+          .get();
       final hospitals = snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;
@@ -22,7 +29,7 @@ class MapsRepositoryImpl implements MapsRepository {
       await _cacheHospitals(hospitals);
       return hospitals;
     } catch (e) {
-      return _getCachedHospitals();
+      return cached;
     }
   }
 
@@ -31,14 +38,28 @@ class MapsRepositoryImpl implements MapsRepository {
     String? specialty,
     String? searchQuery,
   }) async {
+    // Use cached data for filtered queries — avoids double Firestore reads.
     try {
+      final cached = await _getCachedHospitals();
+      if (cached.isNotEmpty) {
+        var filtered = cached;
+        if (specialty != null && specialty.isNotEmpty) {
+          filtered = filtered.where((h) => h.specialties.contains(specialty)).toList();
+        }
+        if (searchQuery != null && searchQuery.isNotEmpty) {
+          final lowerQuery = searchQuery.toLowerCase();
+          filtered = filtered.where((h) => h.name.toLowerCase().contains(lowerQuery)).toList();
+        }
+        return filtered;
+      }
+
       Query<Map<String, dynamic>> query = _firestore.collection('hospitals');
 
       if (specialty != null && specialty.isNotEmpty) {
         query = query.where('specialties', arrayContains: specialty);
       }
 
-      final snapshot = await query.get();
+      final snapshot = await query.limit(100).get();
       var hospitals = snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;

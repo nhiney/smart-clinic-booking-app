@@ -32,9 +32,12 @@ class PrescriptionScreen extends StatelessWidget {
               icon: Icons.lock_outline,
             )
           : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              // Chỉ filter theo patientId (không orderBy) để tránh phải tạo
+              // composite index; đã sắp xếp client-side theo examinedAt bên dưới.
               stream: FirebaseFirestore.instance
                   .collection('medical_records')
                   .where('patientId', isEqualTo: uid)
+                  .limit(30)
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {

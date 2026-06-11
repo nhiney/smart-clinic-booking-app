@@ -9,37 +9,66 @@ class VoiceService {
   final FlutterTts _tts = FlutterTts();
 
   bool _isSpeechInitialized = false;
+  String _localeId = 'vi_VN';
 
-  // Stream for sound level (0.0 – 1.0) so UI can animate mic button.
   final _soundLevelController = StreamController<double>.broadcast();
   Stream<double> get soundLevelStream => _soundLevelController.stream;
+
+  bool get isListening => _speech.isListening;
 
   Future<bool> init() async {
     if (_isSpeechInitialized) return true;
 
-    final status = await Permission.microphone.request();
-    if (status != PermissionStatus.granted) {
-      debugPrint('Microphone permission not granted');
+    try {
+      final status = await Permission.microphone.request();
+      if (status != PermissionStatus.granted) {
+        debugPrint('VoiceService: microphone permission denied');
+        return false;
+      }
+
+      _isSpeechInitialized = await _speech.initialize(
+        onError: (e) => debugPrint('VoiceService STT error: $e'),
+        onStatus: (s) => debugPrint('VoiceService STT status: $s'),
+      );
+
+      if (!_isSpeechInitialized) {
+        debugPrint('VoiceService: STT init failed');
+        return false;
+      }
+
+      // Pick Vietnamese locale if available, otherwise use device default.
+      final locales = await _speech.locales();
+      final vi = locales.where((l) => l.localeId.startsWith('vi')).firstOrNull;
+      if (vi != null) {
+        _localeId = vi.localeId;
+        debugPrint('VoiceService: vi locale found → $_localeId');
+      } else {
+        // No vi locale — fall back to device default (no localeId arg).
+        _localeId = '';
+        debugPrint('VoiceService: vi locale NOT available, using device default');
+      }
+
+      // TTS setup (non-fatal).
+      try {
+        await _tts.setLanguage('vi-VN');
+        await _tts.setPitch(1.0);
+        await _tts.setSpeechRate(0.5);
+        await _tts.setIosAudioCategory(
+          IosTextToSpeechAudioCategory.playback,
+          [
+            IosTextToSpeechAudioCategoryOptions.defaultToSpeaker,
+            IosTextToSpeechAudioCategoryOptions.allowBluetooth,
+            IosTextToSpeechAudioCategoryOptions.allowBluetoothA2DP,
+          ],
+          IosTextToSpeechAudioMode.defaultMode,
+        );
+      } catch (e) {
+        debugPrint('VoiceService: TTS setup warning (non-fatal): $e');
+      }
+    } catch (e) {
+      debugPrint('VoiceService: init error: $e');
       return false;
     }
-
-    _isSpeechInitialized = await _speech.initialize(
-      onError: (val) => debugPrint('STT Error: $val'),
-      onStatus: (val) => debugPrint('STT Status: $val'),
-    );
-
-    await _tts.setLanguage('vi-VN');
-    await _tts.setPitch(1.0);
-    await _tts.setSpeechRate(0.5);
-    await _tts.setIosAudioCategory(
-      IosTextToSpeechAudioCategory.playback,
-      [
-        IosTextToSpeechAudioCategoryOptions.defaultToSpeaker,
-        IosTextToSpeechAudioCategoryOptions.allowBluetooth,
-        IosTextToSpeechAudioCategoryOptions.allowBluetoothA2DP,
-      ],
-      IosTextToSpeechAudioMode.defaultMode,
-    );
 
     return _isSpeechInitialized;
   }
@@ -52,24 +81,31 @@ class VoiceService {
     if (!_isSpeechInitialized) {
       final ok = await init();
       if (!ok) {
-        onError('Không thể khởi tạo micro');
+        onError('Không thể khởi tạo micro. Vui lòng cấp quyền micro trong Cài đặt.');
         return;
       }
     }
+
+    // Stop any previous session before starting a new one.
+    if (_speech.isListening) {
+      await _speech.stop();
+      await Future.delayed(const Duration(milliseconds: 150));
+    }
+
+    onListeningChange(true);
 
     await _speech.listen(
       onResult: (val) {
         if (val.recognizedWords.isNotEmpty) {
           onResult(val.recognizedWords);
         }
-        // STT done (final result) → notify caller
         if (val.finalResult) {
           onListeningChange(false);
         }
       },
-      localeId: 'vi_VN',
+      localeId: _localeId.isEmpty ? null : _localeId,
+      pauseFor: const Duration(seconds: 2),
       onSoundLevelChange: (level) {
-        // Normalize roughly to 0–1 (level range is typically -2 to 10 dB)
         final normalized = ((level + 2) / 12).clamp(0.0, 1.0);
         if (!_soundLevelController.isClosed) {
           _soundLevelController.add(normalized);
@@ -78,19 +114,26 @@ class VoiceService {
       listenOptions: stt.SpeechListenOptions(
         cancelOnError: true,
         listenMode: stt.ListenMode.confirmation,
+        partialResults: true,
       ),
     );
 
-    onListeningChange(true);
+    // Verify listening actually started.
+    if (!_speech.isListening) {
+      debugPrint('VoiceService: listen() returned but isListening=false');
+      onListeningChange(false);
+      onError('Không thể bắt đầu ghi âm. Thử lại hoặc kiểm tra quyền micro.');
+    }
   }
 
   Future<void> stopListening() async {
-    await _speech.stop();
+    if (_speech.isListening) {
+      await _speech.stop();
+    }
   }
 
   Future<void> speak(String text) async {
     if (text.isNotEmpty) {
-      debugPrint('AI Speaking: $text');
       await _tts.speak(text);
     }
   }
@@ -98,8 +141,6 @@ class VoiceService {
   Future<void> stopSpeaking() async {
     await _tts.stop();
   }
-
-  bool get isListening => _speech.isListening;
 
   void dispose() {
     _speech.stop();

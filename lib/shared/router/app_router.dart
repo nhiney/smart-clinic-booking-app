@@ -11,6 +11,12 @@ import 'package:smart_clinic_booking/features/consultation/presentation/screens/
 import 'package:smart_clinic_booking/features/lab/presentation/screens/lab_results_screen.dart';
 import 'package:smart_clinic_booking/features/family/presentation/screens/family_profile_screen.dart';
 import 'package:smart_clinic_booking/features/sos/presentation/screens/emergency_sos_screen.dart';
+import 'package:smart_clinic_booking/features/medical_record/presentation/screens/medical_history_timeline_screen.dart';
+import 'package:smart_clinic_booking/features/medication/presentation/screens/medication_schedule_screen.dart';
+import 'package:smart_clinic_booking/features/invoice/presentation/screens/invoice_bill_screen.dart';
+import 'package:smart_clinic_booking/features/notification/presentation/screens/notification_center_screen.dart';
+import 'package:smart_clinic_booking/features/review/presentation/screens/rate_doctor_screen.dart';
+import 'package:smart_clinic_booking/features/profile/presentation/screens/patient_profile_detail_screen.dart';
 import 'package:smart_clinic_booking/features/admin/presentation/screens/admin_dashboard_screen.dart';
 import 'package:smart_clinic_booking/features/admin/presentation/screens/admin_appointments_screen.dart';
 import 'package:smart_clinic_booking/features/admin/presentation/screens/admin_notification_broadcast_screen.dart';
@@ -598,6 +604,30 @@ class AppRouter {
         builder: (context, state) => const EmergencySosScreen(),
       ),
       GoRoute(
+        path: '/medical-history',
+        builder: (context, state) => const MedicalHistoryTimelineScreen(),
+      ),
+      GoRoute(
+        path: '/medication-schedule',
+        builder: (context, state) => const MedicationScheduleScreen(),
+      ),
+      GoRoute(
+        path: '/invoice-bill',
+        builder: (context, state) => const InvoiceBillScreen(),
+      ),
+      GoRoute(
+        path: '/notifications-center',
+        builder: (context, state) => const NotificationCenterScreen(),
+      ),
+      GoRoute(
+        path: '/rate-doctor',
+        builder: (context, state) => const RateDoctorScreen(),
+      ),
+      GoRoute(
+        path: '/profile-detail',
+        builder: (context, state) => const PatientProfileDetailScreen(),
+      ),
+      GoRoute(
         path: '/insurance',
         builder: (context, state) => const InsuranceCardScreen(),
       ),
@@ -683,7 +713,9 @@ class AppRouter {
       ),
       GoRoute(
         path: '/doctor/profile-booking',
-        builder: (context, state) => const PatientDoctorProfileBookingScreen(),
+        builder: (context, state) => PatientDoctorProfileBookingScreen(
+          doctorId: state.extra is String ? state.extra as String : null,
+        ),
       ),
       GoRoute(
         path: '/booking/confirmation',

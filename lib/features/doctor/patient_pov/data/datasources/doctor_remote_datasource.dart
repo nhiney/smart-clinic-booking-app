@@ -13,7 +13,10 @@ class DoctorRemoteDatasource {
   static const int _catalogFetchCap = 200;
 
   Future<List<DoctorModel>> getDoctors() async {
-    final snapshot = await _firestore.collection('doctors').get();
+    final snapshot = await _firestore
+        .collection('doctors')
+        .limit(50)
+        .get();
     return snapshot.docs
         .map((doc) => DoctorModel.fromJson(doc.data(), doc.id))
         .toList();
@@ -47,8 +50,13 @@ class DoctorRemoteDatasource {
   }
 
   Future<List<DoctorModel>> searchDoctors(String query) async {
-    final snapshot = await _firestore.collection('doctors').get();
     final lowerQuery = query.toLowerCase();
+    // Cap at 100 docs; Firestore doesn't support full-text search so we
+    // filter client-side, but we bound the read count.
+    final snapshot = await _firestore
+        .collection('doctors')
+        .limit(100)
+        .get(const GetOptions(source: Source.serverAndCache));
     return snapshot.docs
         .map((doc) => DoctorModel.fromJson(doc.data(), doc.id))
         .where((doctor) =>

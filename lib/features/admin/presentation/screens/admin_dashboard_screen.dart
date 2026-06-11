@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/theme/icare_tokens.dart';
 import '../../../../core/extensions/context_extension.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../domain/entities/facility_entities.dart';
@@ -253,9 +254,74 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               controller: controller,
               onAddHospitalTap: () => _showAddHospitalDialog(context),
             ),
+            const SizedBox(height: 28),
+            _buildAdminToolsSection(context),
+            const SizedBox(height: 24),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildAdminToolsSection(BuildContext context) {
+    const tools = [
+      _AdminTool(
+        title: 'Lịch hẹn',
+        subtitle: 'Duyệt & quản lý',
+        icon: Icons.calendar_month_rounded,
+        gradient: [Color(0xFF1565C0), Color(0xFF2196F3)],
+        route: '/admin/appointments',
+      ),
+      _AdminTool(
+        title: 'Thông báo',
+        subtitle: 'Gửi broadcast',
+        icon: Icons.campaign_rounded,
+        gradient: [Color(0xFF4338CA), Color(0xFF818CF8)],
+        route: '/admin/broadcast',
+      ),
+      _AdminTool(
+        title: 'Bệnh nhân',
+        subtitle: 'Xem hồ sơ',
+        icon: Icons.people_rounded,
+        gradient: [Color(0xFF047857), Color(0xFF34D399)],
+        route: '/admin/patients',
+      ),
+      _AdminTool(
+        title: 'Đánh giá',
+        subtitle: 'Kiểm duyệt',
+        icon: Icons.rate_review_rounded,
+        gradient: [Color(0xFFB91C1C), Color(0xFFF87171)],
+        route: '/admin/reviews',
+      ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 4, height: 18,
+              decoration: BoxDecoration(
+                color: IColors.primary500,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text('Công cụ quản trị', style: context.textStyles.bodyBold),
+          ],
+        ),
+        const SizedBox(height: 14),
+        GridView.count(
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 1.5,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          children: tools.map((t) => _AdminToolCard(tool: t)).toList(),
+        ),
+      ],
     );
   }
 
@@ -462,5 +528,81 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   void _handleLogout(BuildContext context) {
     context.read<AuthController>().logout();
+  }
+}
+
+class _AdminTool {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final List<Color> gradient;
+  final String route;
+
+  const _AdminTool({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.gradient,
+    required this.route,
+  });
+}
+
+class _AdminToolCard extends StatelessWidget {
+  final _AdminTool tool;
+  const _AdminToolCard({required this.tool});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push(tool.route),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: tool.gradient,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: tool.gradient.last.withValues(alpha: 0.35),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              right: -12, top: -12,
+              child: Icon(tool.icon, size: 80, color: Colors.white.withValues(alpha: 0.12)),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(tool.icon, color: Colors.white, size: 22),
+                  ),
+                  const Spacer(),
+                  Text(tool.title,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15)),
+                  const SizedBox(height: 2),
+                  Text(tool.subtitle,
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 12)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

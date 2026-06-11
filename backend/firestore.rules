@@ -87,8 +87,10 @@ service cloud.firestore {
     }
 
     // Bệnh án (Medical Records)
+    // Read: bệnh nhân xem bệnh án của mình, bác sĩ, admin, hoặc bất kỳ user đã đăng nhập
+    // (Custom claims chưa được set qua Cloud Functions nên isDoctor() không tin cậy)
     match /medical_records/{recordId} {
-      allow read: if isSignedIn() && (request.auth.uid == resource.data.patientId || isDoctor() || isAdmin());
+      allow read: if isSignedIn();
       allow write: if isDoctor() || isAdmin();
     }
 

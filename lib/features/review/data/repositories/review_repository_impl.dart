@@ -12,6 +12,7 @@ class ReviewRepositoryImpl implements ReviewRepository {
         .collection('reviews')
         .where('hospitalId', isEqualTo: hospitalId)
         .orderBy('createdAt', descending: true)
+        .limit(20)
         .snapshots()
         .map((s) => s.docs.map((doc) => ReviewModel.fromJson(doc.data(), doc.id)).toList());
   }
@@ -22,6 +23,7 @@ class ReviewRepositoryImpl implements ReviewRepository {
         .collection('reviews')
         .where('doctorId', isEqualTo: doctorId)
         .orderBy('createdAt', descending: true)
+        .limit(20)
         .snapshots()
         .map((s) => s.docs.map((doc) => ReviewModel.fromJson(doc.data(), doc.id)).toList());
   }

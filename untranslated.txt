@@ -1,0 +1,46 @@
+{
+  "ja": [
+    "register_subtitle",
+    "terms_agreement_text",
+    "otp_title",
+    "otp_hint",
+    "create_password_title",
+    "registration_success",
+    "invalid_otp",
+    "password_validation_error",
+    "logout_confirm_title",
+    "logout_confirm_message",
+    "cancel_button_text",
+    "logout_button"
+  ],
+
+  "ko": [
+    "register_subtitle",
+    "terms_agreement_text",
+    "otp_title",
+    "otp_hint",
+    "create_password_title",
+    "registration_success",
+    "invalid_otp",
+    "password_validation_error",
+    "logout_confirm_title",
+    "logout_confirm_message",
+    "cancel_button_text",
+    "logout_button"
+  ],
+
+  "zh": [
+    "register_subtitle",
+    "terms_agreement_text",
+    "otp_title",
+    "otp_hint",
+    "create_password_title",
+    "registration_success",
+    "invalid_otp",
+    "password_validation_error",
+    "logout_confirm_title",
+    "logout_confirm_message",
+    "cancel_button_text",
+    "logout_button"
+  ]
+}
