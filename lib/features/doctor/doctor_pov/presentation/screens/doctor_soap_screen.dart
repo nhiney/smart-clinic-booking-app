@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../patient_pov/presentation/riverpod/examination_provider.dart';
+import 'package:smart_clinic_booking/features/doctor/patient_pov/presentation/riverpod/examination_provider.dart';
 
 /// SOAP clinical examination screen (doctor POV).
 class DoctorSoapScreen extends ConsumerStatefulWidget {
