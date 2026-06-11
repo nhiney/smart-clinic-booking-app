@@ -74,7 +74,7 @@ class ReviewRepositoryImpl implements ReviewRepository {
     }
     final snapshot = await _firestore.collection('reviews').where('hospitalId', isEqualTo: hospitalId).get();
     if (snapshot.docs.isEmpty) return 0.0;
-    final total = snapshot.docs.fold<double>(0, (sum, d) => sum + (d.data()['rating'] as num).toDouble());
+    final total = snapshot.docs.fold<double>(0, (acc, d) => acc + (d.data()['rating'] as num).toDouble());
     return total / snapshot.docs.length;
   }
 
@@ -86,7 +86,7 @@ class ReviewRepositoryImpl implements ReviewRepository {
     }
     final snapshot = await _firestore.collection('reviews').where('doctorId', isEqualTo: doctorId).get();
     if (snapshot.docs.isEmpty) return 0.0;
-    final total = snapshot.docs.fold<double>(0, (sum, d) => sum + (d.data()['rating'] as num).toDouble());
+    final total = snapshot.docs.fold<double>(0, (acc, d) => acc + (d.data()['rating'] as num).toDouble());
     return total / snapshot.docs.length;
   }
 
@@ -120,7 +120,6 @@ class ReviewRepositoryImpl implements ReviewRepository {
   }
 
   @override
-    @override
   Future<void> respondToReview(String reviewId, String response) async {
     await _firestore.collection('reviews').doc(reviewId).update({
       'doctorResponse': response,

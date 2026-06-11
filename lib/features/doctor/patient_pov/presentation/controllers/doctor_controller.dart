@@ -26,10 +26,12 @@ class DoctorController extends ChangeNotifier {
   String? errorMessage;
   DoctorEntity? currentDoctor;
   List<AppointmentEntity> todayAppointments = [];
-  Map<String, int> stats = {
+  Map<String, dynamic> stats = {
     'today_total': 0,
     'waiting': 0,
     'confirmed': 0,
+    'week_total': 0,
+    'sparklineData': <double>[0, 0, 0, 0, 0, 0, 0],
   };
   List<DoctorWorkDay> workDays = const [];
   List<DoctorIncomeEntry> incomeEntries = const [];
@@ -103,10 +105,26 @@ class DoctorController extends ChangeNotifier {
       int waiting = todayAppointments.where((a) => a.status == AppointmentStatuses.checkedIn || a.status == AppointmentStatuses.inQueue).length;
       int confirmed = todayAppointments.where((a) => a.status == AppointmentStatuses.confirmed || a.status == AppointmentStatuses.booked).length;
       
+      // Calculate weekly stats
+      final last7Days = now.subtract(const Duration(days: 7));
+      final weekAppointments = appointments.where((a) {
+        return a.dateTime.isAfter(last7Days) && a.dateTime.isBefore(now.add(const Duration(days: 1)));
+      }).toList();
+      
+      List<double> sparkline = List.filled(7, 0.0);
+      for (var a in weekAppointments) {
+        final diff = now.difference(a.dateTime).inDays;
+        if (diff >= 0 && diff < 7) {
+          sparkline[6 - diff] += 1;
+        }
+      }
+
       stats = {
         'today_total': todayAppointments.length,
         'waiting': waiting,
         'confirmed': confirmed,
+        'week_total': weekAppointments.length,
+        'sparklineData': sparkline.where((e) => e > 0).isEmpty ? <double>[0, 0, 0, 0, 0, 0, 0] : sparkline,
       };
     } catch (e) {
       debugPrint('Error fetching dashboard data: $e');

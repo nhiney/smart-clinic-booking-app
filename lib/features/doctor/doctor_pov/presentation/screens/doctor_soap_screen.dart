@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../patient_pov/presentation/riverpod/examination_provider.dart';
 
 /// SOAP clinical examination screen (doctor POV).
-class DoctorSoapScreen extends StatefulWidget {
+class DoctorSoapScreen extends ConsumerStatefulWidget {
   final String patientId;
-  const DoctorSoapScreen({super.key, required this.patientId});
+  final Map<String, dynamic>? appointmentExtra;
+  const DoctorSoapScreen({super.key, required this.patientId, this.appointmentExtra});
 
   @override
-  State<DoctorSoapScreen> createState() => _State();
+  ConsumerState<DoctorSoapScreen> createState() => _State();
 }
 
-class _State extends State<DoctorSoapScreen> with SingleTickerProviderStateMixin {
+class _State extends ConsumerState<DoctorSoapScreen> with SingleTickerProviderStateMixin {
   int _step = 2; // 0=S,1=O,2=A,3=P — show A as active like design
   final _stopwatch = Stopwatch()..start();
   bool _autoSave = true;
@@ -34,6 +37,44 @@ class _State extends State<DoctorSoapScreen> with SingleTickerProviderStateMixin
     _sCtrl.dispose();
     _oCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _save() async {
+    final aptId = widget.appointmentExtra?['id']?.toString();
+    if (aptId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lỗi: Không tìm thấy mã lịch hẹn')),
+      );
+      return;
+    }
+    
+    final patientName = widget.appointmentExtra?['patientName']?.toString() ?? 'Nguyễn Văn An';
+    
+    // ICD code
+    final icdString = _icdCodes.map((e) => '${e.code}: ${e.label}').join(', ');
+    final finalDiagnosis = '${_oCtrl.text}\nICD: $icdString';
+    
+    await ref.read(examinationProvider.notifier).save(
+      appointmentId: aptId,
+      patientId: widget.patientId,
+      patientName: patientName,
+      diagnosis: finalDiagnosis,
+      prescription: '',
+      notes: _sCtrl.text,
+    );
+
+    if (!mounted) return;
+    final state = ref.read(examinationProvider);
+    if (state.isSaved) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đã lưu kết quả khám')),
+      );
+      context.go('/doctor/dashboard');
+    } else if (state.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi: ${state.error}')),
+      );
+    }
   }
 
   String get _elapsed {
@@ -355,19 +396,32 @@ class _State extends State<DoctorSoapScreen> with SingleTickerProviderStateMixin
           const Spacer(),
           SizedBox(
             height: 48,
-            child: ElevatedButton(
-              onPressed: _step < 3
-                  ? () => setState(() => _step++)
-                  : () => context.push('/doctor/prescription/${widget.patientId}'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1D4ED8), foregroundColor: Colors.white, elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-              ),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Text(_step < 3 ? 'Tiếp tục bước ${['O', 'A', 'P', ''][_step]} →' : 'Hoàn tất ✓',
-                    style: const TextStyle(fontWeight: FontWeight.w700)),
-              ]),
+            child: Consumer(
+              builder: (context, ref, _) {
+                final isSaving = ref.watch(examinationProvider).isSaving;
+                return ElevatedButton(
+                  onPressed: isSaving
+                      ? null
+                      : (_step < 3
+                          ? () => setState(() => _step++)
+                          : _save),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1D4ED8), foregroundColor: Colors.white, elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                  ),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    if (isSaving)
+                      const SizedBox(
+                        height: 18, width: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    else
+                      Text(_step < 3 ? 'Tiếp tục bước ${['O', 'A', 'P', ''][_step]} →' : 'Hoàn tất ✓',
+                          style: const TextStyle(fontWeight: FontWeight.w700)),
+                  ]),
+                );
+              }
             ),
           ),
         ]),

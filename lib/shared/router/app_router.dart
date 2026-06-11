@@ -380,6 +380,7 @@ class AppRouter {
         path: '/doctor/soap/:patientId',
         builder: (context, state) => DoctorSoapScreen(
           patientId: state.pathParameters['patientId']!,
+          appointmentExtra: state.extra as Map<String, dynamic>?,
         ),
       ),
       GoRoute(

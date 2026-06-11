@@ -239,7 +239,7 @@ class DoctorPatientRecordScreen extends StatelessWidget {
               child: SizedBox(
                 height: 48,
                 child: ElevatedButton.icon(
-                  onPressed: () => context.push('/doctor/soap/$patientId'),
+                  onPressed: () => context.push('/doctor/soap/$patientId', extra: appointmentExtra),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1D4ED8),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

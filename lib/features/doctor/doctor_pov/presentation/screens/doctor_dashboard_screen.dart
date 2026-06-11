@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:smart_clinic_booking/core/extensions/context_extension.dart';
 import 'package:smart_clinic_booking/features/doctor/patient_pov/presentation/controllers/doctor_controller.dart';
 import 'package:smart_clinic_booking/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:smart_clinic_booking/features/appointment/domain/entities/appointment_entity.dart';
 
 import '../widgets/doctor_header_section.dart';
 import '../widgets/today_progress_card.dart';
@@ -92,15 +93,13 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                   padding: EdgeInsets.symmetric(horizontal: context.spacing.m),
                   child: Row(
                     children: [
-                      const StatCard(
+                      StatCard(
                         title: 'TUẦN NÀY',
-                        value: '47',
-                        changeText: '+12.7%',
+                        value: '${doctorController.stats['week_total'] ?? 0}',
+                        changeText: '',
                         isPositive: true,
                         subtitle: 'bệnh nhân',
-                        sparklineData: [
-                          28, 32, 25, 30, 35, 33, 38, 36, 42, 40, 44, 47,
-                        ],
+                        sparklineData: (doctorController.stats['sparklineData'] as List<dynamic>?)?.map((e) => e as double).toList() ?? [0, 0, 0, 0, 0, 0, 0],
                       ),
                       SizedBox(width: context.spacing.s + 4),
                       StatCard(
@@ -133,9 +132,9 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                 SizedBox(height: context.spacing.m),
 
                 _DoctorQuickActions(
-                  onOpenProfile: () => context.push('/patient/0451'),
-                  onOpenEncounter: () => context.push('/encounter/0451'),
-                  onOpenTreatmentPlan: () => context.push('/encounter/0451/plan'),
+                  onOpenProfile: () => context.push('/doctor/schedule-list'),
+                  onOpenEncounter: () => context.push('/doctor/schedule-list'),
+                  onOpenTreatmentPlan: () => context.push('/doctor/schedule-list'),
                 ),
 
                 SizedBox(height: context.spacing.xxl),
@@ -152,6 +151,31 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
 class _DateTitleSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final doctorController = context.watch<DoctorController>();
+    final stats = doctorController.stats;
+    final total = stats['today_total'] ?? 0;
+    final waiting = stats['waiting'] ?? 0;
+    final confirmed = stats['confirmed'] ?? 0;
+    final done = (total - waiting - confirmed).clamp(0, total);
+    
+    final now = DateTime.now();
+    int? nextMinutes;
+    final upcoming = doctorController.todayAppointments
+        .where((a) => a.dateTime.isAfter(now) && 
+            (a.status == AppointmentStatuses.confirmed || 
+             a.status == AppointmentStatuses.booked || 
+             a.status == AppointmentStatuses.inQueue))
+        .toList()
+      ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+    
+    if (upcoming.isNotEmpty) {
+      nextMinutes = upcoming.first.dateTime.difference(now).inMinutes;
+    }
+
+    final weekdays = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
+    final weekdayStr = weekdays[now.weekday % 7];
+    final dateStr = '$weekdayStr, ${now.day} tháng ${now.month}';
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: context.spacing.m),
       child: Column(
@@ -159,7 +183,7 @@ class _DateTitleSection extends StatelessWidget {
         children: [
           // Date
           Text(
-            'Thứ năm, 23 tháng 5',
+            dateStr,
             style: context.textStyles.bodySmall.copyWith(
               color: context.colors.primary,
               fontWeight: FontWeight.w600,
@@ -192,7 +216,7 @@ class _DateTitleSection extends StatelessWidget {
               children: [
                 const TextSpan(text: 'Đã khám '),
                 TextSpan(
-                  text: '5 ca',
+                  text: '$done ca',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     color: context.colors.textPrimary,
@@ -200,21 +224,25 @@ class _DateTitleSection extends StatelessWidget {
                 ),
                 const TextSpan(text: ', còn '),
                 TextSpan(
-                  text: '7 ca',
+                  text: '$waiting ca',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     color: context.colors.textPrimary,
                   ),
                 ),
-                const TextSpan(text: '. Bệnh nhân tiếp theo trong '),
-                TextSpan(
-                  text: '18 phút',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: context.colors.primary,
+                if (nextMinutes != null) ...[
+                  const TextSpan(text: '. Bệnh nhân tiếp theo trong '),
+                  TextSpan(
+                    text: '$nextMinutes phút',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: context.colors.primary,
+                    ),
                   ),
-                ),
-                const TextSpan(text: '.'),
+                  const TextSpan(text: '.'),
+                ] else ...[
+                  const TextSpan(text: '. Đã hoàn tất lịch khám hiện tại.'),
+                ]
               ],
             ),
           ),
