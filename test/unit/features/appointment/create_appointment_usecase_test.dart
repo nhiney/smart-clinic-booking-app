@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:smart_clinic_booking/features/appointment/domain/entities/appointment_entity.dart';
-import 'package:smart_clinic_booking/features/appointment/domain/repositories/appointment_repository.dart';
-import 'package:smart_clinic_booking/features/appointment/domain/usecases/create_appointment_usecase.dart';
+import 'package:smart_clinic_booking/features/booking_system/appointment/domain/entities/appointment_entity.dart';
+import 'package:smart_clinic_booking/features/booking_system/appointment/domain/repositories/appointment_repository.dart';
+import 'package:smart_clinic_booking/features/booking_system/appointment/domain/usecases/create_appointment_usecase.dart';
 
 class _FakeAppointmentRepository implements AppointmentRepository {
   AppointmentEntity? createdAppointment;

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'colors/colors.dart';
-import 'typography/app_text_styles.dart';
-import 'spacing/app_spacing.dart';
-import 'radius/app_radius.dart';
+import './colors/colors.dart';
+import './typography/app_text_styles.dart';
+import './spacing/app_spacing.dart';
+import './radius/app_radius.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // DesignSystem — Hub tổng hợp tất cả UI tokens

@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'app_language.dart';
+import './app_language.dart';
 
 class LanguageService {
   static const String _languageKey = 'selected_language';
@@ -16,11 +16,11 @@ class LanguageService {
 
   static AppLanguage getSavedLanguage() {
     final String? languageCode = _prefs?.getString(_languageKey);
-    if (languageCode == null) return AppLanguage.en;
-    
+    if (languageCode == null) return AppLanguage.vi;
+
     return AppLanguage.values.firstWhere(
       (lang) => lang.name == languageCode,
-      orElse: () => AppLanguage.en,
+      orElse: () => AppLanguage.vi,
     );
   }
 

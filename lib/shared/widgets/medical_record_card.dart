@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../core/extensions/context_extension.dart';
 import '../../core/theme/colors/colors.dart';
-import '../../features/clinical/domain/entities/medical_record.dart';
+import '../../features/clinical/clinical/domain/entities/medical_record.dart';
 import '../../core/widgets/app_card.dart';
 
 class MedicalRecordCard extends StatelessWidget {

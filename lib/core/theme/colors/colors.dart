@@ -11,5 +11,5 @@
 //   AppColors.catCardiology     → màu chuyên khoa
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export 'app_colors.dart';
-export 'app_color_scheme.dart';
+export './app_colors.dart';
+export './app_color_scheme.dart';

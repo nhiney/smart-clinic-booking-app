@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../extensions/context_extension.dart';
 import '../../l10n/app_localizations.dart';
-import 'icare_logo.dart';
+import './icare_logo.dart';
 
 class AuthHeader extends StatelessWidget {
   const AuthHeader({super.key});

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../l10n/app_localizations.dart';
 import '../extensions/context_extension.dart';
-import 'icare_logo.dart';
+import './icare_logo.dart';
 
 class BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String? title;

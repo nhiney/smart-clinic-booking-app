@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:smart_clinic_booking/features/checkin/presentation/controllers/checkin_controller.dart';
+import 'package:smart_clinic_booking/features/booking_system/checkin/presentation/controllers/checkin_controller.dart';
 
 void main() {
   group('CheckInNotifier', () {

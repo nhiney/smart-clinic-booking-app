@@ -19,12 +19,7 @@ build/
 
 # Logs & Local Docs
 *.log
-docs/logs/
-docs/patches/
-docs/planning/
-docs/requirements/
-docs/tasks/
-docs/archive/
+docs/
 
 # Firebase
 backend/functions/node_modules/

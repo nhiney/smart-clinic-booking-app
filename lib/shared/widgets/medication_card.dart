@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/extensions/context_extension.dart';
 import '../../core/widgets/app_card.dart';
-import '../../features/clinical/domain/entities/medication_plan_item.dart';
+import '../../features/clinical/clinical/domain/entities/medication_plan_item.dart';
 
 class MedicationCard extends StatelessWidget {
   final MedicationPlanItem medication;

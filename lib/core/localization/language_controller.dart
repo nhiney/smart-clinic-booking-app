@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'app_language.dart';
-import 'language_service.dart';
+import './app_language.dart';
+import './language_service.dart';
 
 final languageControllerProvider = StateNotifierProvider<LanguageController, AppLanguage>((ref) {
   return LanguageController();

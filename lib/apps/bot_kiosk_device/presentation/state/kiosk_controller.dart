@@ -5,7 +5,7 @@ import 'package:smart_clinic_booking/apps/bot_kiosk_device/data/repositories/kio
 import 'package:smart_clinic_booking/apps/bot_kiosk_device/domain/entities/slot_entity.dart';
 import 'package:smart_clinic_booking/apps/bot_kiosk_device/domain/repositories/kiosk_repository.dart';
 import 'package:smart_clinic_booking/apps/bot_kiosk_device/domain/usecases/reserve_slot_usecase.dart';
-import 'kiosk_state.dart';
+import './kiosk_state.dart';
 
 // 1. Providers cho Data & Domain
 final kioskFirestoreProvider = Provider((ref) => FirebaseFirestore.instance);

@@ -1,0 +1,184 @@
+import 'package:flutter/material.dart';
+import 'package:smart_clinic_booking/core/theme/colors/app_colors.dart';
+import 'package:smart_clinic_booking/core/extensions/context_extension.dart';
+import 'package:smart_clinic_booking/core/widgets/app_button.dart';
+import 'package:smart_clinic_booking/features/finance/payment/domain/entities/transaction_entity.dart';
+import 'package:go_router/go_router.dart';
+
+class PaymentResultScreen extends StatelessWidget {
+  final PaymentStatus status;
+  final double amount;
+  final String? transactionId;
+  final String? invoiceId;
+
+  const PaymentResultScreen({
+    super.key,
+    required this.status,
+    required this.amount,
+    this.transactionId,
+    this.invoiceId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isSuccess = status == PaymentStatus.success;
+    final isPending = status == PaymentStatus.pending;
+
+    return Scaffold(
+      backgroundColor: context.colors.surface,
+      body: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.all(context.spacing.l),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildStatusIcon(context, status),
+              SizedBox(height: context.spacing.xl),
+              Text(
+                _getStatusTitle(status),
+                style: context.textStyles.heading2
+                    .copyWith(fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: context.spacing.m),
+              Text(
+                _getStatusMessage(status, amount),
+                textAlign: TextAlign.center,
+                style: context.textStyles.body
+                    .copyWith(color: context.colors.textSecondary),
+              ),
+              if (transactionId != null) ...[
+                SizedBox(height: context.spacing.m),
+                Container(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: context.spacing.m, vertical: context.spacing.s),
+                  decoration: BoxDecoration(
+                    color: context.colors.background,
+                    borderRadius: context.radius.mRadius,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.receipt_outlined,
+                          size: 16, color: context.colors.textHint),
+                      SizedBox(width: context.spacing.s),
+                      Text(
+                        'Mã GD: ${transactionId!.substring(0, 12)}...',
+                        style: context.textStyles.caption
+                            .copyWith(color: context.colors.textHint),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              SizedBox(height: context.spacing.xxl),
+              AppButton(
+                text: "Về trang chủ",
+                onPressed: () => context.go('/home'),
+                backgroundColor: isSuccess
+                    ? AppColors.success
+                    : (isPending ? AppColors.warning : context.colors.primary),
+              ),
+              if (isSuccess) ...[
+                SizedBox(height: context.spacing.m),
+                OutlinedButton.icon(
+                  onPressed: () => context.go('/transactions'),
+                  icon: const Icon(Icons.history_rounded, size: 18),
+                  label: const Text("Xem lịch sử giao dịch"),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: context.colors.primary,
+                    side: BorderSide(color: context.colors.primary),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: context.radius.mRadius),
+                    minimumSize: const Size(double.infinity, 48),
+                  ),
+                ),
+                if (invoiceId != null) ...[
+                  SizedBox(height: context.spacing.m),
+                  TextButton.icon(
+                    onPressed: () =>
+                        context.push('/invoices/detail', extra: {'invoiceId': invoiceId}),
+                    icon: const Icon(Icons.receipt_long_rounded, size: 18),
+                    label: const Text("Xem hóa đơn"),
+                    style: TextButton.styleFrom(
+                      foregroundColor: context.colors.textSecondary,
+                    ),
+                  ),
+                ],
+              ],
+              if (!isSuccess && !isPending) ...[
+                SizedBox(height: context.spacing.m),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    "Thử lại",
+                    style: context.textStyles.bodyBold
+                        .copyWith(color: context.colors.primary),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusIcon(BuildContext context, PaymentStatus status) {
+    IconData icon;
+    Color color;
+    switch (status) {
+      case PaymentStatus.success:
+        icon = Icons.check_circle_rounded;
+        color = AppColors.success;
+        break;
+      case PaymentStatus.failed:
+        icon = Icons.error_rounded;
+        color = AppColors.error;
+        break;
+      case PaymentStatus.pending:
+        icon = Icons.access_time_filled_rounded;
+        color = AppColors.warning;
+        break;
+      case PaymentStatus.refunded:
+        icon = Icons.undo_rounded;
+        color = context.colors.textSecondary;
+        break;
+    }
+
+    return Container(
+      padding: EdgeInsets.all(context.spacing.l),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(icon, size: 80, color: color),
+    );
+  }
+
+  String _getStatusTitle(PaymentStatus status) {
+    switch (status) {
+      case PaymentStatus.success:
+        return "Thanh toán thành công!";
+      case PaymentStatus.failed:
+        return "Thanh toán thất bại";
+      case PaymentStatus.pending:
+        return "Giao dịch đang chờ";
+      case PaymentStatus.refunded:
+        return "Đã hoàn tiền";
+    }
+  }
+
+  String _getStatusMessage(PaymentStatus status, double amount) {
+    switch (status) {
+      case PaymentStatus.success:
+        return "Giao dịch trị giá ${amount.toStringAsFixed(0)}đ đã được xử lý thành công.";
+      case PaymentStatus.failed:
+        return "Có lỗi xảy ra trong quá trình xử lý. Vui lòng kiểm tra lại số dư hoặc thử phương thức khác.";
+      case PaymentStatus.pending:
+        return "Giao dịch đang được xử lý bởi hệ thống ngân hàng. Vui lòng kiểm tra lịch sử giao dịch sau ít phút.";
+      case PaymentStatus.refunded:
+        return "Giao dịch đã được hoàn trả thành công.";
+    }
+  }
+}

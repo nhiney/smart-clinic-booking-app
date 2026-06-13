@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/colors/app_colors.dart';
-import '../../features/appointment/domain/entities/appointment_entity.dart';
+import '../../features/booking_system/appointment/domain/entities/appointment_entity.dart';
 
 class AppointmentCard extends StatelessWidget {
   final String doctorName;

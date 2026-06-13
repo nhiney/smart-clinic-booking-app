@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:smart_clinic_booking/apps/bot_kiosk_device/presentation/state/kiosk_controller.dart';
 import 'package:smart_clinic_booking/apps/bot_kiosk_device/presentation/state/kiosk_state.dart';
 import 'package:smart_clinic_booking/apps/bot_kiosk_device/presentation/widgets/kiosk_large_button.dart';
-import 'voice_registration_page.dart';
+import './voice_registration_page.dart';
 
 class SlotSelectionPage extends ConsumerWidget {
   const SlotSelectionPage({super.key});

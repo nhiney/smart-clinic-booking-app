@@ -4,7 +4,7 @@ import 'package:smart_clinic_booking/apps/qr_checkin_device/data/datasources/qr_
 import 'package:smart_clinic_booking/apps/qr_checkin_device/data/repositories/qr_checkin_repository_impl.dart';
 import 'package:smart_clinic_booking/apps/qr_checkin_device/domain/repositories/qr_checkin_repository.dart';
 import 'package:smart_clinic_booking/apps/qr_checkin_device/domain/usecases/process_checkin_usecase.dart';
-import 'qr_checkin_state.dart';
+import './qr_checkin_state.dart';
 
 // 1. Providers cho Data & Domain Layer
 final qrFirestoreProvider = Provider((ref) => FirebaseFirestore.instance);

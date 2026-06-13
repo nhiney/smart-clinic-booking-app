@@ -2,8 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
-import '../../features/admin/domain/entities/facility_entities.dart';
-import '../../features/admin/data/repositories/firestore_facility_repository.dart';
+import '../../features/roles/admin/domain/entities/facility_entities.dart';
+import '../../features/roles/admin/data/repositories/firestore_facility_repository.dart';
 
 class SeedDataService {
   final FirestoreFacilityRepository _repo = FirestoreFacilityRepository();

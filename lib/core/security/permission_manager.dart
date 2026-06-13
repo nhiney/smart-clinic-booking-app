@@ -1,7 +1,7 @@
 import 'package:injectable/injectable.dart';
 
-import 'auth_user.dart';
-import 'resource_context.dart';
+import './auth_user.dart';
+import './resource_context.dart';
 
 /// The central authority for validating permissions based on Role and Context.
 @lazySingleton
